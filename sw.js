@@ -1,7 +1,19 @@
-const CACHE="pu-dex-v4-1-20260928";
+const CACHE="pu-dex-v4-2-20260928";
 const CORE=[
-  "./","index.html","styles.css","app.js","firebase-config.js","manifest.webmanifest",
-  "assets/placeholder.svg","data/pokemon.json","data/attacks.json","data/evolutions.json"
+  "./",
+  "./index.html",
+  "./styles.css",
+  "./app.js",
+  "./firebase-config.js",
+  "./manifest.webmanifest",
+  "./assets/placeholder.svg",
+  "./assets/icons/icon-192.png",
+  "./assets/icons/icon-512.png",
+  "./assets/icons/maskable-512.png",
+  "./assets/icons/apple-touch-icon.png",
+  "./data/pokemon.json",
+  "./data/attacks.json",
+  "./data/evolutions.json"
 ];
 
 self.addEventListener("install",e=>{
@@ -16,11 +28,18 @@ self.addEventListener("activate",e=>e.waitUntil(
 ));
 
 self.addEventListener("fetch",e=>{
-  if(e.request.method!=="GET" || e.request.url.includes("firestore.googleapis.com") || e.request.url.includes("identitytoolkit.googleapis.com") || e.request.url.includes("firebase")) return;
+  if(
+    e.request.method!=="GET" ||
+    e.request.url.includes("firestore.googleapis.com") ||
+    e.request.url.includes("identitytoolkit.googleapis.com") ||
+    e.request.url.includes("firebase")
+  ) return;
+
   e.respondWith(
     caches.match(e.request).then(hit=>hit||fetch(e.request).then(r=>{
-      if(r.ok&&new URL(e.request.url).origin===location.origin){
-        const copy=r.clone(); caches.open(CACHE).then(c=>c.put(e.request,copy));
+      if(r.ok && new URL(e.request.url).origin===location.origin){
+        const copy=r.clone();
+        caches.open(CACHE).then(c=>c.put(e.request,copy));
       }
       return r;
     }))
