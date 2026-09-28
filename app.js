@@ -26,7 +26,8 @@ const app = {
   selectedId: null, activeTab: "info", user: null, isAdmin: false,
   saveTimer: null, saving: false, dirty: false,
   view: "dex", fightSource: "owned", fightRole: "own", fightSelectedId: null,
-  fightSelectedLevel: 1, fightTeam: [], fightBaseline: {}
+  fightSelectedLevel: 1, fightTeam: [], fightBaseline: {},
+  encounterData: null, encounterField: null, encounterTS: 3, encounterResult: null
 };
 
 const $ = s => document.querySelector(s);
@@ -66,13 +67,186 @@ function evolutionGroupFor(id){
   }) || null;
 }
 
+
+const TYPE_CODE_NAMES = {
+  NOR:"Normal", PFL:"Pflanze", FEU:"Feuer", WAS:"Wasser", ELE:"Elektro",
+  PSY:"Psycho", KAM:"Kampf", GIF:"Gift", FLU:"Flug", KAF:"Käfer",
+  BOD:"Boden", GES:"Gestein", GEI:"Geist", EIS:"Eis", DRA:"Drache"
+};
+function rand(arr){ return arr?.length ? arr[Math.floor(Math.random()*arr.length)] : null; }
+function pad2(n){ return String(n).padStart(2,"0"); }
+function randomInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function encounterPokemonByName(name){ return app.pokemon.find(p=>p.name===name) || null; }
+function normalizeEncounterLevelPool(pool=[]){
+  return pool.map(v=>String(v).padStart(2,"0")).filter(v=>{
+    const n=parseInt(v,10); return Number.isFinite(n)&&n>=1&&n<=10;
+  });
+}
+function generateEncounter(){
+  const data=app.encounterData;
+  if(!data){ toast("Zufallsdaten konnten nicht geladen werden"); return; }
+  const feld=app.encounterField;
+  const ts=String(app.encounterTS);
+  const opponentOptions=data.opponents?.[ts]||[];
+  if(!feld || !opponentOptions.length){ toast("Für diese Auswahl fehlen Daten"); return; }
+
+  const chosen=rand(opponentOptions);
+  const isTrainer=/trainer/i.test(chosen||"");
+  const freiwillig=/freiw/i.test(chosen||"");
+  const isTwo=/\b2\b/.test(chosen||"");
+  app.encounterResult=isTrainer
+    ? runTrainerEncounter(ts,feld,freiwillig,chosen)
+    : runWildEncounter(ts,feld,freiwillig,isTwo?2:1,chosen);
+  renderEncounter();
+}
+function runWildEncounter(ts,feld,freiwillig,anzahl,opponentRoll){
+  const data=app.encounterData;
+  const levelPool=normalizeEncounterLevelPool(data.wildLevels?.[ts]||[]);
+  const results=[]; const usedCodes=new Set();
+  for(let i=0;i<anzahl;i++){
+    let found=null;
+    for(let attempt=0;attempt<60 && !found;attempt++){
+      const level=rand(levelPool);
+      const code=`${feld}${level}${pad2(randomInt(1,20))}`;
+      if(usedCodes.has(code)) continue;
+      const hit=data.wildLookup?.[code];
+      if(hit) found={code,name:hit.name,image:hit.image,level,typeCode:null};
+    }
+    if(!found){
+      const level=rand(levelPool)||"01";
+      found={code:`${feld}${level}00`,name:"(nicht gefunden)",image:null,level,typeCode:null};
+    }
+    usedCodes.add(found.code); results.push(found);
+  }
+  return {
+    kind:"wild", freiwillig, feld, ts, opponentRoll, items:results,
+    steps:[
+      {step:"1.0 Gegner",value:opponentRoll},
+      {step:"W2.0 Level Wildes Pok",value:results.map(x=>`Lvl ${parseInt(x.level,10)}`).join(" · ")},
+      {step:"W3.0 Auswahl Wildes Pok",value:results.map(x=>`${x.code} → ${x.name}`).join(" · ")}
+    ]
+  };
+}
+function runTrainerEncounter(ts,feld,freiwillig,opponentRoll){
+  const data=app.encounterData;
+  const teamSize=rand(data.trainerCounts||[]);
+  if(!teamSize) return {kind:"trainer",freiwillig,feld,ts,opponentRoll,items:[],steps:[{step:"1.0 Gegner",value:opponentRoll}]};
+
+  let typeCount=null, safety=0;
+  while(safety<200){
+    const cand=rand(data.trainerTypeCounts||[]);
+    if(cand>=1 && cand<=teamSize){ typeCount=cand; break; }
+    safety++;
+  }
+  if(typeCount===null) typeCount=Math.min(1,teamSize);
+
+  const typePool=data.trainerTypesByField?.[feld]||[];
+  const types=Array.from({length:typeCount},()=>rand(typePool)).filter(Boolean);
+  const levelPool=normalizeEncounterLevelPool(data.trainerLevels?.[ts]||[]);
+  const levelCodes=types.map(()=>rand(levelPool)||"01");
+
+  const base=Math.floor(teamSize/types.length);
+  let remainder=teamSize%types.length;
+  const distribution=types.map(()=>{
+    const v=base+(remainder>0?1:0);
+    if(remainder>0) remainder--;
+    return v;
+  });
+
+  const results=[]; const usedCodes=new Set();
+  for(let i=0;i<types.length;i++){
+    const typ=types[i];
+    const level=levelCodes[i]||levelCodes[0]||"01";
+    const reps=Math.max(1,distribution[i]||1);
+    for(let r=0;r<reps;r++){
+      let found=null;
+      for(let attempt=0;attempt<80 && !found;attempt++){
+        const code=`${typ}${level}${pad2(randomInt(1,20))}`;
+        if(usedCodes.has(code)) continue;
+        const hit=data.trainerLookup?.[code];
+        if(hit) found={code,name:hit.name,image:hit.image,typeCode:typ,level};
+      }
+      if(!found) found={code:`${typ}${level}00`,name:"(nicht gefunden)",image:null,typeCode:typ,level};
+      usedCodes.add(found.code); results.push(found);
+    }
+  }
+  if(results.length>teamSize) results.splice(teamSize);
+  while(results.length<teamSize) results.push({code:"",name:"(fehlend)",image:null,typeCode:types[0]||"",level:levelCodes[0]||""});
+
+  return {
+    kind:"trainer", freiwillig, feld, ts, opponentRoll, items:results,
+    steps:[
+      {step:"1.0 Gegner",value:opponentRoll},
+      {step:"T2.0 Anzahl Trainer Pok",value:String(teamSize)},
+      {step:"T3.0 Anz Typen Trainer Pok",value:String(typeCount)},
+      {step:"T4.0 Typen Trainer Pok",value:types.map(t=>`${t} (${TYPE_CODE_NAMES[t]||t})`).join(" · ")},
+      {step:"T5.0 Level Trainer Pok",value:levelCodes.map(v=>`Lvl ${parseInt(v,10)}`).join(" · ")},
+      {step:"T6.0 Auswahl Trainer Pok",value:results.map(x=>`${x.code} → ${x.name}`).join(" · ")}
+    ]
+  };
+}
+function renderEncounter(){
+  const data=app.encounterData;
+  if(!data) return;
+  if(!app.encounterField) app.encounterField=data.fieldCodes?.[0]||"";
+  const select=$("#encounterFieldSelect");
+  if(select){
+    select.innerHTML=(data.fieldCodes||[]).map(code=>`<option value="${escapeHtml(code)}" ${code===app.encounterField?"selected":""}>${escapeHtml(code)}</option>`).join("");
+    select.value=app.encounterField;
+  }
+  $("#encounterTSValue").textContent=app.encounterTS;
+  $("#encounterTSButtons").innerHTML=Array.from({length:14},(_,i)=>`<button type="button" data-encounter-ts="${i}" class="${i===app.encounterTS?"active":""}">${i}</button>`).join("");
+
+  const result=app.encounterResult;
+  const wrap=$("#encounterResult");
+  wrap.classList.toggle("hidden",!result);
+  if(!result) return;
+
+  $("#encounterResultEyebrow").textContent=result.kind==="trainer"?"Trainer-Kampf":"Wilde Begegnung";
+  $("#encounterResultTitle").textContent=result.kind==="trainer"?"Trainer-Kampf":"Wilde Begegnung";
+  $("#encounterResultMeta").textContent=`Feld ${result.feld} · TS ${result.ts} · ${result.items.length} Pokémon`;
+  $("#encounterVoluntary").classList.toggle("hidden",!result.freiwillig);
+
+  $("#encounterPokemonList").innerHTML=result.items.map((item,index)=>{
+    const p=encounterPokemonByName(item.name);
+    const type=p?.type || TYPE_CODE_NAMES[item.typeCode] || "Unbekannt";
+    return `<article class="encounter-mon" style="${typeVars(type)}">
+      <div class="encounter-mon-art"><img src="${p?.image||FALLBACK_IMAGE}" alt="${escapeHtml(item.name)}" loading="lazy"></div>
+      <div class="encounter-mon-copy">
+        <small>${result.kind==="trainer"?"Trainer":"Wild"} · ${escapeHtml(item.code||"")}</small>
+        <strong>${escapeHtml(item.name)}</strong>
+        <span>${escapeHtml(type)} · Level ${parseInt(item.level,10)||"—"}</span>
+      </div>
+      <div class="encounter-level-badge">Lvl ${parseInt(item.level,10)||"—"}</div>
+    </article>`;
+  }).join("");
+  $$("#encounterPokemonList img").forEach(setImgFallback);
+
+  $("#encounterStepList").innerHTML=result.steps.map((s,i)=>`<div class="encounter-step-row"><span>${i+1}</span><div><strong>${escapeHtml(s.step)}</strong><small>${escapeHtml(s.value)}</small></div></div>`).join("");
+}
+function transferEncounterToFight(){
+  const result=app.encounterResult;
+  if(!result?.items?.length){ toast("Noch keine Begegnung ausgewürfelt"); return; }
+  let added=0;
+  for(const item of result.items){
+    const p=encounterPokemonByName(item.name); if(!p) continue;
+    const level=Math.min(10,Math.max(1,parseInt(item.level,10)||p.minLevel));
+    app.fightTeam.push({uid:newFightUid(),id:p.id,level,role:"opponent",freeLevel:true});
+    added++;
+  }
+  saveFightState();
+  if(!added){ toast("Keine Pokémon konnten übernommen werden"); return; }
+  showModule("fight");
+  toast(`${added} ${added===1?"Pokémon":"Pokémon"} als Gegner übernommen`);
+}
+
 function fightPokemon(id){ return app.pokemon.find(p=>p.id===Number(id)) || null; }
 function newFightUid(){ return (globalThis.crypto?.randomUUID?.() || `fight-${Date.now()}-${Math.random().toString(36).slice(2)}`); }
 function loadFightState(id){
   app.fightTeam=[]; app.fightBaseline={}; app.fightSelectedId=null; app.fightSelectedLevel=1; app.fightSource="owned"; app.fightRole="own";
   try {
     const raw=JSON.parse(localStorage.getItem(fightKey(id))||"{}");
-    if(Array.isArray(raw.team)) app.fightTeam=raw.team.map(m=>({uid:m.uid||newFightUid(),id:+m.id,level:+m.level,role:m.role==="opponent"?"opponent":"own"})).filter(m=>fightPokemon(m.id));
+    if(Array.isArray(raw.team)) app.fightTeam=raw.team.map(m=>({uid:m.uid||newFightUid(),id:+m.id,level:+m.level,role:m.role==="opponent"?"opponent":"own",freeLevel:!!m.freeLevel})).filter(m=>fightPokemon(m.id));
     if(raw.baseline&&typeof raw.baseline==="object") app.fightBaseline=Object.fromEntries(Object.entries(raw.baseline).filter(([,v])=>Number.isFinite(+v)&&+v>0).map(([k,v])=>[k,+v]));
   } catch(err){ console.warn("Kampfstand konnte nicht geladen werden",err); }
   ensureFightSelection(true);
@@ -123,14 +297,17 @@ function renderDiffList(target,counts,emptyText){
 }
 function showModule(view){
   if(!app.player){ showNoPlayer(); return; }
-  app.view=view==="fight"?"fight":"dex";
+  app.view=view==="fight"?"fight":view==="encounter"?"encounter":"dex";
   app.selectedId=null;
   $("#detailView").classList.add("hidden");
   $("#mainView").classList.toggle("hidden",app.view!=="dex");
+  $("#encounterView").classList.toggle("hidden",app.view!=="encounter");
   $("#fightView").classList.toggle("hidden",app.view!=="fight");
-  $("#brandLabel").textContent=app.view==="fight"?"Kampf":"Dex";
+  $("#brandLabel").textContent=app.view==="fight"?"Kampf":app.view==="encounter"?"Begegnung":"Dex";
   $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module===app.view));
-  if(app.view==="fight") renderFight(); else renderGrid();
+  if(app.view==="fight") renderFight();
+  else if(app.view==="encounter") renderEncounter();
+  else renderGrid();
   window.scrollTo({top:0,behavior:"instant"});
 }
 function renderFight(){
@@ -188,7 +365,8 @@ function addFightPokemon(){
 }
 function stepFightMember(uid,delta){
   const m=app.fightTeam.find(x=>x.uid===uid); if(!m)return; const p=fightPokemon(m.id); if(!p)return;
-  m.level=Math.min(p.maxLevel,Math.max(p.minLevel,m.level+delta)); renderFight();
+  const min=m.freeLevel?1:p.minLevel, max=m.freeLevel?10:p.maxLevel;
+  m.level=Math.min(max,Math.max(min,m.level+delta)); renderFight();
 }
 function startNextFight(){
   const current=cardsForFightTeam();
@@ -204,6 +382,10 @@ async function init(){
   catch(err){ console.warn("Attackendaten nicht geladen",err); app.attacks={}; }
   try { const data=await loadJson("data/evolutions.json"); app.evolutionGroups=data.groups||[]; }
   catch(err){ console.warn("Entwicklungsdaten nicht geladen",err); app.evolutionGroups=[]; }
+  try {
+    app.encounterData=await loadJson("data/encounters.json");
+    app.encounterField=app.encounterData.fieldCodes?.[0]||null;
+  } catch(err){ console.warn("Zufallsdaten nicht geladen",err); app.encounterData=null; }
 
   buildTypeStrip(); bindEvents();
   onAuthStateChanged(auth, async user=>{
@@ -222,7 +404,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=4.3").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=5.0").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
@@ -242,9 +424,9 @@ async function selectPlayer(id,close=true){
     app.publishedState=normalizeState(data.pokemon||{});
     app.state=clone(app.publishedState);
     localStorage.setItem(playerKey(id),JSON.stringify(app.state));
-    app.selectedId=null; app.editMode=app.isAdmin && app.editMode; app.view="dex"; loadFightState(id);
+    app.selectedId=null; app.editMode=app.isAdmin && app.editMode; app.view="dex"; app.encounterResult=null; loadFightState(id);
     history.replaceState(null,"",`${location.pathname}?player=${encodeURIComponent(id)}`);
-    $("#mainView").classList.remove("hidden"); $("#fightView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
+    $("#mainView").classList.remove("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
     $("#brandLabel").textContent="Dex"; $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module==="dex"));
     if(close) closeSheets();
     render();
@@ -254,8 +436,8 @@ async function selectPlayer(id,close=true){
     const cached=localStorage.getItem(playerKey(id));
     if(cached){
       app.player={id,name:"Offline-Spielstand"};
-      app.state=normalizeState(JSON.parse(cached)); app.publishedState=clone(app.state); app.view="dex"; loadFightState(id);
-      $("#mainView").classList.remove("hidden"); $("#fightView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
+      app.state=normalizeState(JSON.parse(cached)); app.publishedState=clone(app.state); app.view="dex"; app.encounterResult=null; loadFightState(id);
+      $("#mainView").classList.remove("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
       toast("Offline-Kopie geladen");
       render();
       return true;
@@ -266,8 +448,8 @@ async function selectPlayer(id,close=true){
 }
 
 function showNoPlayer(msg="Öffne deinen persönlichen Spieler-Link. Als Spielleiter kannst du dich über ☰ anmelden."){
-  app.player=null; app.state={}; app.publishedState={}; app.selectedId=null; app.fightTeam=[]; app.fightBaseline={};
-  $("#detailView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#moduleNav").classList.add("hidden"); $("#noPlayerView").classList.remove("hidden");
+  app.player=null; app.state={}; app.publishedState={}; app.selectedId=null; app.fightTeam=[]; app.fightBaseline={}; app.encounterResult=null;
+  $("#detailView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#moduleNav").classList.add("hidden"); $("#noPlayerView").classList.remove("hidden");
   $("#noPlayerText").textContent=msg;
 }
 
@@ -288,7 +470,7 @@ function filteredPokemon(){
 function render(){
   if(app.player){
     $("#playerNameTop").textContent=app.player.name; $("#playerAvatar").textContent=initials(app.player.name); $("#welcomeLabel").textContent=`${app.player.name}s Dex`;
-    renderStats(); renderGrid(); if(app.view==="fight") renderFight();
+    renderStats(); renderGrid(); if(app.view==="fight") renderFight(); else if(app.view==="encounter") renderEncounter();
   } else { $("#playerNameTop").textContent=app.isAdmin?"Spieler wählen":"Dex"; $("#playerAvatar").textContent=app.isAdmin?"A":"?"; }
   renderPlayerList(); updateAuthUI();
   $("#editModeToggle").checked=app.editMode;
@@ -309,7 +491,7 @@ function renderPlayerList(){
   wrap.innerHTML=app.players.map(p=>`<button class="player-option ${app.player?.id===p.id?"active":""}" data-player="${p.id}"><span class="player-avatar">${initials(p.name)}</span><span><strong>${escapeHtml(p.name)}</strong><small>${app.player?.id===p.id?"Aktuell ausgewählt":"Dex öffnen"}</small></span></button>`).join("")||`<div class="notice"><strong>Noch keine Spieler</strong><p>Importiere zuerst deine JSON-Spielstände über <code>admin-import.html</code>.</p></div>`;
 }
 
-function openDetail(id){ app.view="dex"; app.selectedId=Number(id); app.activeTab="info"; $("#mainView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#detailView").classList.remove("hidden"); window.scrollTo({top:0,behavior:"instant"}); renderDetail(); }
+function openDetail(id){ app.view="dex"; app.selectedId=Number(id); app.activeTab="info"; $("#mainView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#detailView").classList.remove("hidden"); window.scrollTo({top:0,behavior:"instant"}); renderDetail(); }
 function closeDetail(){ app.selectedId=null; $("#detailView").classList.add("hidden"); $("#mainView").classList.remove("hidden"); app.view="dex"; renderGrid(); }
 function selectedPokemon(){ return app.pokemon.find(p=>p.id===app.selectedId); }
 
@@ -470,12 +652,17 @@ function bindEvents(){
   $$('[data-filter]').forEach(b=>b.addEventListener("click",()=>{app.filter=b.dataset.filter; $$('[data-filter]').forEach(x=>x.classList.toggle("active",x===b));renderGrid();}));
   $("#typeStrip").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(!b)return;app.type=b.dataset.type;$$(".type-chip").forEach(x=>x.classList.toggle("active",x===b));renderGrid();});
   $("#clearFiltersBtn").addEventListener("click",resetFilters); $("#dexGrid").addEventListener("click",e=>{const c=e.target.closest(".dex-card");if(c)openDetail(c.dataset.id);});
-  $("#backBtn").addEventListener("click",closeDetail); $("#homeBtn").addEventListener("click",()=>{if(app.selectedId)closeDetail();else if(app.player&&app.view==="fight")showModule("dex");else if(app.player)resetFilters();});
+  $("#backBtn").addEventListener("click",closeDetail); $("#homeBtn").addEventListener("click",()=>{if(app.selectedId)closeDetail();else if(app.player&&app.view!=="dex")showModule("dex");else if(app.player)resetFilters();});
   $("#prevBtn").addEventListener("click",()=>{app.selectedId=app.selectedId<=1?app.pokemon.length:app.selectedId-1;renderDetail();}); $("#nextBtn").addEventListener("click",()=>{app.selectedId=app.selectedId>=app.pokemon.length?1:app.selectedId+1;renderDetail();});
   $("#detailFavoriteBtn").addEventListener("click",()=>mutateSelected(s=>s.favorite=!s.favorite)); $$(".tab").forEach(b=>b.addEventListener("click",()=>{app.activeTab=b.dataset.tab;renderDetail();}));
   $("#ownedToggle").addEventListener("change",e=>mutateSelected(s=>s.owned=e.target.checked)); $("#favoriteToggle").addEventListener("change",e=>mutateSelected(s=>s.favorite=e.target.checked)); $("#levelSlider").addEventListener("input",e=>mutateSelected(s=>s.level=+e.target.value)); $$(".stepper [data-ep]").forEach(b=>b.addEventListener("click",()=>changeEP(+b.dataset.ep)));
   $("#evolutionContent").addEventListener("click",e=>{const b=e.target.closest("[data-evo-id]"); if(!b)return; app.selectedId=+b.dataset.evoId; app.activeTab="entwicklung"; window.scrollTo({top:0,behavior:"smooth"}); renderDetail();});
   $("#moduleNav").addEventListener("click",e=>{const b=e.target.closest("[data-module]");if(b)showModule(b.dataset.module);});
+  $("#encounterFieldSelect").addEventListener("change",e=>{app.encounterField=e.target.value;app.encounterResult=null;renderEncounter();});
+  $("#encounterTSButtons").addEventListener("click",e=>{const b=e.target.closest("[data-encounter-ts]");if(!b)return;app.encounterTS=+b.dataset.encounterTs;app.encounterResult=null;renderEncounter();});
+  $("#encounterStartBtn").addEventListener("click",generateEncounter);
+  $("#encounterRerollBtn").addEventListener("click",generateEncounter);
+  $("#encounterToFightBtn").addEventListener("click",transferEncounterToFight);
   $$("[data-fight-source]").forEach(b=>b.addEventListener("click",()=>{app.fightSource=b.dataset.fightSource; app.fightRole=isOwnFightSource()?"own":"opponent"; app.fightSelectedId=null; ensureFightSelection(true); renderFight();}));
   $$("[data-fight-role]").forEach(b=>b.addEventListener("click",()=>{app.fightRole=b.dataset.fightRole;renderFight();}));
   $("#fightPokemonSelect").addEventListener("change",e=>{app.fightSelectedId=+e.target.value;ensureFightSelection(true);renderFight();});

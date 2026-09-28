@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>PU Dex</title>
-  <link rel="manifest" href="manifest.webmanifest?v=4.3">
+  <link rel="manifest" href="manifest.webmanifest?v=5.0">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=4.3">
+  <link rel="stylesheet" href="styles.css?v=5.0">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -180,6 +180,61 @@
     </main>
 
 
+
+    <main id="encounterView" class="encounter-view hidden">
+      <section class="hero encounter-hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Zufallsgenerator</p>
+          <h1>Begegnung auswürfeln.</h1>
+          <p>Die gleiche Schrittfolge wie in deinem bisherigen Generator – jetzt ohne Excel-Upload.</p>
+        </div>
+        <div class="encounter-orb" aria-hidden="true">🎲</div>
+      </section>
+
+      <section class="encounter-panel">
+        <div class="encounter-panel-head">
+          <div><p class="eyebrow">Eingabe</p><h2>Feld & Trainerstufe</h2></div>
+          <span class="data-pill">Zufall (1).xlsx</span>
+        </div>
+
+        <label class="fight-field encounter-field">
+          <span>Feld-Code</span>
+          <select id="encounterFieldSelect"></select>
+        </label>
+
+        <div class="encounter-ts-head">
+          <span>TS (Trainerstufe)</span><strong id="encounterTSValue">3</strong>
+        </div>
+        <div class="encounter-ts-grid" id="encounterTSButtons" aria-label="Trainerstufe auswählen"></div>
+
+        <button class="primary-btn encounter-start-btn" id="encounterStartBtn" type="button">Begegnung starten</button>
+        <p class="encounter-note">Ablauf: 1.0 Gegner → bei wilden Pokémon W2.0 + W3.0; bei Trainern T2.0 → T3.0 → T4.0 → T5.0 → T6.0.</p>
+      </section>
+
+      <section class="encounter-result hidden" id="encounterResult">
+        <div class="encounter-result-head">
+          <div>
+            <p class="eyebrow" id="encounterResultEyebrow">Ergebnis</p>
+            <h2 id="encounterResultTitle">Begegnung</h2>
+            <p id="encounterResultMeta"></p>
+          </div>
+          <span class="voluntary-badge hidden" id="encounterVoluntary">FREIWILLIG</span>
+        </div>
+
+        <div class="encounter-pokemon-list" id="encounterPokemonList"></div>
+
+        <div class="encounter-actions">
+          <button class="primary-btn" id="encounterToFightBtn" type="button">In Kampf übernehmen</button>
+          <button class="secondary-btn" id="encounterRerollBtn" type="button">Neu würfeln</button>
+        </div>
+
+        <details class="encounter-steps">
+          <summary>Ausgewürfelte Schritte anzeigen</summary>
+          <div id="encounterStepList"></div>
+        </details>
+      </section>
+    </main>
+
     <main id="fightView" class="fight-view hidden">
       <section class="hero fight-hero">
         <div class="hero-copy">
@@ -277,6 +332,7 @@
 
     <nav class="app-nav hidden" id="moduleNav" aria-label="App-Bereiche">
       <button class="active" data-module="dex" type="button"><span>◉</span><small>Dex</small></button>
+      <button data-module="encounter" type="button"><span>🎲</span><small>Begegnung</small></button>
       <button data-module="fight" type="button"><span>⚔</span><small>Kampf</small></button>
     </nav>
 
@@ -313,11 +369,11 @@
         <button class="setting-button" id="installAppBtn" type="button"><span>▣</span><div><strong>App installieren</strong><small id="installAppStatus">Installationsstatus wird geprüft…</small></div></button>
         <a class="setting-button admin-link" href="admin-import.html"><span>＋</span><div><strong>Spielstände importieren</strong><small>Nur für den ersten Import oder neue Spieler</small></div></a>
       </div>
-      <div class="settings-note"><strong>Firebase-Synchronisierung · Dex v4.3</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Die Kampfvorbereitung bleibt lokal auf dem jeweiligen Gerät und verändert keinen Spielstand.</p></div>
+      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v5.0</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung und Zufallsgenerator bleiben lokal auf dem jeweiligen Gerät und verändern keinen Spielstand.</p></div>
     </aside>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script type="module" src="app.js?v=4.3"></script>
+  <script type="module" src="app.js?v=5.0"></script>
 </body>
 </html>

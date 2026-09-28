@@ -1,4 +1,4 @@
-PU Dex v4.3 – PWA + Favoriten-Fix
+PU v5.0 – Begegnungsmodul
 
 In GitHub ersetzen:
 - index.html
@@ -7,10 +7,23 @@ In GitHub ersetzen:
 - sw.js
 - manifest.webmanifest
 
-Ordner assets/icons hochladen/ersetzen:
-- apple-touch-icon.png
-- icon-192.png
-- icon-512.png
-- maskable-512.png
+Neu hochladen:
+- data/encounters.json
 
-Firebase/Spielstände/Daten müssen nicht neu importiert werden.
+Nicht verändern:
+- firebase-config.js
+- Firestore
+- Spielerstände
+- pokemon.json / attacks.json / evolutions.json
+- assets/
+
+Der Zufallsgenerator übernimmt die Schrittfolge und Zufallslogik aus
+„Zufallsgenerator 3.html“ und die Daten aus „Zufall (1).xlsx“.
+Es ist kein Excel-Upload mehr nötig.
+
+Neu:
+- Bereich „Begegnung“
+- Feld-Code + TS 0–13
+- wilde Begegnung / freiwillige Begegnung / Trainerkampf
+- sichtbare Schrittfolge 1.0 / W2.0 / W3.0 bzw. T2.0–T6.0
+- Ergebnis direkt als Gegner in die Kampfvorbereitung übernehmen

@@ -1,4 +1,4 @@
-const CACHE="pu-dex-v4-3-20260928";
+const CACHE="pu-dex-v5-0-20260928";
 const CORE=[
   "./",
   "./index.html",
@@ -12,7 +12,8 @@ const CORE=[
   "./assets/icons/apple-touch-icon.png",
   "./data/pokemon.json",
   "./data/attacks.json",
-  "./data/evolutions.json"
+  "./data/evolutions.json",
+  "./data/encounters.json"
 ];
 
 self.addEventListener("install",e=>{

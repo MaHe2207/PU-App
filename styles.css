@@ -214,7 +214,7 @@ main{padding:0 16px 110px}
 
 
 /* Dex v4: Kampfvorbereitung */
-.app-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:50;width:min(760px,100%);display:grid;grid-template-columns:1fr 1fr;padding:7px 12px calc(7px + var(--safe-bottom));background:rgba(255,255,255,.93);backdrop-filter:blur(18px);border-top:1px solid var(--line);box-shadow:0 -8px 26px rgba(25,36,48,.06)}
+.app-nav{position:fixed;left:50%;bottom:0;transform:translateX(-50%);z-index:50;width:min(760px,100%);display:grid;grid-template-columns:repeat(3,1fr);padding:7px 12px calc(7px + var(--safe-bottom));background:rgba(255,255,255,.93);backdrop-filter:blur(18px);border-top:1px solid var(--line);box-shadow:0 -8px 26px rgba(25,36,48,.06)}
 .app-nav button{border:0;background:transparent;border-radius:15px;padding:7px 12px;display:flex;align-items:center;justify-content:center;gap:7px;color:#76818e;font-weight:850}
 .app-nav button span{font-size:19px;line-height:1}.app-nav button small{font-size:11px;font-weight:900}.app-nav button.active{background:#172433;color:#fff;box-shadow:0 5px 15px rgba(23,36,51,.17)}
 .fight-view{padding-top:0}.fight-hero{background:linear-gradient(135deg,#fff 0 54%,#edf1f8 100%)}.fight-orb{width:80px;height:80px;border-radius:24px;background:#172433;color:#fff;display:grid;place-items:center;font-size:34px;box-shadow:0 12px 28px rgba(23,36,51,.18);transform:rotate(-5deg);flex:none;margin-right:-4px}
@@ -231,3 +231,53 @@ main{padding:0 16px 110px}
 /* Dex v4.3: Favoriten-Hinweis & PWA-Installation */
 .fight-source-hint{margin:7px 3px 2px;color:#7b8794;font-size:10px;line-height:1.4;min-height:14px}
 .setting-button[disabled]{opacity:.62;cursor:default}
+
+
+/* PU v5: Begegnungs-/Zufallsgenerator */
+.encounter-view{padding-top:0}
+.encounter-hero{background:linear-gradient(135deg,#fff 0 54%,#fff5e8 100%)}
+.encounter-orb{width:80px;height:80px;border-radius:24px;background:#172433;color:#fff;display:grid;place-items:center;font-size:34px;box-shadow:0 12px 28px rgba(23,36,51,.18);transform:rotate(4deg);flex:none;margin-right:-4px}
+.encounter-panel,.encounter-result{background:#fff;border:1px solid var(--line);border-radius:22px;padding:14px;margin:12px 0;box-shadow:0 5px 17px rgba(26,36,48,.045)}
+.encounter-panel-head,.encounter-result-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.encounter-panel-head h2,.encounter-result-head h2{margin:2px 0 0;font-size:18px;letter-spacing:-.3px}
+.encounter-field{margin-top:0}
+.encounter-ts-head{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+.encounter-ts-head span{font-size:10px;color:var(--muted);font-weight:850}
+.encounter-ts-head strong{font-size:18px}
+.encounter-ts-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:7px}
+.encounter-ts-grid button{height:36px;border:1px solid var(--line);background:#fafbfc;border-radius:10px;font-size:11px;font-weight:900;color:#5f6b78}
+.encounter-ts-grid button.active{background:#172433;color:#fff;border-color:#172433;box-shadow:0 4px 10px rgba(23,36,51,.13)}
+.encounter-start-btn{width:100%;margin-top:14px}
+.encounter-note{font-size:9px;color:var(--muted);line-height:1.5;margin:9px 3px 0}
+.encounter-result-head>div{min-width:0}
+.encounter-result-head p:not(.eyebrow){margin:5px 0 0;color:var(--muted);font-size:10px}
+.voluntary-badge{background:#fff0d8;color:#a45f00;border:1px solid #f2d49c;border-radius:999px;padding:6px 8px;font-size:8px;font-weight:1000;letter-spacing:.08em;flex:none}
+.encounter-pokemon-list{display:grid;gap:8px}
+.encounter-mon{display:grid;grid-template-columns:68px minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--line);background:#fafbfc;border-radius:18px;padding:8px}
+.encounter-mon-art{width:68px;height:68px;border-radius:14px;background:linear-gradient(145deg,var(--type-soft,#f1f3f5),#fff);display:grid;place-items:center;overflow:hidden;position:relative}
+.encounter-mon-art:before{content:"";position:absolute;width:48px;height:48px;border:6px solid color-mix(in srgb,var(--type,#8b96a3) 12%,transparent);border-radius:50%}
+.encounter-mon-art img{width:94%;height:94%;object-fit:contain;position:relative;z-index:1;filter:drop-shadow(0 5px 7px rgba(20,32,43,.12))}
+.encounter-mon-copy{min-width:0}
+.encounter-mon-copy small{display:block;font-size:8px;color:var(--muted);font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.encounter-mon-copy strong{display:block;font-size:14px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.encounter-mon-copy span{display:block;font-size:9px;color:var(--muted);margin-top:4px}
+.encounter-level-badge{border-radius:12px;background:var(--type-soft,#edf1f5);color:var(--type,#596574);padding:8px 9px;font-size:9px;font-weight:950;white-space:nowrap}
+.encounter-actions{display:grid;grid-template-columns:1.2fr 1fr;gap:7px;margin-top:12px}
+.encounter-actions .primary-btn,.encounter-actions .secondary-btn{padding:11px 8px;font-size:11px}
+.encounter-steps{margin-top:12px;border-top:1px solid #edf0f3;padding-top:10px}
+.encounter-steps summary{cursor:pointer;font-size:10px;font-weight:900;color:#5e6a77;list-style:none}
+.encounter-steps summary::-webkit-details-marker{display:none}
+.encounter-steps summary:after{content:"⌄";float:right}
+.encounter-steps[open] summary:after{content:"⌃"}
+#encounterStepList{display:grid;gap:6px;margin-top:9px}
+.encounter-step-row{display:grid;grid-template-columns:28px minmax(0,1fr);gap:8px;align-items:start}
+.encounter-step-row>span{width:25px;height:25px;border-radius:9px;background:#edf1f5;display:grid;place-items:center;font-size:9px;font-weight:1000;color:#596574}
+.encounter-step-row strong{display:block;font-size:10px}
+.encounter-step-row small{display:block;margin-top:2px;color:var(--muted);font-size:9px;line-height:1.4;word-break:break-word}
+@media (max-width:390px){
+  .app-nav button{padding-left:7px;padding-right:7px;gap:5px}
+  .app-nav button small{font-size:10px}
+  .encounter-mon{grid-template-columns:58px minmax(0,1fr)}
+  .encounter-mon-art{width:58px;height:58px}
+  .encounter-level-badge{grid-column:2;justify-self:start;margin-top:-4px;padding:5px 7px}
+}
