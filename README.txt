@@ -1,14 +1,16 @@
-PU Dex v4.2 – PWA-Fix
+PU Dex v4.3 – PWA + Favoriten-Fix
 
 In GitHub ersetzen:
 - index.html
-- manifest.webmanifest
+- app.js
+- styles.css
 - sw.js
+- manifest.webmanifest
 
-Neu hochladen:
-- assets/icons/icon-192.png
-- assets/icons/icon-512.png
-- assets/icons/maskable-512.png
-- assets/icons/apple-touch-icon.png
+Ordner assets/icons hochladen/ersetzen:
+- apple-touch-icon.png
+- icon-192.png
+- icon-512.png
+- maskable-512.png
 
-Andere Dateien bleiben unverändert.
+Firebase/Spielstände/Daten müssen nicht neu importiert werden.

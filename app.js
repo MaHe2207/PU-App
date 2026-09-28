@@ -36,6 +36,8 @@ const pad = n => String(n).padStart(3,"0");
 const initials = name => (name||"?").trim().split(/\s+/).map(x=>x[0]).join("").slice(0,2).toUpperCase();
 const playerKey = id => `pu-dex-cache-${id}`;
 const fightKey = id => `pu-fight-v4-${id}`;
+const LAST_PLAYER_KEY = "pu-last-player";
+let deferredInstallPrompt = null;
 const escapeHtml = value => String(value ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function typeVars(type){ const [a,b]=TYPE_COLORS[type]||["#8793a0","#f1f3f5"]; return `--type:${a};--type-soft:${b};`; }
 function setImgFallback(img){ img.addEventListener("error",()=>{ if(!img.src.endsWith("placeholder.svg")) img.src=FALLBACK_IMAGE; },{once:true}); }
@@ -135,6 +137,21 @@ function renderFight(){
   if(!app.player) return;
   ensureFightSelection(false);
   const choices=fightChoices();
+  const ownedCount=app.pokemon.filter(p=>stateFor(p).owned).length;
+  const favoriteCount=app.pokemon.filter(p=>stateFor(p).owned && stateFor(p).favorite).length;
+  const ownedBtn=document.querySelector('[data-fight-source="owned"]');
+  const favoriteBtn=document.querySelector('[data-fight-source="favorite"]');
+  const allBtn=document.querySelector('[data-fight-source="all"]');
+  if(ownedBtn) ownedBtn.textContent=`Mein Dex (${ownedCount})`;
+  if(favoriteBtn) favoriteBtn.textContent=`Favoriten (${favoriteCount})`;
+  if(allBtn) allBtn.textContent=`Alle 151`;
+  const sourceHint=$("#fightSourceHint");
+  if(sourceHint){
+    if(app.fightSource==="favorite" && favoriteCount===ownedCount && ownedCount>0) sourceHint.textContent=`Bei ${app.player.name} sind aktuell alle ${ownedCount} gefangenen Pokémon Favoriten – deshalb ist die Liste identisch mit „Mein Dex“.`;
+    else if(app.fightSource==="favorite") sourceHint.textContent=`${favoriteCount} gefangene Favoriten werden angezeigt.`;
+    else if(app.fightSource==="owned") sourceHint.textContent=`${ownedCount} gefangene Pokémon werden angezeigt.`;
+    else sourceHint.textContent="Alle 151 Pokémon stehen zur Auswahl; Level und Seite kannst du frei festlegen.";
+  }
   const select=$("#fightPokemonSelect");
   select.disabled=!choices.length;
   select.innerHTML=choices.length?choices.map(p=>`<option value="${p.id}" ${p.id===app.fightSelectedId?"selected":""}>#${pad(p.id)} · ${escapeHtml(p.name)}${isOwnFightSource()?` · Lv ${stateFor(p).level}`:""}</option>`).join(""):`<option>${app.fightSource==="favorite"?"Keine gefangenen Favoriten":"Keine gefangenen Pokémon"}</option>`;
@@ -194,12 +211,18 @@ async function init(){
     updateAuthUI();
     if(app.isAdmin) await loadAdminPlayers(); else app.players=[];
     const requested=new URLSearchParams(location.search).get("player");
-    if(requested) await selectPlayer(requested,false);
-    else if(app.isAdmin && app.players[0]) await selectPlayer(app.players[0].id,false);
-    else showNoPlayer();
+    const remembered=localStorage.getItem(LAST_PLAYER_KEY);
+    let loaded=false;
+    for(const candidate of [requested,remembered]){
+      if(!candidate || loaded) continue;
+      loaded=await selectPlayer(candidate,false);
+    }
+    if(!loaded && app.isAdmin && app.players[0]) loaded=await selectPlayer(app.players[0].id,false);
+    if(!loaded) showNoPlayer();
     render();
   });
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js").catch(()=>{});
+  setupPwaInstall();
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=4.3").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
@@ -215,6 +238,7 @@ async function selectPlayer(id,close=true){
     if(!snap.exists()) throw new Error("Spieler nicht gefunden");
     const data=snap.data();
     app.player={id,name:data.name||"Spieler"};
+    localStorage.setItem(LAST_PLAYER_KEY,id);
     app.publishedState=normalizeState(data.pokemon||{});
     app.state=clone(app.publishedState);
     localStorage.setItem(playerKey(id),JSON.stringify(app.state));
@@ -223,6 +247,8 @@ async function selectPlayer(id,close=true){
     $("#mainView").classList.remove("hidden"); $("#fightView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
     $("#brandLabel").textContent="Dex"; $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module==="dex"));
     if(close) closeSheets();
+    render();
+    return true;
   } catch(err){
     console.error(err);
     const cached=localStorage.getItem(playerKey(id));
@@ -231,9 +257,12 @@ async function selectPlayer(id,close=true){
       app.state=normalizeState(JSON.parse(cached)); app.publishedState=clone(app.state); app.view="dex"; loadFightState(id);
       $("#mainView").classList.remove("hidden"); $("#fightView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
       toast("Offline-Kopie geladen");
+      render();
+      return true;
     } else { showNoPlayer("Dieser Spieler-Link ist ungültig oder derzeit nicht erreichbar."); }
   }
   render();
+  return false;
 }
 
 function showNoPlayer(msg="Öffne deinen persönlichen Spieler-Link. Als Spielleiter kannst du dich über ☰ anmelden."){
@@ -393,9 +422,52 @@ function resetFilters(){ app.filter="all"; app.type="Alle"; app.search=""; $("#s
 function exportState(){ if(!app.player)return; const blob=new Blob([JSON.stringify(app.state,null,2)],{type:"application/json"}); const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`${app.player.name}.json`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
 async function sharePlayer(){ if(!app.player)return; const url=new URL(location.href); url.searchParams.set("player",app.player.id); try{await navigator.clipboard.writeText(url.toString());toast("Spieler-Link kopiert");}catch{prompt("Link kopieren:",url.toString());} }
 
+function isStandalone(){
+  return window.matchMedia?.("(display-mode: standalone)")?.matches || window.navigator.standalone===true;
+}
+function updateInstallUi(){
+  const btn=$("#installAppBtn"), status=$("#installAppStatus");
+  if(!btn||!status) return;
+  if(isStandalone()){
+    btn.disabled=true;
+    status.textContent="App läuft bereits im installierten Modus.";
+  } else if(deferredInstallPrompt){
+    btn.disabled=false;
+    status.textContent="Bereit – hier tippen, um PU zu installieren.";
+  } else {
+    btn.disabled=false;
+    status.textContent="Falls kein Dialog erscheint: Seite einmal neu laden und erneut tippen.";
+  }
+}
+function setupPwaInstall(){
+  window.addEventListener("beforeinstallprompt",e=>{
+    e.preventDefault();
+    deferredInstallPrompt=e;
+    updateInstallUi();
+  });
+  window.addEventListener("appinstalled",()=>{
+    deferredInstallPrompt=null;
+    updateInstallUi();
+    toast("PU wurde installiert");
+  });
+  updateInstallUi();
+}
+async function installPwa(){
+  if(isStandalone()){ toast("Die App läuft bereits installiert"); return; }
+  if(deferredInstallPrompt){
+    deferredInstallPrompt.prompt();
+    const choice=await deferredInstallPrompt.userChoice.catch(()=>null);
+    deferredInstallPrompt=null;
+    updateInstallUi();
+    if(choice?.outcome!=="accepted") toast("Installation nicht abgeschlossen");
+    return;
+  }
+  toast("Chrome-Menü öffnen → App installieren. Falls Chrome weiterhin eine alte Installation meldet, Seite neu laden.");
+}
+
 function bindEvents(){
   $("#searchInput").addEventListener("input",e=>{app.search=e.target.value;renderGrid();});
-  $$(".segment").forEach(b=>b.addEventListener("click",()=>{app.filter=b.dataset.filter; $$(".segment").forEach(x=>x.classList.toggle("active",x===b));renderGrid();}));
+  $$('[data-filter]').forEach(b=>b.addEventListener("click",()=>{app.filter=b.dataset.filter; $$('[data-filter]').forEach(x=>x.classList.toggle("active",x===b));renderGrid();}));
   $("#typeStrip").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(!b)return;app.type=b.dataset.type;$$(".type-chip").forEach(x=>x.classList.toggle("active",x===b));renderGrid();});
   $("#clearFiltersBtn").addEventListener("click",resetFilters); $("#dexGrid").addEventListener("click",e=>{const c=e.target.closest(".dex-card");if(c)openDetail(c.dataset.id);});
   $("#backBtn").addEventListener("click",closeDetail); $("#homeBtn").addEventListener("click",()=>{if(app.selectedId)closeDetail();else if(app.player&&app.view==="fight")showModule("dex");else if(app.player)resetFilters();});
@@ -416,7 +488,7 @@ function bindEvents(){
   $("#playerBtn").addEventListener("click",()=>openSheet(app.isAdmin?"#playerSheet":"#settingsSheet")); $("#settingsBtn").addEventListener("click",()=>openSheet("#settingsSheet")); $("#sheetBackdrop").addEventListener("click",closeSheets); $$(".close-sheet").forEach(b=>b.addEventListener("click",closeSheets));
   $("#playerList").addEventListener("click",e=>{const b=e.target.closest("[data-player]");if(b)selectPlayer(b.dataset.player);});
   $("#editModeToggle").addEventListener("change",e=>{if(!app.isAdmin){e.target.checked=false;toast("Admin-Anmeldung erforderlich");return;}app.editMode=e.target.checked;renderDetail();toast(app.editMode?"Bearbeitungsmodus aktiv":"Ansichtsmodus aktiv");});
-  $("#exportBtn").addEventListener("click",exportState); $("#shareBtn").addEventListener("click",sharePlayer); $("#saveNowBtn").addEventListener("click",saveToFirebase);
+  $("#exportBtn").addEventListener("click",exportState); $("#shareBtn").addEventListener("click",sharePlayer); $("#saveNowBtn").addEventListener("click",saveToFirebase); $("#installAppBtn").addEventListener("click",installPwa);
   $("#loginBtn").addEventListener("click",doLogin); $("#logoutBtn").addEventListener("click",doLogout); $("#adminPassword").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
   window.addEventListener("beforeunload",()=>{ if(app.dirty) cacheState(); });
 }

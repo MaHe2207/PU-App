@@ -1,11 +1,10 @@
-const CACHE="pu-dex-v4-2-20260928";
+const CACHE="pu-dex-v4-3-20260928";
 const CORE=[
   "./",
   "./index.html",
   "./styles.css",
   "./app.js",
   "./firebase-config.js",
-  "./manifest.webmanifest",
   "./assets/placeholder.svg",
   "./assets/icons/icon-192.png",
   "./assets/icons/icon-512.png",
@@ -27,21 +26,33 @@ self.addEventListener("activate",e=>e.waitUntil(
     .then(()=>self.clients.claim())
 ));
 
-self.addEventListener("fetch",e=>{
-  if(
-    e.request.method!=="GET" ||
-    e.request.url.includes("firestore.googleapis.com") ||
-    e.request.url.includes("identitytoolkit.googleapis.com") ||
-    e.request.url.includes("firebase")
-  ) return;
+async function networkFirst(request){
+  try{
+    const response=await fetch(request);
+    if(response.ok){
+      const cache=await caches.open(CACHE);
+      cache.put(request,response.clone());
+    }
+    return response;
+  }catch(err){
+    const hit=await caches.match(request,{ignoreSearch:true});
+    if(hit) return hit;
+    if(request.mode==="navigate") return caches.match("./index.html");
+    throw err;
+  }
+}
 
-  e.respondWith(
-    caches.match(e.request).then(hit=>hit||fetch(e.request).then(r=>{
-      if(r.ok && new URL(e.request.url).origin===location.origin){
-        const copy=r.clone();
-        caches.open(CACHE).then(c=>c.put(e.request,copy));
-      }
-      return r;
-    }))
-  );
+self.addEventListener("fetch",e=>{
+  const request=e.request;
+  if(request.method!=="GET") return;
+  const url=new URL(request.url);
+  if(url.origin!==self.location.origin) return;
+
+  const freshShell=request.mode==="navigate" || /\/(?:app\.js|styles\.css|manifest\.webmanifest|firebase-config\.js)$/.test(url.pathname);
+  if(freshShell){ e.respondWith(networkFirst(request)); return; }
+
+  e.respondWith(caches.match(request,{ignoreSearch:true}).then(hit=>hit||fetch(request).then(response=>{
+    if(response.ok){ caches.open(CACHE).then(c=>c.put(request,response.clone())); }
+    return response;
+  })));
 });

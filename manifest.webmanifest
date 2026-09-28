@@ -1,15 +1,24 @@
 {
   "name": "PU – Pokémon × Unmatched",
   "short_name": "PU",
-  "id": "./",
-  "start_url": "./",
-  "scope": "./",
+  "id": "/PU-App/pwa-pu-companion",
+  "start_url": "/PU-App/",
+  "scope": "/PU-App/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait-primary",
   "background_color": "#f7f8fb",
   "theme_color": "#f7f8fb",
   "description": "Mobile Begleit-App für PU – Dex und Kampfvorbereitung für Pokémon × Unmatched",
+  "lang": "de",
+  "categories": [
+    "games",
+    "utilities"
+  ],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "assets/icons/icon-192.png",
