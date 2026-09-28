@@ -1,0 +1,1210 @@
+[
+  {
+    "id": 1,
+    "name": "Bisasam",
+    "type": "Pflanze",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/001.webp"
+  },
+  {
+    "id": 2,
+    "name": "Bisaknosp",
+    "type": "Pflanze",
+    "minLevel": 4,
+    "maxLevel": 6,
+    "image": "assets/pokemon/002.webp"
+  },
+  {
+    "id": 3,
+    "name": "Bisaflor",
+    "type": "Pflanze",
+    "minLevel": 7,
+    "maxLevel": 10,
+    "image": "assets/pokemon/003.webp"
+  },
+  {
+    "id": 4,
+    "name": "Glumanda",
+    "type": "Feuer",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/004.webp"
+  },
+  {
+    "id": 5,
+    "name": "Glutexo",
+    "type": "Feuer",
+    "minLevel": 4,
+    "maxLevel": 6,
+    "image": "assets/pokemon/005.webp"
+  },
+  {
+    "id": 6,
+    "name": "Glurak",
+    "type": "Feuer",
+    "minLevel": 7,
+    "maxLevel": 10,
+    "image": "assets/pokemon/006.webp"
+  },
+  {
+    "id": 7,
+    "name": "Schiggy",
+    "type": "Wasser",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/007.webp"
+  },
+  {
+    "id": 8,
+    "name": "Schillok",
+    "type": "Wasser",
+    "minLevel": 4,
+    "maxLevel": 6,
+    "image": "assets/pokemon/008.webp"
+  },
+  {
+    "id": 9,
+    "name": "Turtok",
+    "type": "Wasser",
+    "minLevel": 7,
+    "maxLevel": 10,
+    "image": "assets/pokemon/009.webp"
+  },
+  {
+    "id": 10,
+    "name": "Raupy",
+    "type": "Käfer",
+    "minLevel": 1,
+    "maxLevel": 2,
+    "image": "assets/pokemon/010.webp"
+  },
+  {
+    "id": 11,
+    "name": "Safcon",
+    "type": "Käfer",
+    "minLevel": 3,
+    "maxLevel": 4,
+    "image": "assets/pokemon/011.webp"
+  },
+  {
+    "id": 12,
+    "name": "Smettbo",
+    "type": "Käfer",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/012.webp"
+  },
+  {
+    "id": 13,
+    "name": "Hornliu",
+    "type": "Käfer",
+    "minLevel": 1,
+    "maxLevel": 2,
+    "image": "assets/pokemon/013.webp"
+  },
+  {
+    "id": 14,
+    "name": "Kokuna",
+    "type": "Käfer",
+    "minLevel": 3,
+    "maxLevel": 4,
+    "image": "assets/pokemon/014.webp"
+  },
+  {
+    "id": 15,
+    "name": "Bibor",
+    "type": "Käfer",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/015.webp"
+  },
+  {
+    "id": 16,
+    "name": "Taubsi",
+    "type": "Flug",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/016.webp"
+  },
+  {
+    "id": 17,
+    "name": "Tauboga",
+    "type": "Flug",
+    "minLevel": 4,
+    "maxLevel": 6,
+    "image": "assets/pokemon/017.webp"
+  },
+  {
+    "id": 18,
+    "name": "Tauboss",
+    "type": "Flug",
+    "minLevel": 7,
+    "maxLevel": 10,
+    "image": "assets/pokemon/018.webp"
+  },
+  {
+    "id": 19,
+    "name": "Rattfratz",
+    "type": "Normal",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/019.webp"
+  },
+  {
+    "id": 20,
+    "name": "Rattikarl",
+    "type": "Normal",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/020.webp"
+  },
+  {
+    "id": 21,
+    "name": "Habitak",
+    "type": "Flug",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/021.webp"
+  },
+  {
+    "id": 22,
+    "name": "Ibitak",
+    "type": "Flug",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/022.webp"
+  },
+  {
+    "id": 23,
+    "name": "Rettan",
+    "type": "Gift",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/023.webp"
+  },
+  {
+    "id": 24,
+    "name": "Arbok",
+    "type": "Gift",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/024.webp"
+  },
+  {
+    "id": 25,
+    "name": "Pikachu",
+    "type": "Elektro",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/025.webp"
+  },
+  {
+    "id": 26,
+    "name": "Raichu",
+    "type": "Elektro",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/026.webp"
+  },
+  {
+    "id": 27,
+    "name": "Sandan",
+    "type": "Boden",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/027.webp"
+  },
+  {
+    "id": 28,
+    "name": "Sandamer",
+    "type": "Boden",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/028.webp"
+  },
+  {
+    "id": 29,
+    "name": "Nidoran♀",
+    "type": "Gift",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/029.webp"
+  },
+  {
+    "id": 30,
+    "name": "Nidorina",
+    "type": "Gift",
+    "minLevel": 4,
+    "maxLevel": 6,
+    "image": "assets/pokemon/030.webp"
+  },
+  {
+    "id": 31,
+    "name": "Nidoqueen",
+    "type": "Gift",
+    "minLevel": 7,
+    "maxLevel": 10,
+    "image": "assets/pokemon/031.webp"
+  },
+  {
+    "id": 32,
+    "name": "Nidoran♂",
+    "type": "Gift",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/032.webp"
+  },
+  {
+    "id": 33,
+    "name": "Nidorino",
+    "type": "Gift",
+    "minLevel": 4,
+    "maxLevel": 6,
+    "image": "assets/pokemon/033.webp"
+  },
+  {
+    "id": 34,
+    "name": "Nidoking",
+    "type": "Gift",
+    "minLevel": 7,
+    "maxLevel": 10,
+    "image": "assets/pokemon/034.webp"
+  },
+  {
+    "id": 35,
+    "name": "Piepi",
+    "type": "Normal",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/035.webp"
+  },
+  {
+    "id": 36,
+    "name": "Pixi",
+    "type": "Normal",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/036.webp"
+  },
+  {
+    "id": 37,
+    "name": "Vulpix",
+    "type": "Feuer",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/037.webp"
+  },
+  {
+    "id": 38,
+    "name": "Vulnona",
+    "type": "Feuer",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/038.webp"
+  },
+  {
+    "id": 39,
+    "name": "Pummeluff",
+    "type": "Normal",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/039.webp"
+  },
+  {
+    "id": 40,
+    "name": "Knuddeluff",
+    "type": "Normal",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/040.webp"
+  },
+  {
+    "id": 41,
+    "name": "Zubat",
+    "type": "Gift",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/041.webp"
+  },
+  {
+    "id": 42,
+    "name": "Golbat",
+    "type": "Gift",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/042.webp"
+  },
+  {
+    "id": 43,
+    "name": "Myrapla",
+    "type": "Pflanze",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/043.webp"
+  },
+  {
+    "id": 44,
+    "name": "Duflor",
+    "type": "Pflanze",
+    "minLevel": 4,
+    "maxLevel": 6,
+    "image": "assets/pokemon/044.webp"
+  },
+  {
+    "id": 45,
+    "name": "Giflor",
+    "type": "Pflanze",
+    "minLevel": 7,
+    "maxLevel": 10,
+    "image": "assets/pokemon/045.webp"
+  },
+  {
+    "id": 46,
+    "name": "Paras",
+    "type": "Käfer",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/046.webp"
+  },
+  {
+    "id": 47,
+    "name": "Parasek",
+    "type": "Käfer",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/047.webp"
+  },
+  {
+    "id": 48,
+    "name": "Bluzuk",
+    "type": "Käfer",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/048.webp"
+  },
+  {
+    "id": 49,
+    "name": "Omot",
+    "type": "Käfer",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/049.webp"
+  },
+  {
+    "id": 50,
+    "name": "Digda",
+    "type": "Boden",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/050.webp"
+  },
+  {
+    "id": 51,
+    "name": "Digdri",
+    "type": "Boden",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/051.webp"
+  },
+  {
+    "id": 52,
+    "name": "Mauzi",
+    "type": "Normal",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/052.webp"
+  },
+  {
+    "id": 53,
+    "name": "Snobilikat",
+    "type": "Normal",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/053.webp"
+  },
+  {
+    "id": 54,
+    "name": "Enton",
+    "type": "Wasser",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/054.webp"
+  },
+  {
+    "id": 55,
+    "name": "Entoron",
+    "type": "Wasser",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/055.webp"
+  },
+  {
+    "id": 56,
+    "name": "Menki",
+    "type": "Kampf",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/056.webp"
+  },
+  {
+    "id": 57,
+    "name": "Rasaff",
+    "type": "Kampf",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/057.webp"
+  },
+  {
+    "id": 58,
+    "name": "Fukano",
+    "type": "Feuer",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/058.webp"
+  },
+  {
+    "id": 59,
+    "name": "Arkani",
+    "type": "Feuer",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/059.webp"
+  },
+  {
+    "id": 60,
+    "name": "Quapsel",
+    "type": "Wasser",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/060.webp"
+  },
+  {
+    "id": 61,
+    "name": "Quaputzi",
+    "type": "Wasser",
+    "minLevel": 4,
+    "maxLevel": 6,
+    "image": "assets/pokemon/061.webp"
+  },
+  {
+    "id": 62,
+    "name": "Quappo",
+    "type": "Wasser",
+    "minLevel": 7,
+    "maxLevel": 10,
+    "image": "assets/pokemon/062.webp"
+  },
+  {
+    "id": 63,
+    "name": "Abra",
+    "type": "Psycho",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/063.webp"
+  },
+  {
+    "id": 64,
+    "name": "Kadabra",
+    "type": "Psycho",
+    "minLevel": 4,
+    "maxLevel": 6,
+    "image": "assets/pokemon/064.webp"
+  },
+  {
+    "id": 65,
+    "name": "Simsala",
+    "type": "Psycho",
+    "minLevel": 7,
+    "maxLevel": 10,
+    "image": "assets/pokemon/065.webp"
+  },
+  {
+    "id": 66,
+    "name": "Machollo",
+    "type": "Kampf",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/066.webp"
+  },
+  {
+    "id": 67,
+    "name": "Maschock",
+    "type": "Kampf",
+    "minLevel": 4,
+    "maxLevel": 6,
+    "image": "assets/pokemon/067.webp"
+  },
+  {
+    "id": 68,
+    "name": "Machomei",
+    "type": "Kampf",
+    "minLevel": 7,
+    "maxLevel": 10,
+    "image": "assets/pokemon/068.webp"
+  },
+  {
+    "id": 69,
+    "name": "Knofensa",
+    "type": "Pflanze",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/069.webp"
+  },
+  {
+    "id": 70,
+    "name": "Ultrigaria",
+    "type": "Pflanze",
+    "minLevel": 4,
+    "maxLevel": 6,
+    "image": "assets/pokemon/070.webp"
+  },
+  {
+    "id": 71,
+    "name": "Sarzenia",
+    "type": "Pflanze",
+    "minLevel": 7,
+    "maxLevel": 10,
+    "image": "assets/pokemon/071.webp"
+  },
+  {
+    "id": 72,
+    "name": "Tentacha",
+    "type": "Wasser",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/072.webp"
+  },
+  {
+    "id": 73,
+    "name": "Tentoxa",
+    "type": "Wasser",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/073.webp"
+  },
+  {
+    "id": 74,
+    "name": "Kleinstein",
+    "type": "Gestein",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/074.webp"
+  },
+  {
+    "id": 75,
+    "name": "Georok",
+    "type": "Gestein",
+    "minLevel": 4,
+    "maxLevel": 6,
+    "image": "assets/pokemon/075.webp"
+  },
+  {
+    "id": 76,
+    "name": "Geowaz",
+    "type": "Gestein",
+    "minLevel": 7,
+    "maxLevel": 10,
+    "image": "assets/pokemon/076.webp"
+  },
+  {
+    "id": 77,
+    "name": "Ponita",
+    "type": "Feuer",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/077.webp"
+  },
+  {
+    "id": 78,
+    "name": "Gallopa",
+    "type": "Feuer",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/078.webp"
+  },
+  {
+    "id": 79,
+    "name": "Flegmon",
+    "type": "Wasser",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/079.webp"
+  },
+  {
+    "id": 80,
+    "name": "Lahmus",
+    "type": "Wasser",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/080.webp"
+  },
+  {
+    "id": 81,
+    "name": "Magnetilo",
+    "type": "Elektro",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/081.webp"
+  },
+  {
+    "id": 82,
+    "name": "Magneton",
+    "type": "Elektro",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/082.webp"
+  },
+  {
+    "id": 83,
+    "name": "Porenta",
+    "type": "Flug",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/083.webp"
+  },
+  {
+    "id": 84,
+    "name": "Dodu",
+    "type": "Flug",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/084.webp"
+  },
+  {
+    "id": 85,
+    "name": "Dodri",
+    "type": "Flug",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/085.webp"
+  },
+  {
+    "id": 86,
+    "name": "Jurob",
+    "type": "Wasser",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/086.webp"
+  },
+  {
+    "id": 87,
+    "name": "Jugong",
+    "type": "Wasser",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/087.webp"
+  },
+  {
+    "id": 88,
+    "name": "Sleima",
+    "type": "Gift",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/088.webp"
+  },
+  {
+    "id": 89,
+    "name": "Sleimok",
+    "type": "Gift",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/089.webp"
+  },
+  {
+    "id": 90,
+    "name": "Muschas",
+    "type": "Wasser",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/090.webp"
+  },
+  {
+    "id": 91,
+    "name": "Austos",
+    "type": "Wasser",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/091.webp"
+  },
+  {
+    "id": 92,
+    "name": "Nebulak",
+    "type": "Geist",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/092.webp"
+  },
+  {
+    "id": 93,
+    "name": "Alpollo",
+    "type": "Geist",
+    "minLevel": 4,
+    "maxLevel": 6,
+    "image": "assets/pokemon/093.webp"
+  },
+  {
+    "id": 94,
+    "name": "Gengar",
+    "type": "Geist",
+    "minLevel": 7,
+    "maxLevel": 10,
+    "image": "assets/pokemon/094.webp"
+  },
+  {
+    "id": 95,
+    "name": "Onix",
+    "type": "Gestein",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/095.webp"
+  },
+  {
+    "id": 96,
+    "name": "Traumato",
+    "type": "Psycho",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/096.webp"
+  },
+  {
+    "id": 97,
+    "name": "Hypno",
+    "type": "Psycho",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/097.webp"
+  },
+  {
+    "id": 98,
+    "name": "Krabby",
+    "type": "Wasser",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/098.webp"
+  },
+  {
+    "id": 99,
+    "name": "Kingler",
+    "type": "Wasser",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/099.webp"
+  },
+  {
+    "id": 100,
+    "name": "Voltobal",
+    "type": "Elektro",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/100.webp"
+  },
+  {
+    "id": 101,
+    "name": "Lektrobal",
+    "type": "Elektro",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/101.webp"
+  },
+  {
+    "id": 102,
+    "name": "Owei",
+    "type": "Pflanze",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/102.webp"
+  },
+  {
+    "id": 103,
+    "name": "Kokowei",
+    "type": "Pflanze",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/103.webp"
+  },
+  {
+    "id": 104,
+    "name": "Tragosso",
+    "type": "Boden",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/104.webp"
+  },
+  {
+    "id": 105,
+    "name": "Knogga",
+    "type": "Boden",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/105.webp"
+  },
+  {
+    "id": 106,
+    "name": "Kicklee",
+    "type": "Kampf",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/106.webp"
+  },
+  {
+    "id": 107,
+    "name": "Nockchan",
+    "type": "Kampf",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/107.webp"
+  },
+  {
+    "id": 108,
+    "name": "Schlurp",
+    "type": "Normal",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/108.webp"
+  },
+  {
+    "id": 109,
+    "name": "Smogon",
+    "type": "Gift",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/109.webp"
+  },
+  {
+    "id": 110,
+    "name": "Smogmog",
+    "type": "Gift",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/110.webp"
+  },
+  {
+    "id": 111,
+    "name": "Rihorn",
+    "type": "Boden",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/111.webp"
+  },
+  {
+    "id": 112,
+    "name": "Rizeros",
+    "type": "Boden",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/112.webp"
+  },
+  {
+    "id": 113,
+    "name": "Chaneira",
+    "type": "Normal",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/113.webp"
+  },
+  {
+    "id": 114,
+    "name": "Tangela",
+    "type": "Pflanze",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/114.webp"
+  },
+  {
+    "id": 115,
+    "name": "Kangama",
+    "type": "Normal",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/115.webp"
+  },
+  {
+    "id": 116,
+    "name": "Seeper",
+    "type": "Wasser",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/116.webp"
+  },
+  {
+    "id": 117,
+    "name": "Seemon",
+    "type": "Wasser",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/117.webp"
+  },
+  {
+    "id": 118,
+    "name": "Goldini",
+    "type": "Wasser",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/118.webp"
+  },
+  {
+    "id": 119,
+    "name": "Golking",
+    "type": "Wasser",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/119.webp"
+  },
+  {
+    "id": 120,
+    "name": "Sterndu",
+    "type": "Wasser",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/120.webp"
+  },
+  {
+    "id": 121,
+    "name": "Starmie",
+    "type": "Wasser",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/121.webp"
+  },
+  {
+    "id": 122,
+    "name": "Pantimos",
+    "type": "Psycho",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/122.webp"
+  },
+  {
+    "id": 123,
+    "name": "Sichlor",
+    "type": "Käfer",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/123.webp"
+  },
+  {
+    "id": 124,
+    "name": "Rossana",
+    "type": "Eis",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/124.webp"
+  },
+  {
+    "id": 125,
+    "name": "Elektek",
+    "type": "Elektro",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/125.webp"
+  },
+  {
+    "id": 126,
+    "name": "Magmar",
+    "type": "Feuer",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/126.webp"
+  },
+  {
+    "id": 127,
+    "name": "Pinsir",
+    "type": "Käfer",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/127.webp"
+  },
+  {
+    "id": 128,
+    "name": "Tauros",
+    "type": "Normal",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/128.webp"
+  },
+  {
+    "id": 129,
+    "name": "Karpador",
+    "type": "Wasser",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/129.webp"
+  },
+  {
+    "id": 130,
+    "name": "Garados",
+    "type": "Wasser",
+    "minLevel": 4,
+    "maxLevel": 10,
+    "image": "assets/pokemon/130.webp"
+  },
+  {
+    "id": 131,
+    "name": "Lapras",
+    "type": "Wasser",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/131.webp"
+  },
+  {
+    "id": 132,
+    "name": "Ditto",
+    "type": "Normal",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/132.webp"
+  },
+  {
+    "id": 133,
+    "name": "Evoli",
+    "type": "Normal",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/133.webp"
+  },
+  {
+    "id": 134,
+    "name": "Aquana",
+    "type": "Wasser",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/134.webp"
+  },
+  {
+    "id": 135,
+    "name": "Blitza",
+    "type": "Elektro",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/135.webp"
+  },
+  {
+    "id": 136,
+    "name": "Flamara",
+    "type": "Feuer",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/136.webp"
+  },
+  {
+    "id": 137,
+    "name": "Porygon",
+    "type": "Normal",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/137.webp"
+  },
+  {
+    "id": 138,
+    "name": "Amonitas",
+    "type": "Gestein",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/138.webp"
+  },
+  {
+    "id": 139,
+    "name": "Amoroso",
+    "type": "Gestein",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/139.webp"
+  },
+  {
+    "id": 140,
+    "name": "Kabuto",
+    "type": "Gestein",
+    "minLevel": 1,
+    "maxLevel": 4,
+    "image": "assets/pokemon/140.webp"
+  },
+  {
+    "id": 141,
+    "name": "Kabutops",
+    "type": "Gestein",
+    "minLevel": 5,
+    "maxLevel": 10,
+    "image": "assets/pokemon/141.webp"
+  },
+  {
+    "id": 142,
+    "name": "Aerodactyl",
+    "type": "Gestein",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/142.webp"
+  },
+  {
+    "id": 143,
+    "name": "Relaxo",
+    "type": "Normal",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/143.webp"
+  },
+  {
+    "id": 144,
+    "name": "Arktos",
+    "type": "Eis",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/144.webp"
+  },
+  {
+    "id": 145,
+    "name": "Zapdos",
+    "type": "Elektro",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/145.webp"
+  },
+  {
+    "id": 146,
+    "name": "Lavados",
+    "type": "Feuer",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/146.webp"
+  },
+  {
+    "id": 147,
+    "name": "Dratini",
+    "type": "Drache",
+    "minLevel": 1,
+    "maxLevel": 3,
+    "image": "assets/pokemon/147.webp"
+  },
+  {
+    "id": 148,
+    "name": "Dragonir",
+    "type": "Drache",
+    "minLevel": 4,
+    "maxLevel": 6,
+    "image": "assets/pokemon/148.webp"
+  },
+  {
+    "id": 149,
+    "name": "Dragoran",
+    "type": "Drache",
+    "minLevel": 7,
+    "maxLevel": 10,
+    "image": "assets/pokemon/149.webp"
+  },
+  {
+    "id": 150,
+    "name": "Mewtu",
+    "type": "Psycho",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/150.webp"
+  },
+  {
+    "id": 151,
+    "name": "Mew",
+    "type": "Psycho",
+    "minLevel": 1,
+    "maxLevel": 10,
+    "image": "assets/pokemon/151.webp"
+  }
+]
