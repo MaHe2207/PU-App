@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#f7f8fb">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <title>Dex</title>
+  <title>PU Dex</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -118,6 +118,10 @@
             </div>
             <div class="progress-track"><span id="epBar"></span></div>
           </div>
+          <div class="quick-insights">
+            <article><span class="insight-icon">⚔</span><div><small>Attackenkarten</small><strong id="infoAttackCount">—</strong></div></article>
+            <article><span class="insight-icon">↗</span><div><small>Nächste Attacke</small><strong id="infoNextAttack">—</strong></div></article>
+          </div>
           <div class="edit-panel hidden" id="editPanel">
             <div class="edit-row">
               <span><strong>Gefangen</strong><small>Eintrag als gefangen markieren</small></span>
@@ -152,11 +156,24 @@
         </div>
 
         <div class="tab-panel hidden" id="tab-attacken">
-          <div class="notice notice-muted"><strong>Attackendaten noch nicht enthalten</strong><p>Die aktuell bereitgestellte Dex.xlsx enthält nur Monstername, Typ sowie niedrigstes und höchstes Level. Sobald die Attackentabelle vorliegt, kann dieser Tab automatisch pro Level gefüllt werden.</p></div>
+          <div class="attack-summary">
+            <article><small>Auf deinem Level</small><strong id="attackUnlocked">0</strong></article>
+            <article><small>Insgesamt</small><strong id="attackTotal">0</strong></article>
+            <article><small>Nächste Freischaltung</small><strong id="attackNextLevel">—</strong></article>
+          </div>
+          <div class="attack-headline">
+            <div><p class="eyebrow">Unmatched-Karten</p><h3>Attacken nach Level</h3></div>
+            <span class="data-pill">Karten.xlsx</span>
+          </div>
+          <div class="attack-list" id="attackList"></div>
         </div>
 
         <div class="tab-panel hidden" id="tab-entwicklung">
-          <div class="notice notice-muted"><strong>Entwicklungsdaten noch nicht enthalten</strong><p>Für sichere Entwicklungsreihen braucht der Dex eine explizite Zuordnung in der Datengrundlage. Diese wird nicht aus Namen oder Reihenfolge geraten.</p></div>
+          <div class="evolution-headline">
+            <div><p class="eyebrow">Entwicklung</p><h3>Entwicklungsreihe</h3></div>
+          </div>
+          <div class="evolution-content" id="evolutionContent"></div>
+          <div class="source-note">Levelbereiche stammen aus deinem PU-Dex. Die Entwicklungsbeziehungen entsprechen den Standard-Reihen der ersten Pokémon-Generation.</div>
         </div>
       </section>
     </main>
@@ -193,7 +210,7 @@
         <button class="setting-button" id="exportBtn"><span>⇩</span><div><strong>Backup exportieren</strong><small>Aktuellen Spielstand als JSON speichern</small></div></button>
         <a class="setting-button admin-link" href="admin-import.html"><span>＋</span><div><strong>Spielstände importieren</strong><small>Nur für den ersten Import oder neue Spieler</small></div></a>
       </div>
-      <div class="settings-note"><strong>Firebase-Synchronisierung</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich und werden in Cloud Firestore gespeichert.</p></div>
+      <div class="settings-note"><strong>Firebase-Synchronisierung · Dex v3</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich und werden in Cloud Firestore gespeichert.</p></div>
     </aside>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>

@@ -1,0 +1,23 @@
+PU DEX v3 – UPDATE
+
+Deine Firebase-Spielstände bleiben unverändert.
+
+Im GitHub-Repository ersetzen:
+- index.html
+- app.js
+- styles.css
+- sw.js
+- manifest.webmanifest
+
+Neu anlegen unter data/:
+- data/attacks.json
+- data/evolutions.json
+
+Nicht ändern / nicht neu importieren:
+- firebase-config.js
+- firestore.rules
+- admin-import.html
+- data/pokemon.json
+- assets/pokemon/*
+
+Danach GitHub Pages kurz aktualisieren lassen und die Seite neu laden.

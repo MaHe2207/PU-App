@@ -1,9 +1,9 @@
 {
-  "name": "Dex Brettspiel",
-  "short_name": "Dex",
+  "name": "PU Dex – Pokémon × Unmatched",
+  "short_name": "PU Dex",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f5f7fa",
   "theme_color": "#f5f7fa",
-  "description": "Mobiler Dex für das Brettspiel"
+  "description": "Mobiler Dex für PU – Pokémon × Unmatched"
 }

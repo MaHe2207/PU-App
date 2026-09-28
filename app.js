@@ -21,8 +21,8 @@ const TYPE_COLORS = {
 };
 
 const app = {
-  pokemon: [], players: [], player: null, state: {}, publishedState: {},
-  filter: "all", type: "Alle", search: "", editMode: false,
+  pokemon: [], attacks: {}, evolutionGroups: [], players: [], player: null,
+  state: {}, publishedState: {}, filter: "all", type: "Alle", search: "", editMode: false,
   selectedId: null, activeTab: "info", user: null, isAdmin: false,
   saveTimer: null, saving: false, dirty: false
 };
@@ -33,6 +33,7 @@ const clone = v => JSON.parse(JSON.stringify(v));
 const pad = n => String(n).padStart(3,"0");
 const initials = name => (name||"?").trim().split(/\s+/).map(x=>x[0]).join("").slice(0,2).toUpperCase();
 const playerKey = id => `pu-dex-cache-${id}`;
+const escapeHtml = value => String(value ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function typeVars(type){ const [a,b]=TYPE_COLORS[type]||["#8793a0","#f1f3f5"]; return `--type:${a};--type-soft:${b};`; }
 function setImgFallback(img){ img.addEventListener("error",()=>{ if(!img.src.endsWith("placeholder.svg")) img.src=FALLBACK_IMAGE; },{once:true}); }
 function toast(msg){ const el=$("#toast"); el.textContent=msg; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),2200); }
@@ -52,10 +53,23 @@ function normalizeState(raw={}){
 }
 function stateFor(p){ return app.state[p.name]||{owned:false,favorite:false,level:p.minLevel,ep:0}; }
 function cacheState(){ if(app.player) localStorage.setItem(playerKey(app.player.id), JSON.stringify(app.state)); }
+function attacksFor(p){ return app.attacks[p.name]||[]; }
+function evolutionGroupFor(id){
+  return app.evolutionGroups.find(g=>{
+    if(g.kind==="branch") return g.root===id || (g.branches||[]).includes(id);
+    return (g.stages||[]).includes(id);
+  }) || null;
+}
 
 async function init(){
   try { app.pokemon=await loadJson("data/pokemon.json"); }
   catch(err){ document.body.innerHTML=`<main style="padding:24px"><h1>Dex konnte nicht geladen werden</h1><p>Bitte über GitHub Pages oder einen Webserver öffnen.</p><pre>${String(err)}</pre></main>`; return; }
+
+  try { const data=await loadJson("data/attacks.json"); app.attacks=data.pokemon||data||{}; }
+  catch(err){ console.warn("Attackendaten nicht geladen",err); app.attacks={}; }
+  try { const data=await loadJson("data/evolutions.json"); app.evolutionGroups=data.groups||[]; }
+  catch(err){ console.warn("Entwicklungsdaten nicht geladen",err); app.evolutionGroups=[]; }
+
   buildTypeStrip(); bindEvents();
   onAuthStateChanged(auth, async user=>{
     app.user=user||null; app.isAdmin=!!user && user.uid===ADMIN_UID;
@@ -138,31 +152,91 @@ function renderGrid(){
   $("#resultCount").textContent=`${list.length} ${list.length===1?"Eintrag":"Einträge"}`;
   $("#resultLabel").textContent=app.filter==="owned"?"Gefangen":app.filter==="favorite"?"Favoriten":"Alle Monster";
   $("#emptyState").classList.toggle("hidden",list.length!==0);
-  $("#dexGrid").innerHTML=list.map(p=>{ const s=stateFor(p); return `<button class="dex-card ${s.owned?"":"not-owned"}" data-id="${p.id}" style="${typeVars(p.type)}"><div class="card-art"><span class="card-fav">${s.favorite?"★":"☆"}</span><img src="${p.image}" alt="${p.name}" loading="lazy"></div><div class="card-copy"><small>#${pad(p.id)}</small><strong>${p.name}</strong><div class="card-meta"><span class="card-type"><i class="type-dot"></i>${p.type}</span><span class="level-pill">Lvl ${s.level}</span></div></div></button>`; }).join("");
+  $("#dexGrid").innerHTML=list.map(p=>{ const s=stateFor(p); const learned=attacksFor(p).filter(a=>a.level<=s.level).length; return `<button class="dex-card ${s.owned?"":"not-owned"}" data-id="${p.id}" style="${typeVars(p.type)}"><div class="card-art"><span class="card-fav">${s.favorite?"★":"☆"}</span><img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy"></div><div class="card-copy"><small>#${pad(p.id)}</small><strong>${escapeHtml(p.name)}</strong><div class="card-meta"><span class="card-type"><i class="type-dot"></i>${escapeHtml(p.type)}</span><span class="level-pill">Lvl ${s.level}</span></div>${learned?`<div class="card-attacks">⚔ ${learned} Attacken</div>`:""}</div></button>`; }).join("");
   $$("#dexGrid img").forEach(setImgFallback);
 }
 function renderPlayerList(){
   const wrap=$("#playerList");
   if(!app.isAdmin){ wrap.innerHTML=`<div class="notice notice-muted"><strong>Nur für Spielleiter</strong><p>Die Spielerliste ist geschützt und wird erst nach der Admin-Anmeldung geladen.</p></div>`; return; }
-  wrap.innerHTML=app.players.map(p=>`<button class="player-option ${app.player?.id===p.id?"active":""}" data-player="${p.id}"><span class="player-avatar">${initials(p.name)}</span><span><strong>${p.name}</strong><small>${app.player?.id===p.id?"Aktuell ausgewählt":"Dex öffnen"}</small></span></button>`).join("")||`<div class="notice"><strong>Noch keine Spieler</strong><p>Importiere zuerst deine JSON-Spielstände über <code>admin-import.html</code>.</p></div>`;
+  wrap.innerHTML=app.players.map(p=>`<button class="player-option ${app.player?.id===p.id?"active":""}" data-player="${p.id}"><span class="player-avatar">${initials(p.name)}</span><span><strong>${escapeHtml(p.name)}</strong><small>${app.player?.id===p.id?"Aktuell ausgewählt":"Dex öffnen"}</small></span></button>`).join("")||`<div class="notice"><strong>Noch keine Spieler</strong><p>Importiere zuerst deine JSON-Spielstände über <code>admin-import.html</code>.</p></div>`;
 }
 
 function openDetail(id){ app.selectedId=Number(id); app.activeTab="info"; $("#mainView").classList.add("hidden"); $("#detailView").classList.remove("hidden"); window.scrollTo({top:0,behavior:"instant"}); renderDetail(); }
 function closeDetail(){ app.selectedId=null; $("#detailView").classList.add("hidden"); $("#mainView").classList.remove("hidden"); renderGrid(); }
 function selectedPokemon(){ return app.pokemon.find(p=>p.id===app.selectedId); }
+
 function renderDetail(){
   const p=selectedPokemon(); if(!p) return; const s=stateFor(p);
   $("#detailHero").style=typeVars(p.type); $("#detailNumber").textContent=`#${pad(p.id)}`; $("#detailName").textContent=p.name;
-  $("#detailType").innerHTML=`<span class="type-badge" style="${typeVars(p.type)}"><span>●</span>${p.type}</span>`;
+  $("#detailType").innerHTML=`<span class="type-badge" style="${typeVars(p.type)}"><span>●</span>${escapeHtml(p.type)}</span>`;
   const img=$("#detailImage"); img.src=p.image; img.alt=p.name; img.classList.toggle("not-owned",!s.owned); setImgFallback(img);
   $("#detailFavoriteBtn").textContent=s.favorite?"★":"☆"; $("#detailFavoriteBtn").classList.toggle("active",s.favorite);
   $("#infoStatus").textContent=s.owned?"Gefangen":"Nicht gefangen"; $("#infoType").textContent=p.type; $("#infoRange").textContent=`${p.minLevel}–${p.maxLevel}`;
-  $("#currentLevel").textContent=s.level; $("#currentEP").textContent=`${s.ep} / 10`; $("#epBar").style.width=`${s.ep*10}%`;
+  $("#currentLevel").textContent=s.level; $("#currentEP").textContent=s.level>=p.maxLevel?`${s.ep} / 10 · Max`:`${s.ep} / 10`; $("#epBar").style.width=`${s.ep*10}%`;
   $("#valueMin").textContent=p.minLevel; $("#valueMax").textContent=p.maxLevel; $("#valueCurrent").textContent=s.level;
+
+  const moves=attacksFor(p); const unlocked=moves.filter(m=>m.level<=s.level); const next=moves.find(m=>m.level>s.level);
+  $("#infoAttackCount").textContent=moves.length?`${unlocked.length} / ${moves.length}`:"—";
+  $("#infoNextAttack").textContent=next?`Lv ${next.level}: ${next.name}`:(moves.length?"Alle freigeschaltet":"—");
+
   $("#editPanel").classList.toggle("hidden",!(app.isAdmin&&app.editMode));
   $("#ownedToggle").checked=s.owned; $("#favoriteToggle").checked=s.favorite; $("#levelSlider").min=p.minLevel; $("#levelSlider").max=p.maxLevel; $("#levelSlider").value=s.level; $("#levelValue").textContent=s.level; $("#levelHelp").textContent=`Erlaubt: ${p.minLevel} bis ${p.maxLevel}`;
+
+  renderAttackTab(p,s);
+  renderEvolutionTab(p);
+
   $$(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===app.activeTab)); $$(".tab-panel").forEach(x=>x.classList.add("hidden")); $(`#tab-${app.activeTab}`).classList.remove("hidden");
 }
+
+function renderAttackTab(p,s){
+  const moves=attacksFor(p);
+  const unlocked=moves.filter(m=>m.level<=s.level);
+  const future=moves.filter(m=>m.level>s.level);
+  const nextLevel=future.length?Math.min(...future.map(m=>m.level)):null;
+  $("#attackUnlocked").textContent=moves.length?unlocked.length:"—";
+  $("#attackTotal").textContent=moves.length?moves.length:"—";
+  $("#attackNextLevel").textContent=nextLevel?`Lvl ${nextLevel}`:(moves.length?"Komplett":"—");
+  const list=$("#attackList");
+  if(!moves.length){
+    list.innerHTML=`<div class="notice notice-muted"><strong>Keine Attackendaten gefunden</strong><p>Für ${escapeHtml(p.name)} ist in der eingebauten Karten-Datendatei keine Zuordnung vorhanden.</p></div>`;
+    return;
+  }
+  let lastLevel=null;
+  const html=[];
+  for(const m of moves){
+    if(m.level!==lastLevel){
+      html.push(`<div class="attack-level-separator"><span>Level ${m.level}</span><i></i></div>`);
+      lastLevel=m.level;
+    }
+    const ready=m.level<=s.level;
+    html.push(`<article class="attack-item ${ready?"unlocked":"locked"}"><span class="attack-level">${m.level}</span><div class="attack-name"><strong>${escapeHtml(m.name)}</strong><small>${ready?"Für dieses Level verfügbar":`Freischaltung ab Level ${m.level}`}</small></div><span class="attack-state" aria-label="${ready?"verfügbar":"gesperrt"}">${ready?"✓":"○"}</span></article>`);
+  }
+  list.innerHTML=html.join("");
+}
+
+function evolutionCard(member){
+  const p=app.pokemon.find(x=>x.id===member.id) || member;
+  const s=stateFor(p); const current=p.id===app.selectedId;
+  return `<button class="evo-card ${current?"current":""} ${s.owned?"owned":"not-owned"}" data-evo-id="${p.id}" style="${typeVars(p.type)}"><div class="evo-art"><img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy"></div><div class="evo-copy"><small>#${pad(p.id)} · Level ${p.minLevel}–${p.maxLevel}</small><strong>${escapeHtml(p.name)}</strong><span>${s.owned?`Gefangen · Lv ${s.level}`:"Nicht gefangen"}</span></div>${current?'<b class="evo-current">Aktuell</b>':''}</button>`;
+}
+function evoArrow(nextMember){ return `<div class="evo-arrow"><span>→</span><small>ab Lv ${nextMember.minLevel}</small></div>`; }
+function renderEvolutionTab(p){
+  const target=$("#evolutionContent");
+  const group=evolutionGroupFor(p.id);
+  if(!group){ target.innerHTML=`<div class="notice notice-muted"><strong>Keine Entwicklungsdaten</strong><p>Für diesen Eintrag ist keine Entwicklungsreihe hinterlegt.</p></div>`; return; }
+  const members=(group.members||[]).map(m=>app.pokemon.find(x=>x.id===m.id)||m);
+  if(group.kind==="single"){
+    target.innerHTML=`<div class="evolution-single">${evolutionCard(members[0])}<div class="evo-none"><strong>Keine weitere Entwicklung</strong><p>Dieses Pokémon hat innerhalb der ersten Generation keine weitere Entwicklungsstufe.</p></div></div>`;
+  } else if(group.kind==="branch"){
+    const root=members.find(m=>m.id===group.root) || members[0];
+    const branches=(group.branches||[]).map(id=>members.find(m=>m.id===id)).filter(Boolean);
+    target.innerHTML=`<div class="evolution-branch"><div class="branch-root">${evolutionCard(root)}</div><div class="branch-marker"><span>↓</span><small>ab Lv ${branches[0]?.minLevel ?? "—"}</small></div><div class="branch-grid">${branches.map(evolutionCard).join("")}</div></div>`;
+  } else {
+    target.innerHTML=`<div class="evolution-flow">${members.map((m,i)=>`${i?evoArrow(m):""}${evolutionCard(m)}`).join("")}</div>`;
+  }
+  $$("#evolutionContent img").forEach(setImgFallback);
+}
+
 function mutateSelected(mutator){
   if(!app.isAdmin||!app.editMode){ toast("Nur im Admin-Bearbeitungsmodus"); return; }
   const p=selectedPokemon(); if(!p) return; const s=stateFor(p); mutator(s,p); app.state[p.name]=s; cacheState(); app.dirty=true; renderStats(); renderDetail(); renderGrid(); scheduleSave();
@@ -209,6 +283,7 @@ function bindEvents(){
   $("#prevBtn").addEventListener("click",()=>{app.selectedId=app.selectedId<=1?app.pokemon.length:app.selectedId-1;renderDetail();}); $("#nextBtn").addEventListener("click",()=>{app.selectedId=app.selectedId>=app.pokemon.length?1:app.selectedId+1;renderDetail();});
   $("#detailFavoriteBtn").addEventListener("click",()=>mutateSelected(s=>s.favorite=!s.favorite)); $$(".tab").forEach(b=>b.addEventListener("click",()=>{app.activeTab=b.dataset.tab;renderDetail();}));
   $("#ownedToggle").addEventListener("change",e=>mutateSelected(s=>s.owned=e.target.checked)); $("#favoriteToggle").addEventListener("change",e=>mutateSelected(s=>s.favorite=e.target.checked)); $("#levelSlider").addEventListener("input",e=>mutateSelected(s=>s.level=+e.target.value)); $$(".stepper [data-ep]").forEach(b=>b.addEventListener("click",()=>changeEP(+b.dataset.ep)));
+  $("#evolutionContent").addEventListener("click",e=>{const b=e.target.closest("[data-evo-id]"); if(!b)return; app.selectedId=+b.dataset.evoId; app.activeTab="entwicklung"; window.scrollTo({top:0,behavior:"smooth"}); renderDetail();});
   $("#playerBtn").addEventListener("click",()=>openSheet(app.isAdmin?"#playerSheet":"#settingsSheet")); $("#settingsBtn").addEventListener("click",()=>openSheet("#settingsSheet")); $("#sheetBackdrop").addEventListener("click",closeSheets); $$(".close-sheet").forEach(b=>b.addEventListener("click",closeSheets));
   $("#playerList").addEventListener("click",e=>{const b=e.target.closest("[data-player]");if(b)selectPlayer(b.dataset.player);});
   $("#editModeToggle").addEventListener("change",e=>{if(!app.isAdmin){e.target.checked=false;toast("Admin-Anmeldung erforderlich");return;}app.editMode=e.target.checked;renderDetail();toast(app.editMode?"Bearbeitungsmodus aktiv":"Ansichtsmodus aktiv");});
