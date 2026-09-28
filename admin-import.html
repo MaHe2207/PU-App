@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f8fb">
+  <title>PU Dex – Spielstände importieren</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body{background:#f5f7fa}.import-shell{max-width:760px;margin:0 auto;padding:22px 16px 60px}.import-card{background:#fff;border:1px solid #e4e8ee;border-radius:24px;padding:22px;margin:14px 0;box-shadow:0 10px 30px rgba(31,45,61,.06)}.import-card h1,.import-card h2{margin:0 0 10px}.import-card p{color:#687386;line-height:1.55}.import-card label{display:block;font-weight:700;font-size:13px;margin:12px 0}.import-card input[type=email],.import-card input[type=password],.import-card input[type=file]{box-sizing:border-box;width:100%;margin-top:6px;padding:13px 14px;border:1px solid #dce2ea;border-radius:14px;background:#fff;font:inherit}.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}.log{font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;background:#101722;color:#dfe8f4;border-radius:16px;padding:14px;white-space:pre-wrap;min-height:90px}.links{display:grid;gap:10px}.link-row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:#f7f8fb;border-radius:14px;padding:12px}.link-row small{display:block;color:#687386;word-break:break-all}.link-row button{border:0;border-radius:12px;padding:10px 12px;font-weight:800}.toplink{display:inline-flex;text-decoration:none;color:#172433;font-weight:800;margin-bottom:8px}.warning{background:#fff8e8;border:1px solid #f0ddb3;border-radius:16px;padding:14px;color:#70551c}.hidden{display:none!important}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+</head>
+<body>
+  <main class="import-shell">
+    <a class="toplink" href="index.html">← Zurück zum Dex</a>
+    <section class="import-card">
+      <p class="eyebrow">Einmalige Einrichtung / neue Spieler</p>
+      <h1>Spielstände nach Firebase importieren</h1>
+      <p>Diese Seite speichert keine Spielstände im GitHub-Repository. Du wählst die JSON- oder ZIP-Dateien lokal auf deinem Gerät aus; erst nach deiner Admin-Anmeldung werden sie direkt in Cloud Firestore geschrieben.</p>
+      <div class="warning">Importiere nur als Spielleiter. Ein vorhandener Spieler mit demselben Namen wird aktualisiert, statt doppelt angelegt zu werden.</div>
+    </section>
+
+    <section class="import-card" id="loginCard">
+      <h2>1. Admin anmelden</h2>
+      <label>E-Mail<input id="email" type="email" autocomplete="username"></label>
+      <label>Passwort<input id="password" type="password" autocomplete="current-password"></label>
+      <button class="primary-btn" id="loginBtn" type="button">Anmelden</button>
+    </section>
+
+    <section class="import-card hidden" id="importCard">
+      <div class="row"><div><h2>2. Dateien auswählen</h2><p id="who"></p></div><div style="text-align:right"><button class="secondary-btn" id="logoutBtn" type="button">Abmelden</button></div></div>
+      <label>Spielstände (.json) oder PU.zip
+        <input id="files" type="file" accept=".json,.zip,application/json,application/zip" multiple>
+      </label>
+      <p>Du kannst direkt <strong>PU.zip</strong> auswählen; daraus werden automatisch Dateien im Ordner <code>Speicherstände/</code> erkannt. <strong>Marcel.json</strong> kannst du zusätzlich auswählen.</p>
+      <button class="primary-btn" id="importBtn" type="button">Import starten</button>
+    </section>
+
+    <section class="import-card hidden" id="resultCard">
+      <h2>3. Ergebnis</h2>
+      <div class="log" id="log"></div>
+      <div class="links" id="links"></div>
+    </section>
+  </main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
+import { firebaseConfig, ADMIN_UID } from "./firebase-config.js";
+
+const app=initializeApp(firebaseConfig), auth=getAuth(app), db=getFirestore(app);
+const $=s=>document.querySelector(s);
+const log=(m)=>{$("#resultCard").classList.remove("hidden");$("#log").textContent+=m+"\n";};
+const randId=()=>{const a=new Uint8Array(24);crypto.getRandomValues(a);return Array.from(a,b=>b.toString(16).padStart(2,"0")).join("");};
+const cleanName=n=>n.replace(/\.json$/i,"").trim();
+
+onAuthStateChanged(auth,user=>{
+  const ok=!!user&&user.uid===ADMIN_UID;
+  $("#loginCard").classList.toggle("hidden",ok);
+  $("#importCard").classList.toggle("hidden",!ok);
+  $("#who").textContent=ok?`Angemeldet als ${user.email||"Admin"}`:"";
+  if(user&&!ok){ log("Dieses Konto ist nicht als Admin freigeschaltet."); signOut(auth); }
+});
+
+$("#loginBtn").addEventListener("click",async()=>{
+  try{await signInWithEmailAndPassword(auth,$("#email").value.trim(),$("#password").value);$("#password").value="";}
+  catch(e){log("Anmeldung fehlgeschlagen: "+(e.code||e.message));}
+});
+$("#logoutBtn").addEventListener("click",()=>signOut(auth));
+
+async function collectJsonFiles(files){
+  const found=[];
+  for(const file of files){
+    if(file.name.toLowerCase().endsWith(".json")){
+      try{found.push({name:cleanName(file.name),state:JSON.parse(await file.text())});}
+      catch{log(`Übersprungen: ${file.name} ist kein gültiges JSON.`);}
+    }else if(file.name.toLowerCase().endsWith(".zip")){
+      const zip=await JSZip.loadAsync(await file.arrayBuffer());
+      const entries=Object.values(zip.files).filter(z=>!z.dir && /(^|\/)Speicherstände\/[^/]+\.json$/i.test(z.name));
+      for(const z of entries){
+        try{const text=await z.async("text");const base=z.name.split("/").pop();found.push({name:cleanName(base),state:JSON.parse(text)});}
+        catch{log(`Übersprungen: ${z.name} konnte nicht gelesen werden.`);}
+      }
+    }
+  }
+  const unique=new Map(); found.forEach(x=>unique.set(x.name.toLocaleLowerCase("de"),x)); return [...unique.values()];
+}
+
+$("#importBtn").addEventListener("click",async()=>{
+  if(auth.currentUser?.uid!==ADMIN_UID){log("Bitte zuerst als Admin anmelden.");return;}
+  const files=[...$("#files").files]; if(!files.length){log("Bitte mindestens eine JSON- oder ZIP-Datei auswählen.");return;}
+  $("#log").textContent=""; $("#links").innerHTML="";
+  try{
+    const items=await collectJsonFiles(files); log(`${items.length} Spielstand/Spielstände erkannt.`);
+    const snap=await getDocs(collection(db,"players"));
+    const byName=new Map(snap.docs.map(d=>[(d.data().name||"").toLocaleLowerCase("de"),d.id]));
+    const results=[];
+    for(const item of items){
+      const key=item.name.toLocaleLowerCase("de"); const id=byName.get(key)||randId();
+      await setDoc(doc(db,"players",id),{name:item.name,version:1,pokemon:item.state,updatedAt:serverTimestamp()},{merge:true});
+      byName.set(key,id); results.push({name:item.name,id}); log(`✓ ${item.name} ${snap.docs.some(d=>d.id===id)?"aktualisiert":"importiert"}`);
+    }
+    log("Fertig. Die Spielerlinks stehen unten.");
+    $("#links").innerHTML=results.sort((a,b)=>a.name.localeCompare(b.name,"de")).map(r=>{
+      const u=new URL("index.html",location.href);u.searchParams.set("player",r.id);
+      return `<div class="link-row"><div><strong>${r.name}</strong><small>${u.href}</small></div><button data-link="${u.href.replace(/&/g,"&amp;")}">Kopieren</button></div>`;
+    }).join("");
+  }catch(e){console.error(e);log("Fehler: "+(e.code||e.message));}
+});
+$("#links").addEventListener("click",async e=>{const b=e.target.closest("[data-link]");if(!b)return;try{await navigator.clipboard.writeText(b.dataset.link);b.textContent="Kopiert";setTimeout(()=>b.textContent="Kopieren",1200);}catch{prompt("Link kopieren:",b.dataset.link);}});
+</script>
+</body>
+</html>

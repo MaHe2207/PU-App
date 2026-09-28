@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f8fb">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>Dex</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="topbar">
+      <button class="brand" id="homeBtn" aria-label="Zur Übersicht">
+        <span class="brand-ball" aria-hidden="true"></span><span>Dex</span>
+      </button>
+      <div class="top-actions">
+        <button class="player-chip" id="playerBtn" type="button" aria-label="Spieler wechseln">
+          <span class="player-avatar" id="playerAvatar">?</span>
+          <span id="playerNameTop">Spieler</span>
+          <span aria-hidden="true">⌄</span>
+        </button>
+        <button class="icon-btn" id="settingsBtn" type="button" aria-label="Einstellungen">☰</button>
+      </div>
+    </header>
+
+    <main id="noPlayerView" class="no-player-view hidden">
+      <div class="no-player-card">
+        <div class="brand-ball big" aria-hidden="true"></div>
+        <p class="eyebrow">PU · Pokémon × Unmatched</p>
+        <h1>Dein persönlicher Dex</h1>
+        <p id="noPlayerText">Öffne deinen persönlichen Spieler-Link. Als Spielleiter kannst du dich über ☰ anmelden.</p>
+        <button class="primary-btn" type="button" onclick="document.getElementById('settingsBtn').click()">Admin-Anmeldung</button>
+      </div>
+    </main>
+
+    <main id="mainView">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow" id="welcomeLabel">Dein Dex</p>
+          <h1>Entdecke. Fange. Sammle.</h1>
+          <p>Dein Fortschritt auf einen Blick.</p>
+        </div>
+        <div class="hero-orb" aria-hidden="true"><span></span></div>
+      </section>
+
+      <section class="search-row">
+        <label class="searchbox">
+          <span aria-hidden="true">⌕</span>
+          <input id="searchInput" type="search" placeholder="Monster suchen…" autocomplete="off">
+        </label>
+      </section>
+
+      <section class="segmented" aria-label="Filter">
+        <button class="segment active" data-filter="all">Alle</button>
+        <button class="segment" data-filter="owned">Gefangen</button>
+        <button class="segment" data-filter="favorite">Favoriten</button>
+      </section>
+
+      <section class="stats" aria-label="Fortschritt">
+        <article><span class="stat-icon">◉</span><div><strong id="ownedCount">0</strong><small>Gefangen</small></div></article>
+        <article><span class="stat-icon">★</span><div><strong id="favoriteCount">0</strong><small>Favoriten</small></div></article>
+        <article><span class="stat-icon">#</span><div><strong id="totalCount">151</strong><small>Einträge</small></div></article>
+      </section>
+
+      <div class="type-strip" id="typeStrip" aria-label="Typfilter"></div>
+
+      <section class="section-head">
+        <div>
+          <p class="eyebrow" id="resultLabel">Alle Monster</p>
+          <h2 id="resultCount">151 Einträge</h2>
+        </div>
+        <button class="text-btn" id="clearFiltersBtn" type="button">Filter löschen</button>
+      </section>
+
+      <section class="dex-grid" id="dexGrid" aria-live="polite"></section>
+      <p class="empty-state hidden" id="emptyState">Keine Einträge gefunden.</p>
+    </main>
+
+    <main id="detailView" class="detail-view hidden">
+      <section class="detail-hero" id="detailHero">
+        <div class="detail-toolbar">
+          <button class="round-btn" id="backBtn" type="button" aria-label="Zurück">‹</button>
+          <button class="round-btn star-btn" id="detailFavoriteBtn" type="button" aria-label="Favorit">☆</button>
+        </div>
+        <div class="detail-title">
+          <span id="detailNumber">#001</span>
+          <h1 id="detailName">Monster</h1>
+          <div id="detailType"></div>
+        </div>
+        <div class="detail-image-wrap">
+          <button class="nav-arrow" id="prevBtn" type="button" aria-label="Vorheriges Monster">‹</button>
+          <img id="detailImage" alt="">
+          <button class="nav-arrow" id="nextBtn" type="button" aria-label="Nächstes Monster">›</button>
+        </div>
+      </section>
+
+      <section class="detail-card">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="info">Infos</button>
+          <button class="tab" data-tab="werte">Werte</button>
+          <button class="tab" data-tab="attacken">Attacken</button>
+          <button class="tab" data-tab="entwicklung">Entwicklung</button>
+        </div>
+
+        <div class="tab-panel" id="tab-info">
+          <div class="info-grid">
+            <article><small>Status</small><strong id="infoStatus">—</strong></article>
+            <article><small>Typ</small><strong id="infoType">—</strong></article>
+            <article><small>Levelbereich</small><strong id="infoRange">—</strong></article>
+          </div>
+          <div class="progress-card">
+            <div class="progress-head">
+              <div><small>Aktuelles Level</small><strong id="currentLevel">1</strong></div>
+              <div class="progress-right"><small>EP</small><strong id="currentEP">0 / 10</strong></div>
+            </div>
+            <div class="progress-track"><span id="epBar"></span></div>
+          </div>
+          <div class="edit-panel hidden" id="editPanel">
+            <div class="edit-row">
+              <span><strong>Gefangen</strong><small>Eintrag als gefangen markieren</small></span>
+              <label class="switch"><input id="ownedToggle" type="checkbox"><span></span></label>
+            </div>
+            <div class="edit-row">
+              <span><strong>Favorit</strong><small>In Favoriten anzeigen</small></span>
+              <label class="switch"><input id="favoriteToggle" type="checkbox"><span></span></label>
+            </div>
+            <div class="edit-row vertical">
+              <div class="edit-row-head"><span><strong>Level</strong><small id="levelHelp">—</small></span><strong id="levelValue">1</strong></div>
+              <input id="levelSlider" type="range" min="1" max="10" step="1">
+            </div>
+            <div class="edit-row">
+              <span><strong>EP</strong><small>10 EP = 1 Level</small></span>
+              <div class="stepper">
+                <button data-ep="-1">−1</button>
+                <button data-ep="1">+1</button>
+                <button data-ep="5">+5</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel hidden" id="tab-werte">
+          <div class="info-grid values-grid">
+            <article><small>Mind. Level</small><strong id="valueMin">—</strong></article>
+            <article><small>Max. Level</small><strong id="valueMax">—</strong></article>
+            <article><small>Aktuell</small><strong id="valueCurrent">—</strong></article>
+          </div>
+          <div class="notice"><strong>Datengrundlage</strong><p>Diese Werte kommen direkt aus der eingebauten Dex-Datendatei. Eine separate Excel-Datei ist im Betrieb nicht nötig.</p></div>
+        </div>
+
+        <div class="tab-panel hidden" id="tab-attacken">
+          <div class="notice notice-muted"><strong>Attackendaten noch nicht enthalten</strong><p>Die aktuell bereitgestellte Dex.xlsx enthält nur Monstername, Typ sowie niedrigstes und höchstes Level. Sobald die Attackentabelle vorliegt, kann dieser Tab automatisch pro Level gefüllt werden.</p></div>
+        </div>
+
+        <div class="tab-panel hidden" id="tab-entwicklung">
+          <div class="notice notice-muted"><strong>Entwicklungsdaten noch nicht enthalten</strong><p>Für sichere Entwicklungsreihen braucht der Dex eine explizite Zuordnung in der Datengrundlage. Diese wird nicht aus Namen oder Reihenfolge geraten.</p></div>
+        </div>
+      </section>
+    </main>
+
+    <div class="sheet-backdrop hidden" id="sheetBackdrop"></div>
+
+    <aside class="bottom-sheet hidden" id="playerSheet" aria-label="Spieler auswählen">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head"><div><p class="eyebrow">Spieler</p><h2>Dex auswählen</h2></div><button class="round-btn close-sheet" type="button">×</button></div>
+      <div id="playerList" class="player-list"></div>
+    </aside>
+
+    <aside class="bottom-sheet hidden" id="settingsSheet" aria-label="Dex Einstellungen">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head"><div><p class="eyebrow">Einstellungen</p><h2>Dex verwalten</h2></div><button class="round-btn close-sheet" type="button">×</button></div>
+      <div class="auth-card" id="loginBox">
+        <p class="eyebrow">Spielleitung</p>
+        <h3>Admin anmelden</h3>
+        <label>E-Mail<input id="adminEmail" type="email" autocomplete="username" placeholder="deine@email.de"></label>
+        <label>Passwort<input id="adminPassword" type="password" autocomplete="current-password" placeholder="••••••••"></label>
+        <button class="primary-btn" id="loginBtn" type="button">Anmelden</button>
+      </div>
+      <div class="auth-card hidden" id="loggedInBox">
+        <strong id="loggedInText"></strong>
+        <button class="secondary-btn" id="logoutBtn" type="button">Abmelden</button>
+      </div>
+      <div class="settings-list">
+        <div class="setting-row hidden" id="adminControls">
+          <div><strong>Bearbeitungsmodus</strong><small>Änderungen werden automatisch mit Firebase synchronisiert.</small></div>
+          <label class="switch"><input id="editModeToggle" type="checkbox"><span></span></label>
+        </div>
+        <button class="setting-button" id="shareBtn"><span>↗</span><div><strong>Spieler-Link kopieren</strong><small>Nur dieser Dex wird über den Link geöffnet</small></div></button>
+        <button class="setting-button" id="saveNowBtn"><span>☁</span><div><strong>Jetzt synchronisieren</strong><small id="syncStatus">Firebase bereit</small></div></button>
+        <button class="setting-button" id="exportBtn"><span>⇩</span><div><strong>Backup exportieren</strong><small>Aktuellen Spielstand als JSON speichern</small></div></button>
+        <a class="setting-button admin-link" href="admin-import.html"><span>＋</span><div><strong>Spielstände importieren</strong><small>Nur für den ersten Import oder neue Spieler</small></div></a>
+      </div>
+      <div class="settings-note"><strong>Firebase-Synchronisierung</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich und werden in Cloud Firestore gespeichert.</p></div>
+    </aside>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
