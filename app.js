@@ -80,9 +80,12 @@ function saveFightState(){
   localStorage.setItem(fightKey(app.player.id),JSON.stringify({team:app.fightTeam,baseline:app.fightBaseline}));
 }
 function fightChoices(){
-  return app.fightSource==="owned" ? app.pokemon.filter(p=>stateFor(p).owned) : app.pokemon;
+  if(app.fightSource==="favorite") return app.pokemon.filter(p=>stateFor(p).owned && stateFor(p).favorite);
+  if(app.fightSource==="owned") return app.pokemon.filter(p=>stateFor(p).owned);
+  return app.pokemon;
 }
-function defaultFightLevel(p){ return app.fightSource==="owned"&&stateFor(p).owned ? stateFor(p).level : p.minLevel; }
+function isOwnFightSource(){ return app.fightSource==="owned" || app.fightSource==="favorite"; }
+function defaultFightLevel(p){ return isOwnFightSource()&&stateFor(p).owned ? stateFor(p).level : p.minLevel; }
 function ensureFightSelection(resetLevel=false){
   const choices=fightChoices();
   if(!choices.length){ app.fightSelectedId=null; app.fightSelectedLevel=1; return; }
@@ -134,14 +137,14 @@ function renderFight(){
   const choices=fightChoices();
   const select=$("#fightPokemonSelect");
   select.disabled=!choices.length;
-  select.innerHTML=choices.length?choices.map(p=>`<option value="${p.id}" ${p.id===app.fightSelectedId?"selected":""}>#${pad(p.id)} · ${escapeHtml(p.name)}${app.fightSource==="owned"?` · Lv ${stateFor(p).level}`:""}</option>`).join(""):`<option>Keine gefangenen Pokémon</option>`;
+  select.innerHTML=choices.length?choices.map(p=>`<option value="${p.id}" ${p.id===app.fightSelectedId?"selected":""}>#${pad(p.id)} · ${escapeHtml(p.name)}${isOwnFightSource()?` · Lv ${stateFor(p).level}`:""}</option>`).join(""):`<option>${app.fightSource==="favorite"?"Keine gefangenen Favoriten":"Keine gefangenen Pokémon"}</option>`;
   const p=fightPokemon(app.fightSelectedId);
   $$("[data-fight-source]").forEach(b=>b.classList.toggle("active",b.dataset.fightSource===app.fightSource));
   $$("[data-fight-role]").forEach(b=>b.classList.toggle("active",b.dataset.fightRole===app.fightRole));
   $("#fightAddBtn").disabled=!p;
   if(p){
     $("#fightLevelValue").textContent=app.fightSelectedLevel;
-    $("#fightLevelNote").textContent=app.fightSource==="owned"&&stateFor(p).owned?`Dex-Level: ${stateFor(p).level} · Erlaubt für ${p.name}: ${p.minLevel}–${p.maxLevel}`:`Erlaubt für ${p.name}: ${p.minLevel}–${p.maxLevel}`;
+    $("#fightLevelNote").textContent=isOwnFightSource()&&stateFor(p).owned?`Dex-Level: ${stateFor(p).level} · Erlaubt für ${p.name}: ${p.minLevel}–${p.maxLevel}`:`Erlaubt für ${p.name}: ${p.minLevel}–${p.maxLevel}`;
     $("#fightLevelButtons").innerHTML=Array.from({length:10},(_,i)=>i+1).map(level=>`<button type="button" data-fight-level="${level}" class="${level===app.fightSelectedLevel?"active":""}" ${level<p.minLevel||level>p.maxLevel?"disabled":""}>${level}</button>`).join("");
   } else {
     $("#fightLevelValue").textContent="—"; $("#fightLevelNote").textContent="Markiere zuerst ein Pokémon als gefangen oder wähle ‚Alle 151‘."; $("#fightLevelButtons").innerHTML="";
@@ -401,7 +404,7 @@ function bindEvents(){
   $("#ownedToggle").addEventListener("change",e=>mutateSelected(s=>s.owned=e.target.checked)); $("#favoriteToggle").addEventListener("change",e=>mutateSelected(s=>s.favorite=e.target.checked)); $("#levelSlider").addEventListener("input",e=>mutateSelected(s=>s.level=+e.target.value)); $$(".stepper [data-ep]").forEach(b=>b.addEventListener("click",()=>changeEP(+b.dataset.ep)));
   $("#evolutionContent").addEventListener("click",e=>{const b=e.target.closest("[data-evo-id]"); if(!b)return; app.selectedId=+b.dataset.evoId; app.activeTab="entwicklung"; window.scrollTo({top:0,behavior:"smooth"}); renderDetail();});
   $("#moduleNav").addEventListener("click",e=>{const b=e.target.closest("[data-module]");if(b)showModule(b.dataset.module);});
-  $$("[data-fight-source]").forEach(b=>b.addEventListener("click",()=>{app.fightSource=b.dataset.fightSource; app.fightRole=app.fightSource==="owned"?"own":"opponent"; app.fightSelectedId=null; ensureFightSelection(true); renderFight();}));
+  $$("[data-fight-source]").forEach(b=>b.addEventListener("click",()=>{app.fightSource=b.dataset.fightSource; app.fightRole=isOwnFightSource()?"own":"opponent"; app.fightSelectedId=null; ensureFightSelection(true); renderFight();}));
   $$("[data-fight-role]").forEach(b=>b.addEventListener("click",()=>{app.fightRole=b.dataset.fightRole;renderFight();}));
   $("#fightPokemonSelect").addEventListener("change",e=>{app.fightSelectedId=+e.target.value;ensureFightSelection(true);renderFight();});
   $("#fightLevelButtons").addEventListener("click",e=>{const b=e.target.closest("[data-fight-level]");if(!b||b.disabled)return;app.fightSelectedLevel=+b.dataset.fightLevel;renderFight();});

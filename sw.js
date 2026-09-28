@@ -1,4 +1,4 @@
-const CACHE="pu-dex-v4-20260928";
+const CACHE="pu-dex-v4-1-20260928";
 const CORE=[
   "./","index.html","styles.css","app.js","firebase-config.js","manifest.webmanifest",
   "assets/placeholder.svg","data/pokemon.json","data/attacks.json","data/evolutions.json"
