@@ -24,7 +24,9 @@ const app = {
   pokemon: [], attacks: {}, evolutionGroups: [], players: [], player: null,
   state: {}, publishedState: {}, filter: "all", type: "Alle", search: "", editMode: false,
   selectedId: null, activeTab: "info", user: null, isAdmin: false,
-  saveTimer: null, saving: false, dirty: false
+  saveTimer: null, saving: false, dirty: false,
+  view: "dex", fightSource: "owned", fightRole: "own", fightSelectedId: null,
+  fightSelectedLevel: 1, fightTeam: [], fightBaseline: {}
 };
 
 const $ = s => document.querySelector(s);
@@ -33,6 +35,7 @@ const clone = v => JSON.parse(JSON.stringify(v));
 const pad = n => String(n).padStart(3,"0");
 const initials = name => (name||"?").trim().split(/\s+/).map(x=>x[0]).join("").slice(0,2).toUpperCase();
 const playerKey = id => `pu-dex-cache-${id}`;
+const fightKey = id => `pu-fight-v4-${id}`;
 const escapeHtml = value => String(value ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function typeVars(type){ const [a,b]=TYPE_COLORS[type]||["#8793a0","#f1f3f5"]; return `--type:${a};--type-soft:${b};`; }
 function setImgFallback(img){ img.addEventListener("error",()=>{ if(!img.src.endsWith("placeholder.svg")) img.src=FALLBACK_IMAGE; },{once:true}); }
@@ -59,6 +62,118 @@ function evolutionGroupFor(id){
     if(g.kind==="branch") return g.root===id || (g.branches||[]).includes(id);
     return (g.stages||[]).includes(id);
   }) || null;
+}
+
+function fightPokemon(id){ return app.pokemon.find(p=>p.id===Number(id)) || null; }
+function newFightUid(){ return (globalThis.crypto?.randomUUID?.() || `fight-${Date.now()}-${Math.random().toString(36).slice(2)}`); }
+function loadFightState(id){
+  app.fightTeam=[]; app.fightBaseline={}; app.fightSelectedId=null; app.fightSelectedLevel=1; app.fightSource="owned"; app.fightRole="own";
+  try {
+    const raw=JSON.parse(localStorage.getItem(fightKey(id))||"{}");
+    if(Array.isArray(raw.team)) app.fightTeam=raw.team.map(m=>({uid:m.uid||newFightUid(),id:+m.id,level:+m.level,role:m.role==="opponent"?"opponent":"own"})).filter(m=>fightPokemon(m.id));
+    if(raw.baseline&&typeof raw.baseline==="object") app.fightBaseline=Object.fromEntries(Object.entries(raw.baseline).filter(([,v])=>Number.isFinite(+v)&&+v>0).map(([k,v])=>[k,+v]));
+  } catch(err){ console.warn("Kampfstand konnte nicht geladen werden",err); }
+  ensureFightSelection(true);
+}
+function saveFightState(){
+  if(!app.player) return;
+  localStorage.setItem(fightKey(app.player.id),JSON.stringify({team:app.fightTeam,baseline:app.fightBaseline}));
+}
+function fightChoices(){
+  return app.fightSource==="owned" ? app.pokemon.filter(p=>stateFor(p).owned) : app.pokemon;
+}
+function defaultFightLevel(p){ return app.fightSource==="owned"&&stateFor(p).owned ? stateFor(p).level : p.minLevel; }
+function ensureFightSelection(resetLevel=false){
+  const choices=fightChoices();
+  if(!choices.length){ app.fightSelectedId=null; app.fightSelectedLevel=1; return; }
+  let p=choices.find(x=>x.id===app.fightSelectedId);
+  if(!p){ p=choices[0]; app.fightSelectedId=p.id; resetLevel=true; }
+  if(resetLevel) app.fightSelectedLevel=defaultFightLevel(p);
+  app.fightSelectedLevel=Math.min(p.maxLevel,Math.max(p.minLevel,+app.fightSelectedLevel||p.minLevel));
+}
+function cardsForFightTeam(team=app.fightTeam){
+  const counts={};
+  for(const member of team){
+    const p=fightPokemon(member.id); if(!p) continue;
+    for(const move of attacksFor(p)) if(move.level<=member.level) counts[move.name]=(counts[move.name]||0)+1;
+  }
+  return counts;
+}
+function totalCopies(counts){ return Object.values(counts).reduce((sum,n)=>sum+(+n||0),0); }
+function sortedCardEntries(counts){ return Object.entries(counts).filter(([,n])=>n>0).sort((a,b)=>a[0].localeCompare(b[0],"de")); }
+function diffFightCards(current,previous){
+  const names=[...new Set([...Object.keys(current),...Object.keys(previous)])].sort((a,b)=>a.localeCompare(b,"de"));
+  const add={},keep={},remove={};
+  for(const name of names){
+    const now=current[name]||0, before=previous[name]||0;
+    if(now>before) add[name]=now-before;
+    if(now&&before) keep[name]=Math.min(now,before);
+    if(before>now) remove[name]=before-now;
+  }
+  return {add,keep,remove};
+}
+function renderDiffList(target,counts,emptyText){
+  const rows=sortedCardEntries(counts);
+  target.innerHTML=rows.length?rows.map(([name,count])=>`<div class="diff-row"><span>${escapeHtml(name)}</span><strong>×${count}</strong></div>`).join(""):`<div class="diff-empty">${emptyText}</div>`;
+}
+function showModule(view){
+  if(!app.player){ showNoPlayer(); return; }
+  app.view=view==="fight"?"fight":"dex";
+  app.selectedId=null;
+  $("#detailView").classList.add("hidden");
+  $("#mainView").classList.toggle("hidden",app.view!=="dex");
+  $("#fightView").classList.toggle("hidden",app.view!=="fight");
+  $("#brandLabel").textContent=app.view==="fight"?"Kampf":"Dex";
+  $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module===app.view));
+  if(app.view==="fight") renderFight(); else renderGrid();
+  window.scrollTo({top:0,behavior:"instant"});
+}
+function renderFight(){
+  if(!app.player) return;
+  ensureFightSelection(false);
+  const choices=fightChoices();
+  const select=$("#fightPokemonSelect");
+  select.disabled=!choices.length;
+  select.innerHTML=choices.length?choices.map(p=>`<option value="${p.id}" ${p.id===app.fightSelectedId?"selected":""}>#${pad(p.id)} · ${escapeHtml(p.name)}${app.fightSource==="owned"?` · Lv ${stateFor(p).level}`:""}</option>`).join(""):`<option>Keine gefangenen Pokémon</option>`;
+  const p=fightPokemon(app.fightSelectedId);
+  $$("[data-fight-source]").forEach(b=>b.classList.toggle("active",b.dataset.fightSource===app.fightSource));
+  $$("[data-fight-role]").forEach(b=>b.classList.toggle("active",b.dataset.fightRole===app.fightRole));
+  $("#fightAddBtn").disabled=!p;
+  if(p){
+    $("#fightLevelValue").textContent=app.fightSelectedLevel;
+    $("#fightLevelNote").textContent=app.fightSource==="owned"&&stateFor(p).owned?`Dex-Level: ${stateFor(p).level} · Erlaubt für ${p.name}: ${p.minLevel}–${p.maxLevel}`:`Erlaubt für ${p.name}: ${p.minLevel}–${p.maxLevel}`;
+    $("#fightLevelButtons").innerHTML=Array.from({length:10},(_,i)=>i+1).map(level=>`<button type="button" data-fight-level="${level}" class="${level===app.fightSelectedLevel?"active":""}" ${level<p.minLevel||level>p.maxLevel?"disabled":""}>${level}</button>`).join("");
+  } else {
+    $("#fightLevelValue").textContent="—"; $("#fightLevelNote").textContent="Markiere zuerst ein Pokémon als gefangen oder wähle ‚Alle 151‘."; $("#fightLevelButtons").innerHTML="";
+  }
+
+  const team=$("#fightTeamList");
+  $("#fightTeamHeading").textContent=app.fightTeam.length?`${app.fightTeam.length} ${app.fightTeam.length===1?"Pokémon":"Pokémon"}`:"Noch kein Pokémon";
+  team.innerHTML=app.fightTeam.length?app.fightTeam.map((m,index)=>{ const mon=fightPokemon(m.id); const type=mon?.type||"Normal"; const learned=mon?attacksFor(mon).filter(a=>a.level<=m.level).length:0; return `<article class="fight-member" style="${typeVars(type)}"><div class="fight-member-art"><img src="${mon?.image||FALLBACK_IMAGE}" alt="${escapeHtml(mon?.name||"Pokémon")}" loading="lazy"></div><div class="fight-member-copy"><small>${m.role==="opponent"?"Gegner":"Mein Team"} · #${pad(mon?.id||0)}</small><strong>${escapeHtml(mon?.name||"Pokémon")}</strong><span>Lvl ${m.level} · ${learned} Attackenkarten</span></div><div class="fight-member-actions"><div class="mini-level"><button data-fight-step="-1" data-fight-uid="${m.uid}" type="button">−</button><b>${m.level}</b><button data-fight-step="1" data-fight-uid="${m.uid}" type="button">＋</button></div><button class="fight-remove" data-fight-remove="${m.uid}" type="button" aria-label="${escapeHtml(mon?.name||"Pokémon")} entfernen">×</button></div></article>`; }).join(""):`<div class="fight-empty"><span>⚔</span><strong>Team noch leer</strong><p>Füge oben Pokémon hinzu. Die benötigten Attackenkarten werden sofort berechnet.</p></div>`;
+  $$("#fightTeamList img").forEach(setImgFallback);
+
+  const current=cardsForFightTeam(); const diff=diffFightCards(current,app.fightBaseline);
+  $("#fightTeamCount").textContent=app.fightTeam.length; $("#fightUniqueCount").textContent=Object.keys(current).length; $("#fightCopyCount").textContent=totalCopies(current);
+  const summaries=[["#fightAddSummary",diff.add],["#fightKeepSummary",diff.keep],["#fightRemoveSummary",diff.remove]];
+  for(const [sel,counts] of summaries){ const n=totalCopies(counts); $(sel).textContent=`${n} ${n===1?"Karte":"Karten"}`; }
+  renderDiffList($("#fightAddList"),diff.add,"Nichts Neues holen"); renderDiffList($("#fightKeepList"),diff.keep,"Keine Karten bleiben"); renderDiffList($("#fightRemoveList"),diff.remove,"Nichts zurücklegen");
+  const currentEntries=sortedCardEntries(current); const currentTotal=totalCopies(current); $("#fightCurrentBadge").textContent=`${currentTotal} ${currentTotal===1?"Karte":"Karten"}`;
+  $("#fightCurrentList").innerHTML=currentEntries.length?currentEntries.map(([name,count])=>`<div class="current-card-row"><span>${escapeHtml(name)}</span><strong>×${count}</strong></div>`).join(""):`<div class="diff-empty">Noch keine Attackenkarten benötigt.</div>`;
+  saveFightState();
+}
+function addFightPokemon(){
+  const p=fightPokemon(app.fightSelectedId); if(!p) return;
+  app.fightTeam.push({uid:newFightUid(),id:p.id,level:app.fightSelectedLevel,role:app.fightRole});
+  renderFight(); toast(`${p.name} hinzugefügt`);
+}
+function stepFightMember(uid,delta){
+  const m=app.fightTeam.find(x=>x.uid===uid); if(!m)return; const p=fightPokemon(m.id); if(!p)return;
+  m.level=Math.min(p.maxLevel,Math.max(p.minLevel,m.level+delta)); renderFight();
+}
+function startNextFight(){
+  const current=cardsForFightTeam();
+  if(!app.fightTeam.length && !Object.keys(current).length){ toast("Stelle zuerst einen Kampf zusammen"); return; }
+  app.fightBaseline=current; app.fightTeam=[]; saveFightState(); renderFight(); toast("Kartenstand gemerkt · neues Team wählen");
 }
 
 async function init(){
@@ -100,17 +215,18 @@ async function selectPlayer(id,close=true){
     app.publishedState=normalizeState(data.pokemon||{});
     app.state=clone(app.publishedState);
     localStorage.setItem(playerKey(id),JSON.stringify(app.state));
-    app.selectedId=null; app.editMode=app.isAdmin && app.editMode;
+    app.selectedId=null; app.editMode=app.isAdmin && app.editMode; app.view="dex"; loadFightState(id);
     history.replaceState(null,"",`${location.pathname}?player=${encodeURIComponent(id)}`);
-    $("#mainView").classList.remove("hidden"); $("#noPlayerView").classList.add("hidden");
+    $("#mainView").classList.remove("hidden"); $("#fightView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
+    $("#brandLabel").textContent="Dex"; $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module==="dex"));
     if(close) closeSheets();
   } catch(err){
     console.error(err);
     const cached=localStorage.getItem(playerKey(id));
     if(cached){
       app.player={id,name:"Offline-Spielstand"};
-      app.state=normalizeState(JSON.parse(cached)); app.publishedState=clone(app.state);
-      $("#mainView").classList.remove("hidden"); $("#noPlayerView").classList.add("hidden");
+      app.state=normalizeState(JSON.parse(cached)); app.publishedState=clone(app.state); app.view="dex"; loadFightState(id);
+      $("#mainView").classList.remove("hidden"); $("#fightView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
       toast("Offline-Kopie geladen");
     } else { showNoPlayer("Dieser Spieler-Link ist ungültig oder derzeit nicht erreichbar."); }
   }
@@ -118,8 +234,8 @@ async function selectPlayer(id,close=true){
 }
 
 function showNoPlayer(msg="Öffne deinen persönlichen Spieler-Link. Als Spielleiter kannst du dich über ☰ anmelden."){
-  app.player=null; app.state={}; app.publishedState={}; app.selectedId=null;
-  $("#detailView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#noPlayerView").classList.remove("hidden");
+  app.player=null; app.state={}; app.publishedState={}; app.selectedId=null; app.fightTeam=[]; app.fightBaseline={};
+  $("#detailView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#moduleNav").classList.add("hidden"); $("#noPlayerView").classList.remove("hidden");
   $("#noPlayerText").textContent=msg;
 }
 
@@ -140,7 +256,7 @@ function filteredPokemon(){
 function render(){
   if(app.player){
     $("#playerNameTop").textContent=app.player.name; $("#playerAvatar").textContent=initials(app.player.name); $("#welcomeLabel").textContent=`${app.player.name}s Dex`;
-    renderStats(); renderGrid();
+    renderStats(); renderGrid(); if(app.view==="fight") renderFight();
   } else { $("#playerNameTop").textContent=app.isAdmin?"Spieler wählen":"Dex"; $("#playerAvatar").textContent=app.isAdmin?"A":"?"; }
   renderPlayerList(); updateAuthUI();
   $("#editModeToggle").checked=app.editMode;
@@ -161,8 +277,8 @@ function renderPlayerList(){
   wrap.innerHTML=app.players.map(p=>`<button class="player-option ${app.player?.id===p.id?"active":""}" data-player="${p.id}"><span class="player-avatar">${initials(p.name)}</span><span><strong>${escapeHtml(p.name)}</strong><small>${app.player?.id===p.id?"Aktuell ausgewählt":"Dex öffnen"}</small></span></button>`).join("")||`<div class="notice"><strong>Noch keine Spieler</strong><p>Importiere zuerst deine JSON-Spielstände über <code>admin-import.html</code>.</p></div>`;
 }
 
-function openDetail(id){ app.selectedId=Number(id); app.activeTab="info"; $("#mainView").classList.add("hidden"); $("#detailView").classList.remove("hidden"); window.scrollTo({top:0,behavior:"instant"}); renderDetail(); }
-function closeDetail(){ app.selectedId=null; $("#detailView").classList.add("hidden"); $("#mainView").classList.remove("hidden"); renderGrid(); }
+function openDetail(id){ app.view="dex"; app.selectedId=Number(id); app.activeTab="info"; $("#mainView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#detailView").classList.remove("hidden"); window.scrollTo({top:0,behavior:"instant"}); renderDetail(); }
+function closeDetail(){ app.selectedId=null; $("#detailView").classList.add("hidden"); $("#mainView").classList.remove("hidden"); app.view="dex"; renderGrid(); }
 function selectedPokemon(){ return app.pokemon.find(p=>p.id===app.selectedId); }
 
 function renderDetail(){
@@ -279,11 +395,21 @@ function bindEvents(){
   $$(".segment").forEach(b=>b.addEventListener("click",()=>{app.filter=b.dataset.filter; $$(".segment").forEach(x=>x.classList.toggle("active",x===b));renderGrid();}));
   $("#typeStrip").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(!b)return;app.type=b.dataset.type;$$(".type-chip").forEach(x=>x.classList.toggle("active",x===b));renderGrid();});
   $("#clearFiltersBtn").addEventListener("click",resetFilters); $("#dexGrid").addEventListener("click",e=>{const c=e.target.closest(".dex-card");if(c)openDetail(c.dataset.id);});
-  $("#backBtn").addEventListener("click",closeDetail); $("#homeBtn").addEventListener("click",()=>{if(app.selectedId)closeDetail();else if(app.player)resetFilters();});
+  $("#backBtn").addEventListener("click",closeDetail); $("#homeBtn").addEventListener("click",()=>{if(app.selectedId)closeDetail();else if(app.player&&app.view==="fight")showModule("dex");else if(app.player)resetFilters();});
   $("#prevBtn").addEventListener("click",()=>{app.selectedId=app.selectedId<=1?app.pokemon.length:app.selectedId-1;renderDetail();}); $("#nextBtn").addEventListener("click",()=>{app.selectedId=app.selectedId>=app.pokemon.length?1:app.selectedId+1;renderDetail();});
   $("#detailFavoriteBtn").addEventListener("click",()=>mutateSelected(s=>s.favorite=!s.favorite)); $$(".tab").forEach(b=>b.addEventListener("click",()=>{app.activeTab=b.dataset.tab;renderDetail();}));
   $("#ownedToggle").addEventListener("change",e=>mutateSelected(s=>s.owned=e.target.checked)); $("#favoriteToggle").addEventListener("change",e=>mutateSelected(s=>s.favorite=e.target.checked)); $("#levelSlider").addEventListener("input",e=>mutateSelected(s=>s.level=+e.target.value)); $$(".stepper [data-ep]").forEach(b=>b.addEventListener("click",()=>changeEP(+b.dataset.ep)));
   $("#evolutionContent").addEventListener("click",e=>{const b=e.target.closest("[data-evo-id]"); if(!b)return; app.selectedId=+b.dataset.evoId; app.activeTab="entwicklung"; window.scrollTo({top:0,behavior:"smooth"}); renderDetail();});
+  $("#moduleNav").addEventListener("click",e=>{const b=e.target.closest("[data-module]");if(b)showModule(b.dataset.module);});
+  $$("[data-fight-source]").forEach(b=>b.addEventListener("click",()=>{app.fightSource=b.dataset.fightSource; app.fightRole=app.fightSource==="owned"?"own":"opponent"; app.fightSelectedId=null; ensureFightSelection(true); renderFight();}));
+  $$("[data-fight-role]").forEach(b=>b.addEventListener("click",()=>{app.fightRole=b.dataset.fightRole;renderFight();}));
+  $("#fightPokemonSelect").addEventListener("change",e=>{app.fightSelectedId=+e.target.value;ensureFightSelection(true);renderFight();});
+  $("#fightLevelButtons").addEventListener("click",e=>{const b=e.target.closest("[data-fight-level]");if(!b||b.disabled)return;app.fightSelectedLevel=+b.dataset.fightLevel;renderFight();});
+  $("#fightAddBtn").addEventListener("click",addFightPokemon);
+  $("#fightTeamList").addEventListener("click",e=>{const remove=e.target.closest("[data-fight-remove]");if(remove){app.fightTeam=app.fightTeam.filter(m=>m.uid!==remove.dataset.fightRemove);renderFight();return;}const step=e.target.closest("[data-fight-step]");if(step)stepFightMember(step.dataset.fightUid,+step.dataset.fightStep);});
+  $("#fightClearTeamBtn").addEventListener("click",()=>{app.fightTeam=[];renderFight();toast("Team geleert");});
+  $("#fightNewBattleBtn").addEventListener("click",startNextFight);
+  $("#fightResetCompareBtn").addEventListener("click",()=>{app.fightBaseline={};renderFight();toast("Vergleich zurückgesetzt");});
   $("#playerBtn").addEventListener("click",()=>openSheet(app.isAdmin?"#playerSheet":"#settingsSheet")); $("#settingsBtn").addEventListener("click",()=>openSheet("#settingsSheet")); $("#sheetBackdrop").addEventListener("click",closeSheets); $$(".close-sheet").forEach(b=>b.addEventListener("click",closeSheets));
   $("#playerList").addEventListener("click",e=>{const b=e.target.closest("[data-player]");if(b)selectPlayer(b.dataset.player);});
   $("#editModeToggle").addEventListener("change",e=>{if(!app.isAdmin){e.target.checked=false;toast("Admin-Anmeldung erforderlich");return;}app.editMode=e.target.checked;renderDetail();toast(app.editMode?"Bearbeitungsmodus aktiv":"Ansichtsmodus aktiv");});

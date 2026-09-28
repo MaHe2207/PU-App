@@ -14,7 +14,7 @@
   <div id="app" class="app-shell">
     <header class="topbar">
       <button class="brand" id="homeBtn" aria-label="Zur Übersicht">
-        <span class="brand-ball" aria-hidden="true"></span><span>Dex</span>
+        <span class="brand-ball" aria-hidden="true"></span><span id="brandLabel">Dex</span>
       </button>
       <div class="top-actions">
         <button class="player-chip" id="playerBtn" type="button" aria-label="Spieler wechseln">
@@ -178,6 +178,105 @@
       </section>
     </main>
 
+
+    <main id="fightView" class="fight-view hidden">
+      <section class="hero fight-hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Kampfvorbereitung</p>
+          <h1>Karten schneller bereit.</h1>
+          <p>Team wählen, Level festlegen und nur die Attackenkarten holen, die du wirklich brauchst.</p>
+        </div>
+        <div class="fight-orb" aria-hidden="true">⚔</div>
+      </section>
+
+      <section class="fight-stats" aria-label="Kampfübersicht">
+        <article><span>◉</span><div><strong id="fightTeamCount">0</strong><small>Pokémon</small></div></article>
+        <article><span>▦</span><div><strong id="fightUniqueCount">0</strong><small>versch. Karten</small></div></article>
+        <article><span>≡</span><div><strong id="fightCopyCount">0</strong><small>Karten gesamt</small></div></article>
+      </section>
+
+      <section class="fight-panel">
+        <div class="fight-panel-head">
+          <div><p class="eyebrow">Team</p><h2>Pokémon hinzufügen</h2></div>
+          <button class="text-btn" id="fightClearTeamBtn" type="button">Team leeren</button>
+        </div>
+
+        <div class="fight-source segmented two" aria-label="Pokémon-Auswahl">
+          <button class="segment active" data-fight-source="owned" type="button">Mein Dex</button>
+          <button class="segment" data-fight-source="all" type="button">Alle 151</button>
+        </div>
+
+        <label class="fight-field">
+          <span>Pokémon</span>
+          <select id="fightPokemonSelect"></select>
+        </label>
+
+        <div class="fight-role-row">
+          <span class="fight-field-label">Seite</span>
+          <div class="role-toggle">
+            <button class="active" data-fight-role="own" type="button">Mein Team</button>
+            <button data-fight-role="opponent" type="button">Gegner</button>
+          </div>
+        </div>
+
+        <div class="fight-level-head">
+          <span>Level</span><strong id="fightLevelValue">1</strong>
+        </div>
+        <div class="fight-levels" id="fightLevelButtons" aria-label="Level auswählen"></div>
+        <p class="fight-level-note" id="fightLevelNote"></p>
+
+        <button class="primary-btn fight-add-btn" id="fightAddBtn" type="button">Pokémon zum Kampf hinzufügen</button>
+      </section>
+
+      <section class="fight-panel">
+        <div class="fight-panel-head">
+          <div><p class="eyebrow">Aktueller Kampf</p><h2 id="fightTeamHeading">Noch kein Pokémon</h2></div>
+        </div>
+        <div class="fight-team" id="fightTeamList"></div>
+      </section>
+
+      <section class="fight-panel compare-panel">
+        <div class="fight-panel-head compare-head">
+          <div><p class="eyebrow">Attackenkarten</p><h2>Vergleich zum letzten Kampf</h2></div>
+          <span class="data-pill">automatisch</span>
+        </div>
+        <p class="fight-help">„Neuer Kampf“ merkt sich den aktuellen Kartenstand und leert das Team. Beim Zusammenstellen des nächsten Kampfes siehst du sofort, was geholt, behalten oder zurückgelegt werden muss.</p>
+
+        <div class="compare-actions">
+          <button class="primary-btn" id="fightNewBattleBtn" type="button">Neuer Kampf</button>
+          <button class="secondary-btn" id="fightResetCompareBtn" type="button">Vergleich zurücksetzen</button>
+        </div>
+
+        <div class="card-diff-grid">
+          <article class="card-diff add">
+            <header><span>＋</span><div><strong>Holen</strong><small id="fightAddSummary">0 Karten</small></div></header>
+            <div class="diff-list" id="fightAddList"></div>
+          </article>
+          <article class="card-diff keep">
+            <header><span>✓</span><div><strong>Behalten</strong><small id="fightKeepSummary">0 Karten</small></div></header>
+            <div class="diff-list" id="fightKeepList"></div>
+          </article>
+          <article class="card-diff remove">
+            <header><span>−</span><div><strong>Zurücklegen</strong><small id="fightRemoveSummary">0 Karten</small></div></header>
+            <div class="diff-list" id="fightRemoveList"></div>
+          </article>
+        </div>
+      </section>
+
+      <section class="fight-panel current-cards-panel">
+        <div class="fight-panel-head">
+          <div><p class="eyebrow">Gesamtliste</p><h2>Aktuell benötigte Karten</h2></div>
+          <span class="data-pill" id="fightCurrentBadge">0 Karten</span>
+        </div>
+        <div class="current-card-list" id="fightCurrentList"></div>
+      </section>
+    </main>
+
+    <nav class="app-nav hidden" id="moduleNav" aria-label="App-Bereiche">
+      <button class="active" data-module="dex" type="button"><span>◉</span><small>Dex</small></button>
+      <button data-module="fight" type="button"><span>⚔</span><small>Kampf</small></button>
+    </nav>
+
     <div class="sheet-backdrop hidden" id="sheetBackdrop"></div>
 
     <aside class="bottom-sheet hidden" id="playerSheet" aria-label="Spieler auswählen">
@@ -210,7 +309,7 @@
         <button class="setting-button" id="exportBtn"><span>⇩</span><div><strong>Backup exportieren</strong><small>Aktuellen Spielstand als JSON speichern</small></div></button>
         <a class="setting-button admin-link" href="admin-import.html"><span>＋</span><div><strong>Spielstände importieren</strong><small>Nur für den ersten Import oder neue Spieler</small></div></a>
       </div>
-      <div class="settings-note"><strong>Firebase-Synchronisierung · Dex v3</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich und werden in Cloud Firestore gespeichert.</p></div>
+      <div class="settings-note"><strong>Firebase-Synchronisierung · Dex v4</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Die Kampfvorbereitung bleibt lokal auf dem jeweiligen Gerät und verändert keinen Spielstand.</p></div>
     </aside>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>

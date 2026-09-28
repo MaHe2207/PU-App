@@ -1,0 +1,12 @@
+PU Dex v4 – Update von v3
+
+Im bestehenden GitHub-Repository nur diese 5 Dateien ersetzen:
+- index.html
+- app.js
+- styles.css
+- sw.js
+- manifest.webmanifest
+
+Firebase, Firestore, Spielerstände, Bilder und data/*.json bleiben unverändert.
+
+Neu: Kampfvorbereitung mit Team-Auswahl, automatischer Attackenkartenliste und Vergleich zum letzten Kampf.

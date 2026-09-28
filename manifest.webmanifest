@@ -1,9 +1,9 @@
 {
-  "name": "PU Dex – Pokémon × Unmatched",
-  "short_name": "PU Dex",
+  "name": "PU – Dex & Kampf · Pokémon × Unmatched",
+  "short_name": "PU",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#f5f7fa",
   "theme_color": "#f5f7fa",
-  "description": "Mobiler Dex für PU – Pokémon × Unmatched"
+  "description": "Mobile Begleit-App für PU – Dex und Kampfvorbereitung für Pokémon × Unmatched"
 }
