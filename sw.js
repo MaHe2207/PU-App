@@ -1,4 +1,4 @@
-const CACHE="pu-dex-v5-0-20260928";
+const CACHE="pu-dex-v6-0-20260928";
 const CORE=[
   "./",
   "./index.html",
@@ -13,7 +13,8 @@ const CORE=[
   "./data/pokemon.json",
   "./data/attacks.json",
   "./data/evolutions.json",
-  "./data/encounters.json"
+  "./data/encounters.json",
+  "./data/map.json"
 ];
 
 self.addEventListener("install",e=>{

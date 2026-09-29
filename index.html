@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>PU Dex</title>
-  <link rel="manifest" href="manifest.webmanifest?v=5.0">
+  <link rel="manifest" href="manifest.webmanifest?v=6.0">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=5.0">
+  <link rel="stylesheet" href="styles.css?v=6.0">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -235,6 +235,40 @@
       </section>
     </main>
 
+
+    <main id="mapView" class="map-view hidden">
+      <section class="map-intro">
+        <div>
+          <p class="eyebrow">PU-Weltkarte</p>
+          <h1>Reise durch die Spielwelt.</h1>
+          <p>Tippe ein Feld für Details. Ziehen verschiebt die Karte, zwei Finger zoomen.</p>
+        </div>
+        <div class="map-intro-icon" aria-hidden="true">⌖</div>
+      </section>
+
+      <section class="map-toolbar">
+        <button class="secondary-btn map-tool-btn" id="mapLayerBtn" type="button"><span>☷</span> Layer</button>
+        <button class="secondary-btn map-tool-btn" id="mapCenterBtn" type="button"><span>⌾</span> Zentrieren</button>
+        <span class="map-layer-status" id="mapLayerStatus">Basis-Karte</span>
+      </section>
+
+      <section class="map-stage" id="mapStage">
+        <canvas id="mapCanvas" aria-label="PU-Weltkarte"></canvas>
+        <div class="map-zoom-hint" id="mapZoomHint">Tippen · Ziehen · Pinch-Zoom</div>
+        <article class="map-field-card hidden" id="mapFieldCard">
+          <button class="map-field-close" id="mapFieldClose" type="button" aria-label="Feldinfo schließen">×</button>
+          <div class="map-field-head">
+            <div><p class="eyebrow" id="mapFieldId">Feld</p><h2 id="mapFieldName">Ort</h2></div>
+            <span class="map-field-code" id="mapFieldEncounterCode"></span>
+          </div>
+          <p class="map-field-description" id="mapFieldDescription"></p>
+          <div class="map-field-tags" id="mapFieldTags"></div>
+          <button class="primary-btn map-encounter-btn hidden" id="mapToEncounterBtn" type="button">Begegnung auf diesem Feld</button>
+        </article>
+      </section>
+      <p class="map-source-note">Kartendaten aus <strong>260119 Landkarte.xlsx</strong>. Layer und Feldinformationen entsprechen deiner bisherigen Landkarte.</p>
+    </main>
+
     <main id="fightView" class="fight-view hidden">
       <section class="hero fight-hero">
         <div class="hero-copy">
@@ -332,11 +366,24 @@
 
     <nav class="app-nav hidden" id="moduleNav" aria-label="App-Bereiche">
       <button class="active" data-module="dex" type="button"><span>◉</span><small>Dex</small></button>
+      <button data-module="map" type="button"><span>⌖</span><small>Karte</small></button>
       <button data-module="encounter" type="button"><span>🎲</span><small>Begegnung</small></button>
       <button data-module="fight" type="button"><span>⚔</span><small>Kampf</small></button>
     </nav>
 
     <div class="sheet-backdrop hidden" id="sheetBackdrop"></div>
+
+
+    <aside class="bottom-sheet hidden" id="mapLayerSheet" aria-label="Kartenlayer auswählen">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head"><div><p class="eyebrow">Weltkarte</p><h2>Layer auswählen</h2></div><button class="round-btn close-sheet" type="button">×</button></div>
+      <div class="map-layer-actions">
+        <label class="map-layer-search"><span>⌕</span><input id="mapLayerSearch" type="search" placeholder="Pokémon oder Layer suchen…" autocomplete="off"></label>
+        <button class="secondary-btn" id="mapClearLayers" type="button">Alle aus</button>
+      </div>
+      <p class="map-layer-help">Pokémon-Layer: maximal einer gleichzeitig. Arenen und Trainer können zusätzlich eingeblendet werden.</p>
+      <div class="map-layer-groups" id="mapLayerGroups"></div>
+    </aside>
 
     <aside class="bottom-sheet hidden" id="playerSheet" aria-label="Spieler auswählen">
       <div class="sheet-handle"></div>
@@ -374,6 +421,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script type="module" src="app.js?v=5.0"></script>
+  <script type="module" src="app.js?v=6.0"></script>
 </body>
 </html>

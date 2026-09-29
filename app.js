@@ -27,7 +27,8 @@ const app = {
   saveTimer: null, saving: false, dirty: false,
   view: "dex", fightSource: "owned", fightRole: "own", fightSelectedId: null,
   fightSelectedLevel: 1, fightTeam: [], fightBaseline: {},
-  encounterData: null, encounterField: null, encounterTS: 3, encounterResult: null
+  encounterData: null, encounterField: null, encounterTS: 3, encounterResult: null,
+  mapData: null, mapActiveArea: null, mapSymbolLayers: new Set(), mapSelectedField: null, mapLayerSearch: ""
 };
 
 const $ = s => document.querySelector(s);
@@ -240,6 +241,203 @@ function transferEncounterToFight(){
   toast(`${added} ${added===1?"Pokémon":"Pokémon"} als Gegner übernommen`);
 }
 
+
+/* ---------- Weltkarte ---------- */
+const mapRuntime = {
+  ctx:null, width:0, height:0, dpr:1, baseCell:28, offsetX:0, offsetY:0,
+  zoom:1, panX:0, panY:0, minZoom:.75, maxZoom:5.5,
+  pointers:new Map(), moved:false, pinching:false, lastPinchDist:0
+};
+function mapFieldById(id){ return app.mapData?.fields?.find(f=>f.id===id) || null; }
+function mapEncounterCode(field){
+  const code=String(field?.id||"").slice(0,3);
+  return app.encounterData?.fieldCodes?.includes(code) ? code : null;
+}
+function mapWorldRect(field){
+  const grid=app.mapData?.grid||{width:1,height:1};
+  return {
+    x:mapRuntime.offsetX + field.x*mapRuntime.baseCell,
+    y:mapRuntime.offsetY + (grid.height-field.y-1)*mapRuntime.baseCell,
+    w:mapRuntime.baseCell, h:mapRuntime.baseCell
+  };
+}
+function resizeMapCanvas(reset=false){
+  const canvas=$("#mapCanvas");
+  if(!canvas || !app.mapData) return;
+  const rect=canvas.getBoundingClientRect();
+  if(rect.width<20 || rect.height<20) return;
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  mapRuntime.width=rect.width; mapRuntime.height=rect.height; mapRuntime.dpr=dpr;
+  canvas.width=Math.round(rect.width*dpr); canvas.height=Math.round(rect.height*dpr);
+  const grid=app.mapData.grid;
+  const margin=Math.max(12,Math.min(rect.width,rect.height)*.04);
+  mapRuntime.baseCell=Math.max(8,Math.min((rect.width-margin*2)/grid.width,(rect.height-margin*2)/grid.height));
+  mapRuntime.offsetX=(rect.width-grid.width*mapRuntime.baseCell)/2;
+  mapRuntime.offsetY=(rect.height-grid.height*mapRuntime.baseCell)/2;
+  if(reset){ mapRuntime.zoom=1; mapRuntime.panX=0; mapRuntime.panY=0; }
+  drawMap();
+}
+function resetMapViewport(){ resizeMapCanvas(true); toast("Karte zentriert"); }
+function drawMapSymbol(ctx,cx,cy,bw,bh,s){
+  ctx.save();
+  ctx.fillStyle=s.color||"#000"; ctx.strokeStyle="rgba(20,32,43,.72)"; ctx.lineWidth=1/Math.max(.001,mapRuntime.zoom);
+  const typ=String(s.shape||"").toLowerCase();
+  if(typ.includes("sech")||typ.includes("hex")){
+    ctx.beginPath();
+    for(let i=0;i<6;i++){ const a=Math.PI/3*i-Math.PI/6; const x=cx+(bw/2)*Math.cos(a), y=cy+(bh/2)*Math.sin(a); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }
+    ctx.closePath(); ctx.fill(); ctx.stroke();
+  } else if(typ.includes("kreis")||typ.includes("circle")||typ.includes("rund")){
+    ctx.beginPath(); ctx.arc(cx,cy,Math.max(1,Math.min(bw,bh)/2),0,Math.PI*2); ctx.fill(); ctx.stroke();
+  } else if(typ.includes("drei")||typ.includes("tri")){
+    ctx.beginPath(); ctx.moveTo(cx,cy-bh/2); ctx.lineTo(cx-bw/2,cy+bh/2); ctx.lineTo(cx+bw/2,cy+bh/2); ctx.closePath(); ctx.fill(); ctx.stroke();
+  } else { ctx.fillRect(cx-bw/2,cy-bh/2,bw,bh); ctx.strokeRect(cx-bw/2,cy-bh/2,bw,bh); }
+  ctx.restore();
+}
+function drawMap(){
+  const canvas=$("#mapCanvas"); if(!canvas || !app.mapData) return;
+  const ctx=mapRuntime.ctx || (mapRuntime.ctx=canvas.getContext("2d"));
+  const dpr=mapRuntime.dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,mapRuntime.width,mapRuntime.height);
+  ctx.fillStyle="#eef2f6"; ctx.fillRect(0,0,mapRuntime.width,mapRuntime.height);
+  ctx.setTransform(dpr*mapRuntime.zoom,0,0,dpr*mapRuntime.zoom,dpr*mapRuntime.panX,dpr*mapRuntime.panY);
+
+  const area=app.mapActiveArea ? app.mapData.layers?.[app.mapActiveArea] : null;
+  const areaColors=new Map((area?.entries||[]).map(e=>[e.fieldId,e.color]));
+  for(const f of app.mapData.fields){
+    const r=mapWorldRect(f); const fill=areaColors.get(f.id)||f.color||"#fff";
+    ctx.fillStyle=fill; ctx.fillRect(r.x,r.y,r.w,r.h);
+  }
+  ctx.strokeStyle="rgba(89,101,116,.42)"; ctx.lineWidth=1/Math.max(.001,mapRuntime.zoom);
+  for(const f of app.mapData.fields){ const r=mapWorldRect(f); ctx.strokeRect(r.x+.5/mapRuntime.zoom,r.y+.5/mapRuntime.zoom,r.w,r.h); }
+
+  if(mapRuntime.zoom>=1.35){
+    ctx.textBaseline="top"; ctx.fillStyle="rgba(31,45,58,.72)"; ctx.font=`${Math.max(4.7,7/mapRuntime.zoom)}px system-ui,sans-serif`;
+    for(const f of app.mapData.fields){ const r=mapWorldRect(f); ctx.fillText(f.id,r.x+2/mapRuntime.zoom,r.y+2/mapRuntime.zoom); }
+  }
+  if(mapRuntime.zoom>=2.65){
+    ctx.textBaseline="bottom"; ctx.fillStyle="rgba(20,32,43,.88)"; ctx.font=`600 ${Math.max(4.8,7.6/mapRuntime.zoom)}px system-ui,sans-serif`;
+    for(const f of app.mapData.fields){ const r=mapWorldRect(f); const label=String(f.name||"").slice(0,20); ctx.fillText(label,r.x+2/mapRuntime.zoom,r.y+r.h-2/mapRuntime.zoom); }
+  }
+
+  for(const layerName of app.mapSymbolLayers){
+    const layer=app.mapData.layers?.[layerName]; if(!layer) continue;
+    for(const sym of layer.entries||[]){
+      const f=mapFieldById(sym.fieldId); if(!f) continue; const r=mapWorldRect(f);
+      const cx=r.x+(Number(sym.posX)||0)/100*r.w, cy=r.y+(Number(sym.posY)||0)/100*r.h;
+      const bw=(Number(sym.width)||0)/100*r.w, bh=(Number(sym.height)||0)/100*r.h;
+      if(bw>0&&bh>0) drawMapSymbol(ctx,cx,cy,bw,bh,sym);
+    }
+  }
+
+  if(app.mapSelectedField){
+    const r=mapWorldRect(app.mapSelectedField);
+    ctx.strokeStyle="#ff4b48"; ctx.lineWidth=3/Math.max(.001,mapRuntime.zoom); ctx.strokeRect(r.x+1.5/mapRuntime.zoom,r.y+1.5/mapRuntime.zoom,r.w-3/mapRuntime.zoom,r.h-3/mapRuntime.zoom);
+  }
+  ctx.setTransform(1,0,0,1,0,0);
+}
+function mapLocalPoint(clientX,clientY){ const r=$("#mapCanvas").getBoundingClientRect(); return {x:clientX-r.left,y:clientY-r.top}; }
+function mapScreenToWorld(localX,localY){ return {x:(localX-mapRuntime.panX)/mapRuntime.zoom,y:(localY-mapRuntime.panY)/mapRuntime.zoom}; }
+function mapFieldAt(clientX,clientY){
+  const p=mapLocalPoint(clientX,clientY), w=mapScreenToWorld(p.x,p.y);
+  for(const f of app.mapData?.fields||[]){ const r=mapWorldRect(f); if(w.x>=r.x&&w.x<=r.x+r.w&&w.y>=r.y&&w.y<=r.y+r.h) return f; }
+  return null;
+}
+function mapFieldTags(field){
+  const tags=[];
+  for(const [name,layer] of Object.entries(app.mapData?.layers||{})){
+    if(layer.type!=="symbol") continue;
+    for(const e of layer.entries||[]) if(e.fieldId===field.id && e.name) tags.push(e.name);
+  }
+  if(app.mapActiveArea){
+    const layer=app.mapData.layers?.[app.mapActiveArea];
+    if(layer?.entries?.some(e=>e.fieldId===field.id)) tags.unshift(`${app.mapActiveArea} · Vorkommen`);
+  }
+  return [...new Set(tags)];
+}
+function updateMapFieldCard(){
+  const f=app.mapSelectedField, card=$("#mapFieldCard"); if(!card) return;
+  card.classList.toggle("hidden",!f); if(!f) return;
+  $("#mapFieldId").textContent=f.id; $("#mapFieldName").textContent=f.name||f.id; $("#mapFieldDescription").textContent=f.description||"Keine Beschreibung hinterlegt.";
+  const code=mapEncounterCode(f); $("#mapFieldEncounterCode").textContent=code?`Generator: ${code}`:"Kein Generator";
+  const tags=mapFieldTags(f); $("#mapFieldTags").innerHTML=tags.map(t=>`<span>${escapeHtml(t)}</span>`).join("");
+  $("#mapToEncounterBtn").classList.toggle("hidden",!code);
+}
+function openMapField(field){ app.mapSelectedField=field; updateMapFieldCard(); drawMap(); }
+function closeMapField(){ app.mapSelectedField=null; updateMapFieldCard(); drawMap(); }
+function updateMapLayerStatus(){
+  const parts=[]; if(app.mapActiveArea) parts.push(app.mapActiveArea); parts.push(...app.mapSymbolLayers);
+  const el=$("#mapLayerStatus"); if(el) el.textContent=parts.length?parts.join(" + "):"Basis-Karte";
+}
+function renderMapLayerMenu(){
+  const wrap=$("#mapLayerGroups"); if(!wrap||!app.mapData) return;
+  const q=app.mapLayerSearch.trim().toLowerCase();
+  const html=[];
+  for(const group of app.mapData.groups||[]){
+    const items=(group.items||[]).filter(i=>!q || `${i.name} ${group.name}`.toLowerCase().includes(q));
+    if(!items.length) continue;
+    html.push(`<details class="map-layer-group" ${q||group.name==="Allgemein"?"open":""}><summary><span>${escapeHtml(group.name)}</span><small>${items.length}</small></summary><div class="map-layer-items">${items.map(i=>{
+      const active=i.type==="area"?app.mapActiveArea===i.layer:app.mapSymbolLayers.has(i.layer);
+      return `<button type="button" class="map-layer-item ${active?"active":""}" data-map-layer="${escapeHtml(i.layer)}" data-map-layer-type="${i.type}"><span class="map-layer-swatch" style="${i.type==="symbol"?"":"--swatch:"+(app.mapData.layers?.[i.layer]?.entries?.[0]?.color||"#ccd3da")}">${i.type==="symbol"?(active?"✓":"○"):""}</span><span>${escapeHtml(i.name)}</span><b>${active?"Aktiv":""}</b></button>`;
+    }).join("")}</div></details>`);
+  }
+  wrap.innerHTML=html.join("")||`<div class="diff-empty">Kein Layer gefunden.</div>`;
+}
+function setMapLayer(name,type){
+  if(type==="area") app.mapActiveArea=app.mapActiveArea===name?null:name;
+  else { if(app.mapSymbolLayers.has(name)) app.mapSymbolLayers.delete(name); else app.mapSymbolLayers.add(name); }
+  updateMapLayerStatus(); renderMapLayerMenu(); updateMapFieldCard(); drawMap();
+}
+function clearMapLayers(){ app.mapActiveArea=null; app.mapSymbolLayers.clear(); updateMapLayerStatus(); renderMapLayerMenu(); updateMapFieldCard(); drawMap(); toast("Alle Layer ausgeschaltet"); }
+function renderMap(){
+  if(!app.mapData) return;
+  updateMapLayerStatus(); renderMapLayerMenu(); updateMapFieldCard();
+  requestAnimationFrame(()=>resizeMapCanvas(false));
+}
+function setupMapCanvas(){
+  const canvas=$("#mapCanvas"); if(!canvas) return;
+  canvas.addEventListener("pointerdown",e=>{
+    canvas.setPointerCapture?.(e.pointerId);
+    mapRuntime.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY});
+    if(mapRuntime.pointers.size===1){ mapRuntime.moved=false; mapRuntime.pinching=false; }
+    if(mapRuntime.pointers.size>=2){
+      mapRuntime.pinching=true; mapRuntime.moved=true;
+      const pts=[...mapRuntime.pointers.values()]; mapRuntime.lastPinchDist=Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y);
+    }
+  });
+  canvas.addEventListener("pointermove",e=>{
+    const prev=mapRuntime.pointers.get(e.pointerId); if(!prev) return;
+    const dx=e.clientX-prev.x, dy=e.clientY-prev.y;
+    mapRuntime.pointers.set(e.pointerId,{...prev,x:e.clientX,y:e.clientY});
+    if(mapRuntime.pointers.size===1 && !mapRuntime.pinching){
+      const p=mapRuntime.pointers.get(e.pointerId); if(Math.hypot(p.x-p.startX,p.y-p.startY)>5) mapRuntime.moved=true;
+      mapRuntime.panX+=dx; mapRuntime.panY+=dy; drawMap();
+    } else if(mapRuntime.pointers.size>=2){
+      mapRuntime.pinching=true; mapRuntime.moved=true;
+      const pts=[...mapRuntime.pointers.values()];
+      const dist=Math.hypot(pts[1].x-pts[0].x,pts[1].y-pts[0].y);
+      const centerClient={x:(pts[0].x+pts[1].x)/2,y:(pts[0].y+pts[1].y)/2}; const center=mapLocalPoint(centerClient.x,centerClient.y);
+      if(mapRuntime.lastPinchDist>0 && dist>0){
+        const world=mapScreenToWorld(center.x,center.y); const next=Math.max(mapRuntime.minZoom,Math.min(mapRuntime.maxZoom,mapRuntime.zoom*(dist/mapRuntime.lastPinchDist)));
+        mapRuntime.zoom=next; mapRuntime.panX=center.x-world.x*next; mapRuntime.panY=center.y-world.y*next; drawMap();
+      }
+      mapRuntime.lastPinchDist=dist;
+    }
+  });
+  canvas.addEventListener("pointerup",e=>{
+    const before=mapRuntime.pointers.size; const wasPinching=mapRuntime.pinching; const moved=mapRuntime.moved;
+    mapRuntime.pointers.delete(e.pointerId); canvas.releasePointerCapture?.(e.pointerId);
+    if(before===1 && !wasPinching && !moved){ const f=mapFieldAt(e.clientX,e.clientY); if(f) openMapField(f); else closeMapField(); }
+    if(mapRuntime.pointers.size<2){ mapRuntime.pinching=false; mapRuntime.lastPinchDist=0; }
+    if(mapRuntime.pointers.size===0) mapRuntime.moved=false;
+  });
+  canvas.addEventListener("pointercancel",e=>{ mapRuntime.pointers.delete(e.pointerId); if(mapRuntime.pointers.size<2) mapRuntime.pinching=false; });
+  canvas.addEventListener("wheel",e=>{
+    e.preventDefault(); const local=mapLocalPoint(e.clientX,e.clientY), world=mapScreenToWorld(local.x,local.y); const factor=e.deltaY<0?1.12:.9;
+    const next=Math.max(mapRuntime.minZoom,Math.min(mapRuntime.maxZoom,mapRuntime.zoom*factor)); mapRuntime.zoom=next; mapRuntime.panX=local.x-world.x*next; mapRuntime.panY=local.y-world.y*next; drawMap();
+  },{passive:false});
+  window.addEventListener("resize",()=>{ if(app.view==="map") resizeMapCanvas(false); });
+}
+
 function fightPokemon(id){ return app.pokemon.find(p=>p.id===Number(id)) || null; }
 function newFightUid(){ return (globalThis.crypto?.randomUUID?.() || `fight-${Date.now()}-${Math.random().toString(36).slice(2)}`); }
 function loadFightState(id){
@@ -297,16 +495,18 @@ function renderDiffList(target,counts,emptyText){
 }
 function showModule(view){
   if(!app.player){ showNoPlayer(); return; }
-  app.view=view==="fight"?"fight":view==="encounter"?"encounter":"dex";
+  app.view=["dex","map","encounter","fight"].includes(view)?view:"dex";
   app.selectedId=null;
   $("#detailView").classList.add("hidden");
   $("#mainView").classList.toggle("hidden",app.view!=="dex");
+  $("#mapView").classList.toggle("hidden",app.view!=="map");
   $("#encounterView").classList.toggle("hidden",app.view!=="encounter");
   $("#fightView").classList.toggle("hidden",app.view!=="fight");
-  $("#brandLabel").textContent=app.view==="fight"?"Kampf":app.view==="encounter"?"Begegnung":"Dex";
+  $("#brandLabel").textContent=app.view==="fight"?"Kampf":app.view==="encounter"?"Begegnung":app.view==="map"?"Karte":"Dex";
   $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module===app.view));
   if(app.view==="fight") renderFight();
   else if(app.view==="encounter") renderEncounter();
+  else if(app.view==="map") renderMap();
   else renderGrid();
   window.scrollTo({top:0,behavior:"instant"});
 }
@@ -386,8 +586,10 @@ async function init(){
     app.encounterData=await loadJson("data/encounters.json");
     app.encounterField=app.encounterData.fieldCodes?.[0]||null;
   } catch(err){ console.warn("Zufallsdaten nicht geladen",err); app.encounterData=null; }
+  try { app.mapData=await loadJson("data/map.json"); }
+  catch(err){ console.warn("Kartendaten nicht geladen",err); app.mapData=null; }
 
-  buildTypeStrip(); bindEvents();
+  buildTypeStrip(); bindEvents(); setupMapCanvas();
   onAuthStateChanged(auth, async user=>{
     app.user=user||null; app.isAdmin=!!user && user.uid===ADMIN_UID;
     updateAuthUI();
@@ -404,7 +606,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=5.0").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=6.0").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
@@ -424,9 +626,9 @@ async function selectPlayer(id,close=true){
     app.publishedState=normalizeState(data.pokemon||{});
     app.state=clone(app.publishedState);
     localStorage.setItem(playerKey(id),JSON.stringify(app.state));
-    app.selectedId=null; app.editMode=app.isAdmin && app.editMode; app.view="dex"; app.encounterResult=null; loadFightState(id);
+    app.selectedId=null; app.editMode=app.isAdmin && app.editMode; app.view="dex"; app.encounterResult=null; app.mapSelectedField=null; loadFightState(id);
     history.replaceState(null,"",`${location.pathname}?player=${encodeURIComponent(id)}`);
-    $("#mainView").classList.remove("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
+    $("#mainView").classList.remove("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
     $("#brandLabel").textContent="Dex"; $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module==="dex"));
     if(close) closeSheets();
     render();
@@ -436,8 +638,8 @@ async function selectPlayer(id,close=true){
     const cached=localStorage.getItem(playerKey(id));
     if(cached){
       app.player={id,name:"Offline-Spielstand"};
-      app.state=normalizeState(JSON.parse(cached)); app.publishedState=clone(app.state); app.view="dex"; app.encounterResult=null; loadFightState(id);
-      $("#mainView").classList.remove("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
+      app.state=normalizeState(JSON.parse(cached)); app.publishedState=clone(app.state); app.view="dex"; app.encounterResult=null; app.mapSelectedField=null; loadFightState(id);
+      $("#mainView").classList.remove("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
       toast("Offline-Kopie geladen");
       render();
       return true;
@@ -449,7 +651,7 @@ async function selectPlayer(id,close=true){
 
 function showNoPlayer(msg="Öffne deinen persönlichen Spieler-Link. Als Spielleiter kannst du dich über ☰ anmelden."){
   app.player=null; app.state={}; app.publishedState={}; app.selectedId=null; app.fightTeam=[]; app.fightBaseline={}; app.encounterResult=null;
-  $("#detailView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#moduleNav").classList.add("hidden"); $("#noPlayerView").classList.remove("hidden");
+  $("#detailView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#moduleNav").classList.add("hidden"); $("#noPlayerView").classList.remove("hidden");
   $("#noPlayerText").textContent=msg;
 }
 
@@ -470,7 +672,7 @@ function filteredPokemon(){
 function render(){
   if(app.player){
     $("#playerNameTop").textContent=app.player.name; $("#playerAvatar").textContent=initials(app.player.name); $("#welcomeLabel").textContent=`${app.player.name}s Dex`;
-    renderStats(); renderGrid(); if(app.view==="fight") renderFight(); else if(app.view==="encounter") renderEncounter();
+    renderStats(); renderGrid(); if(app.view==="fight") renderFight(); else if(app.view==="encounter") renderEncounter(); else if(app.view==="map") renderMap();
   } else { $("#playerNameTop").textContent=app.isAdmin?"Spieler wählen":"Dex"; $("#playerAvatar").textContent=app.isAdmin?"A":"?"; }
   renderPlayerList(); updateAuthUI();
   $("#editModeToggle").checked=app.editMode;
@@ -491,7 +693,7 @@ function renderPlayerList(){
   wrap.innerHTML=app.players.map(p=>`<button class="player-option ${app.player?.id===p.id?"active":""}" data-player="${p.id}"><span class="player-avatar">${initials(p.name)}</span><span><strong>${escapeHtml(p.name)}</strong><small>${app.player?.id===p.id?"Aktuell ausgewählt":"Dex öffnen"}</small></span></button>`).join("")||`<div class="notice"><strong>Noch keine Spieler</strong><p>Importiere zuerst deine JSON-Spielstände über <code>admin-import.html</code>.</p></div>`;
 }
 
-function openDetail(id){ app.view="dex"; app.selectedId=Number(id); app.activeTab="info"; $("#mainView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#detailView").classList.remove("hidden"); window.scrollTo({top:0,behavior:"instant"}); renderDetail(); }
+function openDetail(id){ app.view="dex"; app.selectedId=Number(id); app.activeTab="info"; $("#mainView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#detailView").classList.remove("hidden"); window.scrollTo({top:0,behavior:"instant"}); renderDetail(); }
 function closeDetail(){ app.selectedId=null; $("#detailView").classList.add("hidden"); $("#mainView").classList.remove("hidden"); app.view="dex"; renderGrid(); }
 function selectedPokemon(){ return app.pokemon.find(p=>p.id===app.selectedId); }
 
@@ -658,6 +860,13 @@ function bindEvents(){
   $("#ownedToggle").addEventListener("change",e=>mutateSelected(s=>s.owned=e.target.checked)); $("#favoriteToggle").addEventListener("change",e=>mutateSelected(s=>s.favorite=e.target.checked)); $("#levelSlider").addEventListener("input",e=>mutateSelected(s=>s.level=+e.target.value)); $$(".stepper [data-ep]").forEach(b=>b.addEventListener("click",()=>changeEP(+b.dataset.ep)));
   $("#evolutionContent").addEventListener("click",e=>{const b=e.target.closest("[data-evo-id]"); if(!b)return; app.selectedId=+b.dataset.evoId; app.activeTab="entwicklung"; window.scrollTo({top:0,behavior:"smooth"}); renderDetail();});
   $("#moduleNav").addEventListener("click",e=>{const b=e.target.closest("[data-module]");if(b)showModule(b.dataset.module);});
+  $("#mapLayerBtn").addEventListener("click",()=>{renderMapLayerMenu();openSheet("#mapLayerSheet");});
+  $("#mapCenterBtn").addEventListener("click",resetMapViewport);
+  $("#mapFieldClose").addEventListener("click",closeMapField);
+  $("#mapToEncounterBtn").addEventListener("click",()=>{const code=mapEncounterCode(app.mapSelectedField);if(!code)return;app.encounterField=code;app.encounterResult=null;showModule("encounter");});
+  $("#mapClearLayers").addEventListener("click",clearMapLayers);
+  $("#mapLayerSearch").addEventListener("input",e=>{app.mapLayerSearch=e.target.value;renderMapLayerMenu();});
+  $("#mapLayerGroups").addEventListener("click",e=>{const b=e.target.closest("[data-map-layer]");if(!b)return;setMapLayer(b.dataset.mapLayer,b.dataset.mapLayerType);});
   $("#encounterFieldSelect").addEventListener("change",e=>{app.encounterField=e.target.value;app.encounterResult=null;renderEncounter();});
   $("#encounterTSButtons").addEventListener("click",e=>{const b=e.target.closest("[data-encounter-ts]");if(!b)return;app.encounterTS=+b.dataset.encounterTs;app.encounterResult=null;renderEncounter();});
   $("#encounterStartBtn").addEventListener("click",generateEncounter);
