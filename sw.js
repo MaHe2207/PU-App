@@ -1,4 +1,4 @@
-const CACHE="pu-dex-v6-2-20260929";
+const CACHE="pu-dex-v7-20260929";
 const CORE=[
   "./",
   "./index.html",
@@ -12,6 +12,7 @@ const CORE=[
   "./assets/icons/apple-touch-icon.png",
   "./data/pokemon.json",
   "./data/attacks.json",
+  "./data/attack-cards.json",
   "./data/evolutions.json",
   "./data/encounters.json",
   "./data/map.json"

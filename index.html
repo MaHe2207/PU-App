@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>PU Dex</title>
-  <link rel="manifest" href="manifest.webmanifest?v=6.0">
+  <link rel="manifest" href="manifest.webmanifest?v=7.0">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=6.0">
+  <link rel="stylesheet" href="styles.css?v=7.0">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -366,11 +366,54 @@
       </section>
     </main>
 
+
+
+    <main id="libraryView" class="library-view hidden">
+      <section class="hero library-hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Spielmaterial · Nachschlagewerk</p>
+          <h1>Kartenwissen griffbereit.</h1>
+          <p>Attacken durchsuchen, Effekte nachlesen und direkt sehen, welche Pokémon eine Karte verwenden.</p>
+        </div>
+        <div class="library-orb" aria-hidden="true">▤</div>
+      </section>
+
+      <section class="library-stats" aria-label="Kartenübersicht">
+        <article><span>⚔</span><div><strong id="libraryCardCount">0</strong><small>Attacken</small></div></article>
+        <article><span>▦</span><div><strong id="librarySetCount">0</strong><small>Karten im Vorrat</small></div></article>
+        <article><span>⌁</span><div><strong id="libraryResultCount">0</strong><small>Treffer</small></div></article>
+      </section>
+
+      <section class="library-panel">
+        <label class="library-search">
+          <span aria-hidden="true">⌕</span>
+          <input id="librarySearch" type="search" placeholder="Attacke oder Effekt suchen…" autocomplete="off">
+        </label>
+        <div class="library-kind-filter" id="libraryKindFilter" aria-label="Kartenart">
+          <button class="active" data-card-kind="all" type="button">Alle</button>
+          <button data-card-kind="attack" type="button">Angriff</button>
+          <button data-card-kind="defense" type="button">Verteidigung</button>
+          <button data-card-kind="versatile" type="button">Vielseitig</button>
+          <button data-card-kind="scheme" type="button">Planung</button>
+        </div>
+        <div class="library-type-strip" id="libraryTypeStrip" aria-label="Attackentyp"></div>
+      </section>
+
+      <section class="section-head library-head">
+        <div><p class="eyebrow">Attackenkarten</p><h2 id="libraryHeading">Alle Karten</h2></div>
+        <button class="text-btn" id="libraryClearBtn" type="button">Filter löschen</button>
+      </section>
+      <section class="library-grid" id="libraryGrid" aria-live="polite"></section>
+      <p class="empty-state hidden" id="libraryEmpty">Keine Attackenkarten gefunden.</p>
+      <p class="library-source-note">Kartendaten wurden einmalig aus deinen bereitgestellten Attackenkarten-PDFs strukturiert. Die App verwendet die PDFs selbst nicht.</p>
+    </main>
+
     <nav class="app-nav hidden" id="moduleNav" aria-label="App-Bereiche">
       <button class="active" data-module="dex" type="button"><span>◉</span><small>Dex</small></button>
       <button data-module="map" type="button"><span>⌖</span><small>Karte</small></button>
       <button data-module="encounter" type="button"><span>🎲</span><small>Begegnung</small></button>
       <button data-module="fight" type="button"><span>⚔</span><small>Kampf</small></button>
+      <button data-module="library" type="button"><span>▤</span><small>Bibliothek</small></button>
     </nav>
 
     <div class="sheet-backdrop hidden" id="sheetBackdrop"></div>
@@ -400,6 +443,14 @@
       <div id="playerList" class="player-list"></div>
     </aside>
 
+
+
+    <aside class="bottom-sheet card-detail-sheet hidden" id="cardDetailSheet" aria-label="Attackenkarte">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head"><div><p class="eyebrow" id="cardDetailEyebrow">Attackenkarte</p><h2 id="cardDetailName">Attacke</h2></div><button class="round-btn close-sheet" type="button">×</button></div>
+      <div id="cardDetailBody" class="card-detail-body"></div>
+    </aside>
+
     <aside class="bottom-sheet hidden" id="settingsSheet" aria-label="Dex Einstellungen">
       <div class="sheet-handle"></div>
       <div class="sheet-head"><div><p class="eyebrow">Einstellungen</p><h2>Dex verwalten</h2></div><button class="round-btn close-sheet" type="button">×</button></div>
@@ -425,11 +476,11 @@
         <button class="setting-button" id="installAppBtn" type="button"><span>▣</span><div><strong>App installieren</strong><small id="installAppStatus">Installationsstatus wird geprüft…</small></div></button>
         <a class="setting-button admin-link" href="admin-import.html"><span>＋</span><div><strong>Spielstände importieren</strong><small>Nur für den ersten Import oder neue Spieler</small></div></a>
       </div>
-      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v6.1</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung und Zufallsgenerator bleiben lokal auf dem jeweiligen Gerät und verändern keinen Spielstand.</p></div>
+      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v7.0</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung und Zufallsgenerator bleiben lokal auf dem jeweiligen Gerät und verändern keinen Spielstand.</p></div>
     </aside>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script type="module" src="app.js?v=6.2"></script>
+  <script type="module" src="app.js?v=7.0"></script>
 </body>
 </html>

@@ -1,7 +1,14 @@
-# PU Dex Firebase v6.2
+# PU v7 – Update
 
-Fix für das Speichern von Trainerpositionen.
+In GitHub ersetzen:
+- `index.html`
+- `app.js`
+- `styles.css`
+- `sw.js`
+- `manifest.webmanifest`
 
-In v6.1 wurde für die Kartenkonfiguration versehentlich die Firestore-Dokument-ID `__pu_map_config__` verwendet. Firestore reserviert IDs im Muster `__.*__`; deshalb schlug das Speichern fehl. v6.2 verwendet die gültige ID `pu_map_config`.
+Neu hinzufügen:
+- `data/attack-cards.json`
 
-Keine Änderung an Firestore-Regeln oder Spielerständen nötig.
+Neu: Kartenbibliothek, Attackendetails und korrekte physische Kartensatzmengen in der Kampfvorbereitung.
+Firebase/Spielstände müssen nicht geändert werden.

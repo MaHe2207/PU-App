@@ -21,7 +21,7 @@ const TYPE_COLORS = {
 };
 
 const app = {
-  pokemon: [], attacks: {}, evolutionGroups: [], players: [], player: null,
+  pokemon: [], attacks: {}, attackCards: [], attackCardMap: new Map(), evolutionGroups: [], players: [], player: null,
   state: {}, publishedState: {}, filter: "all", type: "Alle", search: "", editMode: false,
   selectedId: null, activeTab: "info", user: null, isAdmin: false,
   saveTimer: null, saving: false, dirty: false,
@@ -29,7 +29,8 @@ const app = {
   fightSelectedLevel: 1, fightTeam: [], fightBaseline: {},
   encounterData: null, encounterField: null, encounterTS: 3, encounterResult: null,
   mapData: null, mapActiveArea: null, mapSymbolLayers: new Set(), mapSelectedField: null, mapLayerSearch: "",
-  mapTrainerMoveId: null
+  mapTrainerMoveId: null,
+  librarySearch: "", libraryKind: "all", libraryType: "Alle", selectedCardName: null
 };
 
 const $ = s => document.querySelector(s);
@@ -62,6 +63,20 @@ function normalizeState(raw={}){
 function stateFor(p){ return app.state[p.name]||{owned:false,favorite:false,level:p.minLevel,ep:0}; }
 function cacheState(){ if(app.player) localStorage.setItem(playerKey(app.player.id), JSON.stringify(app.state)); }
 function attacksFor(p){ return app.attacks[p.name]||[]; }
+const CARD_KIND_LABELS={attack:"Angriff",defense:"Verteidigung",versatile:"Vielseitig",scheme:"Planung"};
+const CARD_KIND_ICONS={attack:"⚔",defense:"◆",versatile:"◈",scheme:"⚡"};
+const TIMING_LABELS={immediately:"IMMEDIATELY",duringCombat:"DURING COMBAT",afterCombat:"AFTER COMBAT",scheme:"PLANUNG",text:"EFFEKT"};
+function attackCard(name){ return app.attackCardMap.get(name)||null; }
+function cardSetSize(name){ const c=attackCard(name); return c?.detailsAvailable!==false && Number.isFinite(+c?.setSize) ? +c.setSize : 1; }
+function cardLearners(name){
+  const out=[];
+  for(const p of app.pokemon){
+    const hit=attacksFor(p).find(m=>m.name===name);
+    if(hit) out.push({pokemon:p,level:+hit.level});
+  }
+  return out.sort((a,b)=>a.level-b.level||a.pokemon.id-b.pokemon.id);
+}
+function cardTypeVars(type){ return typeVars(type||"Normal"); }
 function evolutionGroupFor(id){
   return app.evolutionGroups.find(g=>{
     if(g.kind==="branch") return g.root===id || (g.branches||[]).includes(id);
@@ -532,13 +547,13 @@ function loadFightState(id){
   try {
     const raw=JSON.parse(localStorage.getItem(fightKey(id))||"{}");
     if(Array.isArray(raw.team)) app.fightTeam=raw.team.map(m=>({uid:m.uid||newFightUid(),id:+m.id,level:+m.level,role:m.role==="opponent"?"opponent":"own",freeLevel:!!m.freeLevel})).filter(m=>fightPokemon(m.id));
-    if(raw.baseline&&typeof raw.baseline==="object") app.fightBaseline=Object.fromEntries(Object.entries(raw.baseline).filter(([,v])=>Number.isFinite(+v)&&+v>0).map(([k,v])=>[k,+v]));
+    if(raw.baseline&&typeof raw.baseline==="object") app.fightBaseline=Object.fromEntries(Object.entries(raw.baseline).filter(([,v])=>Number.isFinite(+v)&&+v>0).map(([k,v])=>[k,(raw.version>=7?+v:+v*cardSetSize(k))]));
   } catch(err){ console.warn("Kampfstand konnte nicht geladen werden",err); }
   ensureFightSelection(true);
 }
 function saveFightState(){
   if(!app.player) return;
-  localStorage.setItem(fightKey(app.player.id),JSON.stringify({team:app.fightTeam,baseline:app.fightBaseline}));
+  localStorage.setItem(fightKey(app.player.id),JSON.stringify({version:7,team:app.fightTeam,baseline:app.fightBaseline}));
 }
 function fightChoices(){
   if(app.fightSource==="favorite") return app.pokemon.filter(p=>stateFor(p).owned && stateFor(p).favorite);
@@ -559,9 +574,16 @@ function cardsForFightTeam(team=app.fightTeam){
   const counts={};
   for(const member of team){
     const p=fightPokemon(member.id); if(!p) continue;
-    for(const move of attacksFor(p)) if(move.level<=member.level) counts[move.name]=(counts[move.name]||0)+1;
+    for(const move of attacksFor(p)){
+      if(move.level>member.level) continue;
+      // Ein Pokémon benötigt immer den vollständigen Kartensatz dieser Attacke.
+      counts[move.name]=(counts[move.name]||0)+cardSetSize(move.name);
+    }
   }
   return counts;
+}
+function fightCardUsers(name,team=app.fightTeam){
+  return team.reduce((sum,member)=>{ const p=fightPokemon(member.id); return sum+(p&&attacksFor(p).some(m=>m.name===name&&m.level<=member.level)?1:0); },0);
 }
 function totalCopies(counts){ return Object.values(counts).reduce((sum,n)=>sum+(+n||0),0); }
 function sortedCardEntries(counts){ return Object.entries(counts).filter(([,n])=>n>0).sort((a,b)=>a[0].localeCompare(b[0],"de")); }
@@ -578,25 +600,28 @@ function diffFightCards(current,previous){
 }
 function renderDiffList(target,counts,emptyText){
   const rows=sortedCardEntries(counts);
-  target.innerHTML=rows.length?rows.map(([name,count])=>`<div class="diff-row"><span>${escapeHtml(name)}</span><strong>×${count}</strong></div>`).join(""):`<div class="diff-empty">${emptyText}</div>`;
+  target.innerHTML=rows.length?rows.map(([name,count])=>`<button class="diff-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span>${escapeHtml(name)}</span><strong>×${count}</strong></button>`).join(""):`<div class="diff-empty">${emptyText}</div>`;
 }
 function showModule(view){
   if(!app.player){ showNoPlayer(); return; }
-  app.view=["dex","map","encounter","fight"].includes(view)?view:"dex";
+  app.view=["dex","map","encounter","fight","library"].includes(view)?view:"dex";
   app.selectedId=null;
   $("#detailView").classList.add("hidden");
   $("#mainView").classList.toggle("hidden",app.view!=="dex");
   $("#mapView").classList.toggle("hidden",app.view!=="map");
   $("#encounterView").classList.toggle("hidden",app.view!=="encounter");
   $("#fightView").classList.toggle("hidden",app.view!=="fight");
-  $("#brandLabel").textContent=app.view==="fight"?"Kampf":app.view==="encounter"?"Begegnung":app.view==="map"?"Karte":"Dex";
+  $("#libraryView").classList.toggle("hidden",app.view!=="library");
+  $("#brandLabel").textContent=app.view==="fight"?"Kampf":app.view==="encounter"?"Begegnung":app.view==="map"?"Karte":app.view==="library"?"Bibliothek":"Dex";
   $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module===app.view));
   if(app.view==="fight") renderFight();
   else if(app.view==="encounter") renderEncounter();
   else if(app.view==="map") renderMap();
+  else if(app.view==="library") renderLibrary();
   else renderGrid();
   window.scrollTo({top:0,behavior:"instant"});
 }
+
 function renderFight(){
   if(!app.player) return;
   ensureFightSelection(false);
@@ -633,7 +658,7 @@ function renderFight(){
 
   const team=$("#fightTeamList");
   $("#fightTeamHeading").textContent=app.fightTeam.length?`${app.fightTeam.length} ${app.fightTeam.length===1?"Pokémon":"Pokémon"}`:"Noch kein Pokémon";
-  team.innerHTML=app.fightTeam.length?app.fightTeam.map((m,index)=>{ const mon=fightPokemon(m.id); const type=mon?.type||"Normal"; const learned=mon?attacksFor(mon).filter(a=>a.level<=m.level).length:0; return `<article class="fight-member" style="${typeVars(type)}"><div class="fight-member-art"><img src="${mon?.image||FALLBACK_IMAGE}" alt="${escapeHtml(mon?.name||"Pokémon")}" loading="lazy"></div><div class="fight-member-copy"><small>${m.role==="opponent"?"Gegner":"Mein Team"} · #${pad(mon?.id||0)}</small><strong>${escapeHtml(mon?.name||"Pokémon")}</strong><span>Lvl ${m.level} · ${learned} Attackenkarten</span></div><div class="fight-member-actions"><div class="mini-level"><button data-fight-step="-1" data-fight-uid="${m.uid}" type="button">−</button><b>${m.level}</b><button data-fight-step="1" data-fight-uid="${m.uid}" type="button">＋</button></div><button class="fight-remove" data-fight-remove="${m.uid}" type="button" aria-label="${escapeHtml(mon?.name||"Pokémon")} entfernen">×</button></div></article>`; }).join(""):`<div class="fight-empty"><span>⚔</span><strong>Team noch leer</strong><p>Füge oben Pokémon hinzu. Die benötigten Attackenkarten werden sofort berechnet.</p></div>`;
+  team.innerHTML=app.fightTeam.length?app.fightTeam.map((m,index)=>{ const mon=fightPokemon(m.id); const type=mon?.type||"Normal"; const learnedMoves=mon?attacksFor(mon).filter(a=>a.level<=m.level):[]; const copies=learnedMoves.reduce((sum,a)=>sum+cardSetSize(a.name),0); return `<article class="fight-member" style="${typeVars(type)}"><div class="fight-member-art"><img src="${mon?.image||FALLBACK_IMAGE}" alt="${escapeHtml(mon?.name||"Pokémon")}" loading="lazy"></div><div class="fight-member-copy"><small>${m.role==="opponent"?"Gegner":"Mein Team"} · #${pad(mon?.id||0)}</small><strong>${escapeHtml(mon?.name||"Pokémon")}</strong><span>Lvl ${m.level} · ${learnedMoves.length} Attacken · ${copies} Karten</span></div><div class="fight-member-actions"><div class="mini-level"><button data-fight-step="-1" data-fight-uid="${m.uid}" type="button">−</button><b>${m.level}</b><button data-fight-step="1" data-fight-uid="${m.uid}" type="button">＋</button></div><button class="fight-remove" data-fight-remove="${m.uid}" type="button" aria-label="${escapeHtml(mon?.name||"Pokémon")} entfernen">×</button></div></article>`; }).join(""):`<div class="fight-empty"><span>⚔</span><strong>Team noch leer</strong><p>Füge oben Pokémon hinzu. Die benötigten Attackenkarten werden sofort berechnet.</p></div>`;
   $$("#fightTeamList img").forEach(setImgFallback);
 
   const current=cardsForFightTeam(); const diff=diffFightCards(current,app.fightBaseline);
@@ -642,7 +667,11 @@ function renderFight(){
   for(const [sel,counts] of summaries){ const n=totalCopies(counts); $(sel).textContent=`${n} ${n===1?"Karte":"Karten"}`; }
   renderDiffList($("#fightAddList"),diff.add,"Nichts Neues holen"); renderDiffList($("#fightKeepList"),diff.keep,"Keine Karten bleiben"); renderDiffList($("#fightRemoveList"),diff.remove,"Nichts zurücklegen");
   const currentEntries=sortedCardEntries(current); const currentTotal=totalCopies(current); $("#fightCurrentBadge").textContent=`${currentTotal} ${currentTotal===1?"Karte":"Karten"}`;
-  $("#fightCurrentList").innerHTML=currentEntries.length?currentEntries.map(([name,count])=>`<div class="current-card-row"><span>${escapeHtml(name)}</span><strong>×${count}</strong></div>`).join(""):`<div class="diff-empty">Noch keine Attackenkarten benötigt.</div>`;
+  $("#fightCurrentList").innerHTML=currentEntries.length?currentEntries.map(([name,count])=>{
+    const users=fightCardUsers(name), setSize=cardSetSize(name);
+    const detail=users>0?`${users} Pokémon × Satz x${setSize}`:`Kartensatz x${setSize}`;
+    return `<button class="current-card-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span><b>${escapeHtml(name)}</b><small>${detail}</small></span><strong>×${count}</strong></button>`;
+  }).join(""):`<div class="diff-empty">Noch keine Attackenkarten benötigt.</div>`;
   saveFightState();
 }
 function addFightPokemon(){
@@ -667,6 +696,10 @@ async function init(){
 
   try { const data=await loadJson("data/attacks.json"); app.attacks=data.pokemon||data||{}; }
   catch(err){ console.warn("Attackendaten nicht geladen",err); app.attacks={}; }
+  try {
+    const data=await loadJson("data/attack-cards.json");
+    app.attackCards=data.cards||[]; app.attackCardMap=new Map(app.attackCards.map(c=>[c.name,c]));
+  } catch(err){ console.warn("Kartendetails nicht geladen",err); app.attackCards=[]; app.attackCardMap=new Map(); }
   try { const data=await loadJson("data/evolutions.json"); app.evolutionGroups=data.groups||[]; }
   catch(err){ console.warn("Entwicklungsdaten nicht geladen",err); app.evolutionGroups=[]; }
   try {
@@ -677,7 +710,7 @@ async function init(){
   catch(err){ console.warn("Kartendaten nicht geladen",err); app.mapData=null; }
   if(app.mapData) await loadMapTrainerConfig();
 
-  buildTypeStrip(); bindEvents(); setupMapCanvas();
+  buildTypeStrip(); buildLibraryTypeStrip(); bindEvents(); setupMapCanvas();
   onAuthStateChanged(auth, async user=>{
     app.user=user||null; app.isAdmin=!!user && user.uid===ADMIN_UID;
     updateAuthUI();
@@ -694,7 +727,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=6.1").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=7.0").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
@@ -716,7 +749,7 @@ async function selectPlayer(id,close=true){
     localStorage.setItem(playerKey(id),JSON.stringify(app.state));
     app.selectedId=null; app.editMode=app.isAdmin && app.editMode; app.view="dex"; app.encounterResult=null; app.mapSelectedField=null; loadFightState(id);
     history.replaceState(null,"",`${location.pathname}?player=${encodeURIComponent(id)}`);
-    $("#mainView").classList.remove("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
+    $("#mainView").classList.remove("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
     $("#brandLabel").textContent="Dex"; $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module==="dex"));
     if(close) closeSheets();
     render();
@@ -727,7 +760,7 @@ async function selectPlayer(id,close=true){
     if(cached){
       app.player={id,name:"Offline-Spielstand"};
       app.state=normalizeState(JSON.parse(cached)); app.publishedState=clone(app.state); app.view="dex"; app.encounterResult=null; app.mapSelectedField=null; loadFightState(id);
-      $("#mainView").classList.remove("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
+      $("#mainView").classList.remove("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
       toast("Offline-Kopie geladen");
       render();
       return true;
@@ -739,7 +772,7 @@ async function selectPlayer(id,close=true){
 
 function showNoPlayer(msg="Öffne deinen persönlichen Spieler-Link. Als Spielleiter kannst du dich über ☰ anmelden."){
   app.player=null; app.state={}; app.publishedState={}; app.selectedId=null; app.fightTeam=[]; app.fightBaseline={}; app.encounterResult=null;
-  $("#detailView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#moduleNav").classList.add("hidden"); $("#noPlayerView").classList.remove("hidden");
+  $("#detailView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#moduleNav").classList.add("hidden"); $("#noPlayerView").classList.remove("hidden");
   $("#noPlayerText").textContent=msg;
 }
 
@@ -760,7 +793,7 @@ function filteredPokemon(){
 function render(){
   if(app.player){
     $("#playerNameTop").textContent=app.player.name; $("#playerAvatar").textContent=initials(app.player.name); $("#welcomeLabel").textContent=`${app.player.name}s Dex`;
-    renderStats(); renderGrid(); if(app.view==="fight") renderFight(); else if(app.view==="encounter") renderEncounter(); else if(app.view==="map") renderMap();
+    renderStats(); renderGrid(); if(app.view==="fight") renderFight(); else if(app.view==="encounter") renderEncounter(); else if(app.view==="map") renderMap(); else if(app.view==="library") renderLibrary();
   } else { $("#playerNameTop").textContent=app.isAdmin?"Spieler wählen":"Dex"; $("#playerAvatar").textContent=app.isAdmin?"A":"?"; }
   renderPlayerList(); updateAuthUI();
   $("#editModeToggle").checked=app.editMode;
@@ -781,7 +814,7 @@ function renderPlayerList(){
   wrap.innerHTML=app.players.map(p=>`<button class="player-option ${app.player?.id===p.id?"active":""}" data-player="${p.id}"><span class="player-avatar">${initials(p.name)}</span><span><strong>${escapeHtml(p.name)}</strong><small>${app.player?.id===p.id?"Aktuell ausgewählt":"Dex öffnen"}</small></span></button>`).join("")||`<div class="notice"><strong>Noch keine Spieler</strong><p>Importiere zuerst deine JSON-Spielstände über <code>admin-import.html</code>.</p></div>`;
 }
 
-function openDetail(id){ app.view="dex"; app.selectedId=Number(id); app.activeTab="info"; $("#mainView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#detailView").classList.remove("hidden"); window.scrollTo({top:0,behavior:"instant"}); renderDetail(); }
+function openDetail(id){ app.view="dex"; app.selectedId=Number(id); app.activeTab="info"; $("#mainView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#detailView").classList.remove("hidden"); window.scrollTo({top:0,behavior:"instant"}); renderDetail(); }
 function closeDetail(){ app.selectedId=null; $("#detailView").classList.add("hidden"); $("#mainView").classList.remove("hidden"); app.view="dex"; renderGrid(); }
 function selectedPokemon(){ return app.pokemon.find(p=>p.id===app.selectedId); }
 
@@ -829,9 +862,69 @@ function renderAttackTab(p,s){
       lastLevel=m.level;
     }
     const ready=m.level<=s.level;
-    html.push(`<article class="attack-item ${ready?"unlocked":"locked"}"><span class="attack-level">${m.level}</span><div class="attack-name"><strong>${escapeHtml(m.name)}</strong><small>${ready?"Für dieses Level verfügbar":`Freischaltung ab Level ${m.level}`}</small></div><span class="attack-state" aria-label="${ready?"verfügbar":"gesperrt"}">${ready?"✓":"○"}</span></article>`);
+    const card=attackCard(m.name); const setText=card?.detailsAvailable!==false&&card?.setSize?` · Satz x${card.setSize}`:"";
+    html.push(`<button type="button" data-card-open="${escapeHtml(m.name)}" class="attack-item attack-item-button ${ready?"unlocked":"locked"}"><span class="attack-level">${m.level}</span><div class="attack-name"><strong>${escapeHtml(m.name)}</strong><small>${ready?"Für dieses Level verfügbar":`Freischaltung ab Level ${m.level}`}${setText}</small></div><span class="attack-state" aria-label="${ready?"verfügbar":"gesperrt"}">${ready?"✓":"○"}</span></button>`);
   }
   list.innerHTML=html.join("");
+}
+
+
+function buildLibraryTypeStrip(){
+  const types=["Alle",...new Set(app.attackCards.filter(c=>c.detailsAvailable!==false).map(c=>c.type).filter(Boolean))];
+  const el=$("#libraryTypeStrip"); if(!el) return;
+  el.innerHTML=types.map(t=>`<button type="button" class="library-type-chip ${t==="Alle"?"active":""}" data-library-type="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join("");
+}
+function filteredAttackCards(){
+  const q=app.librarySearch.trim().toLowerCase();
+  return app.attackCards.filter(c=>{
+    if(app.libraryKind!=="all"&&c.cardType!==app.libraryKind) return false;
+    if(app.libraryType!=="Alle"&&c.type!==app.libraryType) return false;
+    if(!q) return true;
+    const effect=(c.effects||[]).map(e=>e.text).join(" ");
+    return `${c.name} ${c.type||""} ${CARD_KIND_LABELS[c.cardType]||""} ${effect}`.toLowerCase().includes(q);
+  });
+}
+function renderLibrary(){
+  const list=filteredAttackCards();
+  const detailed=app.attackCards.filter(c=>c.detailsAvailable!==false);
+  $("#libraryCardCount").textContent=detailed.length;
+  $("#librarySetCount").textContent=detailed.reduce((sum,c)=>sum+(+c.setSize||0),0);
+  $("#libraryResultCount").textContent=list.length;
+  $("#libraryHeading").textContent=app.libraryType!=="Alle"?app.libraryType:(app.libraryKind!=="all"?CARD_KIND_LABELS[app.libraryKind]:"Alle Karten");
+  $("#libraryEmpty").classList.toggle("hidden",list.length!==0);
+  $$("#libraryKindFilter [data-card-kind]").forEach(b=>b.classList.toggle("active",b.dataset.cardKind===app.libraryKind));
+  $$("#libraryTypeStrip [data-library-type]").forEach(b=>b.classList.toggle("active",b.dataset.libraryType===app.libraryType));
+  $("#libraryGrid").innerHTML=list.map(c=>{
+    if(c.detailsAvailable===false) return `<button class="library-card missing" data-card-open="${escapeHtml(c.name)}" type="button"><div class="library-card-top"><span class="library-kind neutral">?</span><span class="library-type">${escapeHtml(c.type||"—")}</span></div><h3>${escapeHtml(c.name)}</h3><p>Für diese Attacke wurde in den bereitgestellten Attacken-PDFs keine passende Karte gefunden.</p></button>`;
+    const effects=(c.effects||[]).map(e=>e.text).join(" ");
+    return `<button class="library-card" data-card-open="${escapeHtml(c.name)}" type="button" style="${cardTypeVars(c.type)}"><div class="library-card-top"><span class="library-kind kind-${c.cardType}">${CARD_KIND_ICONS[c.cardType]||"•"} ${CARD_KIND_LABELS[c.cardType]||c.cardType}</span><span class="library-type">${escapeHtml(c.type)}</span></div><h3>${escapeHtml(c.name)}</h3><div class="library-card-values">${c.cardType!=="scheme"?`<span><small>Wert</small><b>${c.value}</b></span>`:""}<span><small>BOOST</small><b>${c.boost}</b></span><span><small>Kartensatz</small><b>x${c.setSize}</b></span></div>${effects?`<p>${escapeHtml(effects)}</p>`:'<p class="muted">Keine zusätzlichen Karteneffekte.</p>'}</button>`;
+  }).join("");
+}
+function resetLibraryFilters(){
+  app.librarySearch=""; app.libraryKind="all"; app.libraryType="Alle";
+  $("#librarySearch").value=""; renderLibrary();
+}
+function renderCardDetail(name){
+  const c=attackCard(name); if(!c) return;
+  app.selectedCardName=name;
+  $("#cardDetailName").textContent=c.name;
+  $("#cardDetailEyebrow").textContent=c.detailsAvailable===false?"Attacke · Datensatz fehlt":`${c.type} · ${CARD_KIND_LABELS[c.cardType]||"Karte"}`;
+  const learners=cardLearners(name);
+  if(c.detailsAvailable===false){
+    $("#cardDetailBody").innerHTML=`<div class="notice notice-muted"><strong>Keine Karteninformationen im PDF-Bestand</strong><p>${escapeHtml(c.note||"Für diese Attacke wurde keine passende Karte in den bereitgestellten Attacken-PDFs gefunden.")}</p></div>${renderLearnersHtml(learners)}`;
+    return;
+  }
+  const effects=(c.effects||[]).length?(c.effects||[]).map(e=>`<article class="card-effect"><small>${TIMING_LABELS[e.timing]||e.timing}</small><p>${escapeHtml(e.text)}</p></article>`).join(""):`<article class="card-effect empty"><small>EFFEKT</small><p>Keine zusätzlichen Karteneffekte.</p></article>`;
+  $("#cardDetailBody").innerHTML=`<section class="card-facts" style="${cardTypeVars(c.type)}"><div class="card-kind-hero kind-${c.cardType}"><span>${CARD_KIND_ICONS[c.cardType]||"•"}</span><strong>${CARD_KIND_LABELS[c.cardType]||c.cardType}</strong></div><div class="card-fact-grid">${c.cardType!=="scheme"?`<article><small>Wert</small><strong>${c.value}</strong></article>`:""}<article><small>BOOST</small><strong>${c.boost}</strong></article><article><small>Kartensatz</small><strong>x${c.setSize}</strong></article></div><p class="set-explain">Ein Pokémon mit dieser Attacke benötigt den vollständigen Satz aus <strong>${c.setSize} ${c.setSize===1?"Karte":"Karten"}</strong>.</p></section><section class="card-effect-list">${effects}</section>${renderLearnersHtml(learners)}`;
+}
+function renderLearnersHtml(learners){
+  if(!learners.length) return `<section class="card-learners"><div class="card-section-head"><p class="eyebrow">Zuordnung</p><h3>Lernbar von</h3></div><div class="notice notice-muted"><p>In Karten.xlsx ist diese Attacke keinem Pokémon zugeordnet.</p></div></section>`;
+  return `<section class="card-learners"><div class="card-section-head"><p class="eyebrow">Karten.xlsx</p><h3>Lernbar von <span>${learners.length}</span></h3></div><div class="card-learner-list">${learners.map(({pokemon,level})=>`<button type="button" data-card-pokemon="${pokemon.id}" style="${typeVars(pokemon.type)}"><img src="${pokemon.image}" alt="" loading="lazy"><span><strong>${escapeHtml(pokemon.name)}</strong><small>#${pad(pokemon.id)} · ab Level ${level}</small></span><b>Lv ${level}</b></button>`).join("")}</div></section>`;
+}
+function openCardDetail(name){
+  const c=attackCard(name); if(!c){ toast("Für diese Attacke fehlen Kartendetails"); return; }
+  renderCardDetail(name); openSheet("#cardDetailSheet");
+  $$("#cardDetailBody img").forEach(setImgFallback);
 }
 
 function evolutionCard(member){
@@ -973,6 +1066,14 @@ function bindEvents(){
   $("#fightClearTeamBtn").addEventListener("click",()=>{app.fightTeam=[];renderFight();toast("Team geleert");});
   $("#fightNewBattleBtn").addEventListener("click",startNextFight);
   $("#fightResetCompareBtn").addEventListener("click",()=>{app.fightBaseline={};renderFight();toast("Vergleich zurückgesetzt");});
+  $("#librarySearch").addEventListener("input",e=>{app.librarySearch=e.target.value;renderLibrary();});
+  $("#libraryKindFilter").addEventListener("click",e=>{const b=e.target.closest("[data-card-kind]");if(!b)return;app.libraryKind=b.dataset.cardKind;renderLibrary();});
+  $("#libraryTypeStrip").addEventListener("click",e=>{const b=e.target.closest("[data-library-type]");if(!b)return;app.libraryType=b.dataset.libraryType;renderLibrary();});
+  $("#libraryClearBtn").addEventListener("click",resetLibraryFilters);
+  document.addEventListener("click",e=>{
+    const card=e.target.closest("[data-card-open]"); if(card){ e.preventDefault(); openCardDetail(card.dataset.cardOpen); return; }
+    const mon=e.target.closest("[data-card-pokemon]"); if(mon){ closeSheets(); openDetail(+mon.dataset.cardPokemon); }
+  });
   $("#playerBtn").addEventListener("click",()=>openSheet(app.isAdmin?"#playerSheet":"#settingsSheet")); $("#settingsBtn").addEventListener("click",()=>openSheet("#settingsSheet")); $("#sheetBackdrop").addEventListener("click",closeSheets); $$(".close-sheet").forEach(b=>b.addEventListener("click",closeSheets));
   $("#playerList").addEventListener("click",e=>{const b=e.target.closest("[data-player]");if(b)selectPlayer(b.dataset.player);});
   $("#editModeToggle").addEventListener("change",e=>{if(!app.isAdmin){e.target.checked=false;toast("Admin-Anmeldung erforderlich");return;}app.editMode=e.target.checked;if(!app.editMode)app.mapTrainerMoveId=null;render();toast(app.editMode?"Bearbeitungsmodus aktiv":"Ansichtsmodus aktiv");});
