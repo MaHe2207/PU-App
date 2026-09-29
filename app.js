@@ -28,7 +28,8 @@ const app = {
   view: "dex", fightSource: "owned", fightRole: "own", fightSelectedId: null,
   fightSelectedLevel: 1, fightTeam: [], fightBaseline: {},
   encounterData: null, encounterField: null, encounterTS: 3, encounterResult: null,
-  mapData: null, mapActiveArea: null, mapSymbolLayers: new Set(), mapSelectedField: null, mapLayerSearch: ""
+  mapData: null, mapActiveArea: null, mapSymbolLayers: new Set(), mapSelectedField: null, mapLayerSearch: "",
+  mapTrainerMoveId: null
 };
 
 const $ = s => document.querySelector(s);
@@ -249,6 +250,42 @@ const mapRuntime = {
   pointers:new Map(), moved:false, pinching:false, lastPinchDist:0
 };
 function mapFieldById(id){ return app.mapData?.fields?.find(f=>f.id===id) || null; }
+function trainerLayer(){ return app.mapData?.layers?.Trainer || null; }
+function trainerEntries(){ return trainerLayer()?.entries || []; }
+function trainerById(id){ return trainerEntries().find(t=>t.symbolId===id) || null; }
+const MAP_CONFIG_DOC = "__pu_map_config__";
+const MAP_CONFIG_CACHE = "pu-map-trainer-locations-v1";
+function applyTrainerLocations(locations={}){
+  for(const trainer of trainerEntries()){
+    const fieldId=locations[trainer.symbolId];
+    if(fieldId && mapFieldById(fieldId)) trainer.fieldId=fieldId;
+  }
+}
+async function loadMapTrainerConfig(){
+  if(!app.mapData) return;
+  try { applyTrainerLocations(JSON.parse(localStorage.getItem(MAP_CONFIG_CACHE)||"{}")); } catch{}
+  try {
+    const snap=await getDoc(doc(db,"players",MAP_CONFIG_DOC));
+    if(!snap.exists()) return;
+    const locations=snap.data()?.trainerLocations || {};
+    applyTrainerLocations(locations);
+    localStorage.setItem(MAP_CONFIG_CACHE,JSON.stringify(locations));
+  } catch(err){ console.warn("Trainerpositionen konnten nicht geladen werden",err); }
+}
+async function saveMapTrainerConfig(){
+  if(!app.isAdmin) return false;
+  const trainerLocations=Object.fromEntries(trainerEntries().map(t=>[t.symbolId,t.fieldId]));
+  try {
+    await setDoc(doc(db,"players",MAP_CONFIG_DOC),{
+      name:"PU Kartenkonfiguration", kind:"map-config", trainerLocations, updatedAt:serverTimestamp()
+    },{merge:true});
+    localStorage.setItem(MAP_CONFIG_CACHE,JSON.stringify(trainerLocations));
+    return true;
+  } catch(err){
+    console.error("Trainerpositionen konnten nicht gespeichert werden",err);
+    return false;
+  }
+}
 function mapEncounterCode(field){
   const code=String(field?.id||"").slice(0,3);
   return app.encounterData?.fieldCodes?.includes(code) ? code : null;
@@ -364,6 +401,51 @@ function updateMapFieldCard(){
 }
 function openMapField(field){ app.mapSelectedField=field; updateMapFieldCard(); drawMap(); }
 function closeMapField(){ app.mapSelectedField=null; updateMapFieldCard(); drawMap(); }
+function renderTrainerEditList(){
+  const wrap=$("#trainerEditList"); if(!wrap) return;
+  const rows=trainerEntries();
+  wrap.innerHTML=rows.length?rows.map(t=>{
+    const f=mapFieldById(t.fieldId);
+    return `<button type="button" class="trainer-edit-row ${app.mapTrainerMoveId===t.symbolId?"active":""}" data-trainer-move="${escapeHtml(t.symbolId)}"><span class="trainer-dot"></span><span><strong>${escapeHtml(t.name||t.symbolId)}</strong><small>${escapeHtml(t.fieldId)}${f?.name?` · ${escapeHtml(f.name)}`:""}</small></span><b>${app.mapTrainerMoveId===t.symbolId?"Ausgewählt":"Verschieben"}</b></button>`;
+  }).join(""):`<div class="diff-empty">Keine Trainer hinterlegt.</div>`;
+}
+function renderMapTrainerEditUi(){
+  const allowed=app.isAdmin && app.editMode;
+  const btn=$("#mapTrainerEditBtn"), banner=$("#mapTrainerMoveBanner"), text=$("#mapTrainerMoveText");
+  if(btn) btn.classList.toggle("hidden",!allowed);
+  if(!allowed && app.mapTrainerMoveId) app.mapTrainerMoveId=null;
+  const trainer=allowed && app.mapTrainerMoveId ? trainerById(app.mapTrainerMoveId) : null;
+  if(banner) banner.classList.toggle("hidden",!trainer);
+  if(text && trainer){
+    const f=mapFieldById(trainer.fieldId);
+    text.textContent=`${trainer.name||trainer.symbolId} verschieben · aktuell ${trainer.fieldId}${f?.name?` (${f.name})`:""} · Zielfeld antippen`;
+  }
+  renderTrainerEditList();
+}
+function startTrainerMove(symbolId){
+  if(!app.isAdmin || !app.editMode){ toast("Bearbeitungsmodus erforderlich"); return; }
+  const trainer=trainerById(symbolId); if(!trainer) return;
+  app.mapTrainerMoveId=symbolId;
+  app.mapSymbolLayers.add("Trainer");
+  closeSheets(); updateMapLayerStatus(); renderMapLayerMenu(); renderMapTrainerEditUi(); drawMap();
+  toast(`${trainer.name||"Trainer"}: Zielfeld antippen`);
+}
+function cancelTrainerMove(){
+  if(!app.mapTrainerMoveId) return;
+  app.mapTrainerMoveId=null; renderMapTrainerEditUi(); drawMap(); toast("Verschieben abgebrochen");
+}
+async function moveSelectedTrainerToField(field){
+  const trainer=trainerById(app.mapTrainerMoveId);
+  if(!trainer || !field || !app.isAdmin || !app.editMode) return;
+  const oldFieldId=trainer.fieldId;
+  if(oldFieldId===field.id){ app.mapTrainerMoveId=null; app.mapSelectedField=field; renderMap(); toast(`${trainer.name||"Trainer"} steht bereits hier`); return; }
+  trainer.fieldId=field.id;
+  app.mapTrainerMoveId=null; app.mapSelectedField=field;
+  renderMap();
+  const ok=await saveMapTrainerConfig();
+  if(ok) toast(`${trainer.name||"Trainer"} → ${field.id}`);
+  else { trainer.fieldId=oldFieldId; renderMap(); toast("Trainerposition konnte nicht gespeichert werden"); }
+}
 function updateMapLayerStatus(){
   const parts=[]; if(app.mapActiveArea) parts.push(app.mapActiveArea); parts.push(...app.mapSymbolLayers);
   const el=$("#mapLayerStatus"); if(el) el.textContent=parts.length?parts.join(" + "):"Basis-Karte";
@@ -390,7 +472,7 @@ function setMapLayer(name,type){
 function clearMapLayers(){ app.mapActiveArea=null; app.mapSymbolLayers.clear(); updateMapLayerStatus(); renderMapLayerMenu(); updateMapFieldCard(); drawMap(); toast("Alle Layer ausgeschaltet"); }
 function renderMap(){
   if(!app.mapData) return;
-  updateMapLayerStatus(); renderMapLayerMenu(); updateMapFieldCard();
+  updateMapLayerStatus(); renderMapLayerMenu(); updateMapFieldCard(); renderMapTrainerEditUi();
   requestAnimationFrame(()=>resizeMapCanvas(false));
 }
 function setupMapCanvas(){
@@ -426,7 +508,12 @@ function setupMapCanvas(){
   canvas.addEventListener("pointerup",e=>{
     const before=mapRuntime.pointers.size; const wasPinching=mapRuntime.pinching; const moved=mapRuntime.moved;
     mapRuntime.pointers.delete(e.pointerId); canvas.releasePointerCapture?.(e.pointerId);
-    if(before===1 && !wasPinching && !moved){ const f=mapFieldAt(e.clientX,e.clientY); if(f) openMapField(f); else closeMapField(); }
+    if(before===1 && !wasPinching && !moved){
+      const f=mapFieldAt(e.clientX,e.clientY);
+      if(f && app.mapTrainerMoveId) moveSelectedTrainerToField(f);
+      else if(f) openMapField(f);
+      else closeMapField();
+    }
     if(mapRuntime.pointers.size<2){ mapRuntime.pinching=false; mapRuntime.lastPinchDist=0; }
     if(mapRuntime.pointers.size===0) mapRuntime.moved=false;
   });
@@ -588,6 +675,7 @@ async function init(){
   } catch(err){ console.warn("Zufallsdaten nicht geladen",err); app.encounterData=null; }
   try { app.mapData=await loadJson("data/map.json"); }
   catch(err){ console.warn("Kartendaten nicht geladen",err); app.mapData=null; }
+  if(app.mapData) await loadMapTrainerConfig();
 
   buildTypeStrip(); bindEvents(); setupMapCanvas();
   onAuthStateChanged(auth, async user=>{
@@ -606,13 +694,13 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=6.0").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=6.1").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
   try {
     const snap=await getDocs(collection(db,"players"));
-    app.players=snap.docs.map(d=>({id:d.id,name:d.data().name||"Spieler"})).sort((a,b)=>a.name.localeCompare(b.name,"de"));
+    app.players=snap.docs.filter(d=>d.id!==MAP_CONFIG_DOC && d.data()?.kind!=="map-config").map(d=>({id:d.id,name:d.data().name||"Spieler"})).sort((a,b)=>a.name.localeCompare(b.name,"de"));
   } catch(err){ console.error(err); toast("Spielerliste konnte nicht geladen werden"); }
 }
 
@@ -790,7 +878,8 @@ function updateAuthUI(){
   $("#loggedInBox").classList.toggle("hidden",!app.user);
   $("#loggedInText").textContent=app.user?(app.isAdmin?`Admin angemeldet: ${app.user.email||""}`:"Angemeldet, aber kein Admin"):"";
   $("#playerBtn").classList.toggle("admin-only-list",!app.isAdmin);
-  if(!app.isAdmin) app.editMode=false;
+  if(!app.isAdmin){ app.editMode=false; app.mapTrainerMoveId=null; }
+  renderMapTrainerEditUi();
 }
 async function doLogin(){
   const email=$("#adminEmail").value.trim(), password=$("#adminPassword").value;
@@ -861,6 +950,9 @@ function bindEvents(){
   $("#evolutionContent").addEventListener("click",e=>{const b=e.target.closest("[data-evo-id]"); if(!b)return; app.selectedId=+b.dataset.evoId; app.activeTab="entwicklung"; window.scrollTo({top:0,behavior:"smooth"}); renderDetail();});
   $("#moduleNav").addEventListener("click",e=>{const b=e.target.closest("[data-module]");if(b)showModule(b.dataset.module);});
   $("#mapLayerBtn").addEventListener("click",()=>{renderMapLayerMenu();openSheet("#mapLayerSheet");});
+  $("#mapTrainerEditBtn").addEventListener("click",()=>{renderTrainerEditList();openSheet("#trainerEditSheet");});
+  $("#trainerEditList").addEventListener("click",e=>{const b=e.target.closest("[data-trainer-move]");if(b)startTrainerMove(b.dataset.trainerMove);});
+  $("#mapTrainerMoveCancel").addEventListener("click",cancelTrainerMove);
   $("#mapCenterBtn").addEventListener("click",resetMapViewport);
   $("#mapFieldClose").addEventListener("click",closeMapField);
   $("#mapToEncounterBtn").addEventListener("click",()=>{const code=mapEncounterCode(app.mapSelectedField);if(!code)return;app.encounterField=code;app.encounterResult=null;showModule("encounter");});
@@ -883,7 +975,7 @@ function bindEvents(){
   $("#fightResetCompareBtn").addEventListener("click",()=>{app.fightBaseline={};renderFight();toast("Vergleich zurückgesetzt");});
   $("#playerBtn").addEventListener("click",()=>openSheet(app.isAdmin?"#playerSheet":"#settingsSheet")); $("#settingsBtn").addEventListener("click",()=>openSheet("#settingsSheet")); $("#sheetBackdrop").addEventListener("click",closeSheets); $$(".close-sheet").forEach(b=>b.addEventListener("click",closeSheets));
   $("#playerList").addEventListener("click",e=>{const b=e.target.closest("[data-player]");if(b)selectPlayer(b.dataset.player);});
-  $("#editModeToggle").addEventListener("change",e=>{if(!app.isAdmin){e.target.checked=false;toast("Admin-Anmeldung erforderlich");return;}app.editMode=e.target.checked;renderDetail();toast(app.editMode?"Bearbeitungsmodus aktiv":"Ansichtsmodus aktiv");});
+  $("#editModeToggle").addEventListener("change",e=>{if(!app.isAdmin){e.target.checked=false;toast("Admin-Anmeldung erforderlich");return;}app.editMode=e.target.checked;if(!app.editMode)app.mapTrainerMoveId=null;render();toast(app.editMode?"Bearbeitungsmodus aktiv":"Ansichtsmodus aktiv");});
   $("#exportBtn").addEventListener("click",exportState); $("#shareBtn").addEventListener("click",sharePlayer); $("#saveNowBtn").addEventListener("click",saveToFirebase); $("#installAppBtn").addEventListener("click",installPwa);
   $("#loginBtn").addEventListener("click",doLogin); $("#logoutBtn").addEventListener("click",doLogout); $("#adminPassword").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
   window.addEventListener("beforeunload",()=>{ if(app.dirty) cacheState(); });

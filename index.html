@@ -248,6 +248,7 @@
 
       <section class="map-toolbar">
         <button class="secondary-btn map-tool-btn" id="mapLayerBtn" type="button"><span>☷</span> Layer</button>
+        <button class="secondary-btn map-tool-btn hidden" id="mapTrainerEditBtn" type="button"><span>●</span> Trainer</button>
         <button class="secondary-btn map-tool-btn" id="mapCenterBtn" type="button"><span>⌾</span> Zentrieren</button>
         <span class="map-layer-status" id="mapLayerStatus">Basis-Karte</span>
       </section>
@@ -255,6 +256,7 @@
       <section class="map-stage" id="mapStage">
         <canvas id="mapCanvas" aria-label="PU-Weltkarte"></canvas>
         <div class="map-zoom-hint" id="mapZoomHint">Tippen · Ziehen · Pinch-Zoom</div>
+        <div class="map-edit-banner hidden" id="mapTrainerMoveBanner"><span id="mapTrainerMoveText"></span><button type="button" id="mapTrainerMoveCancel">Abbrechen</button></div>
         <article class="map-field-card hidden" id="mapFieldCard">
           <button class="map-field-close" id="mapFieldClose" type="button" aria-label="Feldinfo schließen">×</button>
           <div class="map-field-head">
@@ -266,7 +268,7 @@
           <button class="primary-btn map-encounter-btn hidden" id="mapToEncounterBtn" type="button">Begegnung auf diesem Feld</button>
         </article>
       </section>
-      <p class="map-source-note">Kartendaten aus <strong>260119 Landkarte.xlsx</strong>. Layer und Feldinformationen entsprechen deiner bisherigen Landkarte.</p>
+      <p class="map-source-note">Kartendaten aus <strong>260119 Landkarte.xlsx</strong>. Layer und Feldinformationen entsprechen deiner bisherigen Landkarte. Trainerpositionen werden im Admin-Bearbeitungsmodus über Firebase synchronisiert.</p>
     </main>
 
     <main id="fightView" class="fight-view hidden">
@@ -385,6 +387,13 @@
       <div class="map-layer-groups" id="mapLayerGroups"></div>
     </aside>
 
+    <aside class="bottom-sheet hidden" id="trainerEditSheet" aria-label="Trainer verschieben">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head"><div><p class="eyebrow">Bearbeitungsmodus</p><h2>Trainer verschieben</h2></div><button class="round-btn close-sheet" type="button">×</button></div>
+      <p class="map-layer-help">Wähle einen Trainer. Danach schließt sich dieses Fenster und du tippst auf der Karte das neue Zielfeld an. Die Position wird sofort für alle Spieler in Firebase gespeichert.</p>
+      <div class="trainer-edit-list" id="trainerEditList"></div>
+    </aside>
+
     <aside class="bottom-sheet hidden" id="playerSheet" aria-label="Spieler auswählen">
       <div class="sheet-handle"></div>
       <div class="sheet-head"><div><p class="eyebrow">Spieler</p><h2>Dex auswählen</h2></div><button class="round-btn close-sheet" type="button">×</button></div>
@@ -416,11 +425,11 @@
         <button class="setting-button" id="installAppBtn" type="button"><span>▣</span><div><strong>App installieren</strong><small id="installAppStatus">Installationsstatus wird geprüft…</small></div></button>
         <a class="setting-button admin-link" href="admin-import.html"><span>＋</span><div><strong>Spielstände importieren</strong><small>Nur für den ersten Import oder neue Spieler</small></div></a>
       </div>
-      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v5.0</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung und Zufallsgenerator bleiben lokal auf dem jeweiligen Gerät und verändern keinen Spielstand.</p></div>
+      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v6.1</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung und Zufallsgenerator bleiben lokal auf dem jeweiligen Gerät und verändern keinen Spielstand.</p></div>
     </aside>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script type="module" src="app.js?v=6.0"></script>
+  <script type="module" src="app.js?v=6.1"></script>
 </body>
 </html>
