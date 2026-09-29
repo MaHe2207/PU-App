@@ -148,12 +148,26 @@
         </div>
 
         <div class="tab-panel hidden" id="tab-werte">
-          <div class="info-grid values-grid">
+          <div class="character-summary" id="characterSummary">
+            <article class="character-stat hp"><small>Max. KP</small><strong id="valueMaxHp">—</strong><span id="valueHpFormula">—</span></article>
+            <article class="character-stat"><small>KP-Basis</small><strong id="valueBaseHp">—</strong><span>Charakterkarte</span></article>
+            <article class="character-stat"><small>Bewegung</small><strong id="valueMovement">—</strong><span>Felder</span></article>
+            <article class="character-stat"><small>Reichweite</small><strong id="valueCombatRange">—</strong><span id="valueCombatRangeHelp">—</span></article>
+          </div>
+          <div class="info-grid values-grid level-values">
             <article><small>Mind. Level</small><strong id="valueMin">—</strong></article>
             <article><small>Max. Level</small><strong id="valueMax">—</strong></article>
             <article><small>Aktuell</small><strong id="valueCurrent">—</strong></article>
           </div>
-          <div class="notice"><strong>Datengrundlage</strong><p>Diese Werte kommen direkt aus der eingebauten Dex-Datendatei. Eine separate Excel-Datei ist im Betrieb nicht nötig.</p></div>
+          <section class="type-modifier-section">
+            <div class="attack-headline">
+              <div><p class="eyebrow">Charakterkarte</p><h3>Typenmodifikatoren</h3></div>
+              <span class="data-pill">gegen dieses Pokémon</span>
+            </div>
+            <div class="type-modifier-grid" id="typeModifierGrid"></div>
+            <p class="character-rule-note">Der Wert wird auf den Kartenwert einer Attackenkarte dieses Typs angewendet. Immunität bedeutet, dass der Typ gegen dieses Pokémon keine Wirkung hat.</p>
+          </section>
+          <div class="notice"><strong>KP-Regel</strong><p>Maximale KP = KP-Basis der Charakterkarte + aktuelles Level. Die Charakterwerte wurden aus deinen bereitgestellten Pokémon-Karten strukturiert; die PDF selbst wird in der App nicht benötigt.</p></div>
         </div>
 
         <div class="tab-panel hidden" id="tab-attacken">
@@ -373,18 +387,22 @@
         <div class="hero-copy">
           <p class="eyebrow">Spielmaterial · Nachschlagewerk</p>
           <h1>Kartenwissen griffbereit.</h1>
-          <p>Attacken durchsuchen, Effekte nachlesen und direkt sehen, welche Pokémon eine Karte verwenden.</p>
+          <p>Attackenkarten und Pokémon-Charakterkarten durchsuchen, Werte nachlesen und Zusammenhänge direkt im Spiel prüfen.</p>
         </div>
         <div class="library-orb" aria-hidden="true">▤</div>
       </section>
 
       <section class="library-stats" aria-label="Kartenübersicht">
-        <article><span>⚔</span><div><strong id="libraryCardCount">0</strong><small>Attacken</small></div></article>
-        <article><span>▦</span><div><strong id="librarySetCount">0</strong><small>Karten im Vorrat</small></div></article>
-        <article><span>⌁</span><div><strong id="libraryResultCount">0</strong><small>Treffer</small></div></article>
+        <article><span id="libraryStat1Icon">⚔</span><div><strong id="libraryCardCount">0</strong><small id="libraryStat1Label">Attacken</small></div></article>
+        <article><span id="libraryStat2Icon">▦</span><div><strong id="librarySetCount">0</strong><small id="libraryStat2Label">Karten im Vorrat</small></div></article>
+        <article><span id="libraryStat3Icon">⌁</span><div><strong id="libraryResultCount">0</strong><small id="libraryStat3Label">Treffer</small></div></article>
       </section>
 
       <section class="library-panel">
+        <div class="library-section-switch" id="librarySectionSwitch" aria-label="Bibliotheksbereich">
+          <button class="active" data-library-section="attacks" type="button">Attackenkarten</button>
+          <button data-library-section="pokemon" type="button">Pokémon-Karten</button>
+        </div>
         <label class="library-search">
           <span aria-hidden="true">⌕</span>
           <input id="librarySearch" type="search" placeholder="Attacke oder Effekt suchen…" autocomplete="off">
@@ -396,16 +414,16 @@
           <button data-card-kind="versatile" type="button">Vielseitig</button>
           <button data-card-kind="scheme" type="button">Planung</button>
         </div>
-        <div class="library-type-strip" id="libraryTypeStrip" aria-label="Attackentyp"></div>
+        <div class="library-type-strip" id="libraryTypeStrip" aria-label="Typ"></div>
       </section>
 
       <section class="section-head library-head">
-        <div><p class="eyebrow">Attackenkarten</p><h2 id="libraryHeading">Alle Karten</h2></div>
+        <div><p class="eyebrow" id="libraryEyebrow">Attackenkarten</p><h2 id="libraryHeading">Alle Karten</h2></div>
         <button class="text-btn" id="libraryClearBtn" type="button">Filter löschen</button>
       </section>
       <section class="library-grid" id="libraryGrid" aria-live="polite"></section>
       <p class="empty-state hidden" id="libraryEmpty">Keine Attackenkarten gefunden.</p>
-      <p class="library-source-note">Kartendaten wurden einmalig aus deinen bereitgestellten Attackenkarten-PDFs strukturiert. Die App verwendet die PDFs selbst nicht.</p>
+      <p class="library-source-note">Karteninformationen wurden einmalig aus deinen bereitgestellten Spielmaterialien strukturiert. Die App arbeitet mit den Daten und benötigt die PDFs selbst nicht.</p>
     </main>
 
     <nav class="app-nav hidden" id="moduleNav" aria-label="App-Bereiche">

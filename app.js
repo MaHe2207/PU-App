@@ -21,7 +21,7 @@ const TYPE_COLORS = {
 };
 
 const app = {
-  pokemon: [], attacks: {}, attackCards: [], attackCardMap: new Map(), evolutionGroups: [], players: [], player: null,
+  pokemon: [], attacks: {}, attackCards: [], attackCardMap: new Map(), pokemonCards: [], pokemonCardMap: new Map(), evolutionGroups: [], players: [], player: null,
   state: {}, publishedState: {}, filter: "all", type: "Alle", search: "", editMode: false,
   selectedId: null, activeTab: "info", user: null, isAdmin: false,
   saveTimer: null, saving: false, dirty: false,
@@ -30,7 +30,7 @@ const app = {
   encounterData: null, encounterField: null, encounterTS: 3, encounterResult: null,
   mapData: null, mapActiveArea: null, mapSymbolLayers: new Set(), mapSelectedField: null, mapLayerSearch: "",
   mapTrainerMoveId: null,
-  librarySearch: "", libraryKind: "all", libraryType: "Alle", selectedCardName: null
+  librarySearch: "", libraryKind: "all", libraryType: "Alle", librarySection: "attacks", selectedCardName: null
 };
 
 const $ = s => document.querySelector(s);
@@ -67,6 +67,10 @@ const CARD_KIND_LABELS={attack:"Angriff",defense:"Verteidigung",versatile:"Viels
 const CARD_KIND_ICONS={attack:"⚔",defense:"◆",versatile:"◈",scheme:"⚡"};
 const TIMING_LABELS={immediately:"IMMEDIATELY",duringCombat:"DURING COMBAT",afterCombat:"AFTER COMBAT",scheme:"PLANUNG",text:"EFFEKT"};
 function attackCard(name){ return app.attackCardMap.get(name)||null; }
+function pokemonCharacterCard(pOrId){
+  const id=typeof pOrId==="object"?pOrId?.id:+pOrId;
+  return app.pokemonCardMap.get(+id)||null;
+}
 function cardSetSize(name){ const c=attackCard(name); return c?.detailsAvailable!==false && Number.isFinite(+c?.setSize) ? +c.setSize : 1; }
 function cardLearners(name){
   const out=[];
@@ -700,6 +704,10 @@ async function init(){
     const data=await loadJson("data/attack-cards.json");
     app.attackCards=data.cards||[]; app.attackCardMap=new Map(app.attackCards.map(c=>[c.name,c]));
   } catch(err){ console.warn("Kartendetails nicht geladen",err); app.attackCards=[]; app.attackCardMap=new Map(); }
+  try {
+    const data=await loadJson("data/pokemon-cards.json");
+    app.pokemonCards=data.pokemon||[]; app.pokemonCardMap=new Map(app.pokemonCards.map(c=>[+c.id,c]));
+  } catch(err){ console.warn("Pokémon-Kartendetails nicht geladen",err); app.pokemonCards=[]; app.pokemonCardMap=new Map(); }
   try { const data=await loadJson("data/evolutions.json"); app.evolutionGroups=data.groups||[]; }
   catch(err){ console.warn("Entwicklungsdaten nicht geladen",err); app.evolutionGroups=[]; }
   try {
@@ -727,7 +735,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=7.0").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=8.0").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
@@ -827,6 +835,7 @@ function renderDetail(){
   $("#infoStatus").textContent=s.owned?"Gefangen":"Nicht gefangen"; $("#infoType").textContent=p.type; $("#infoRange").textContent=`${p.minLevel}–${p.maxLevel}`;
   $("#currentLevel").textContent=s.level; $("#currentEP").textContent=s.level>=p.maxLevel?`${s.ep} / 10 · Max`:`${s.ep} / 10`; $("#epBar").style.width=`${s.ep*10}%`;
   $("#valueMin").textContent=p.minLevel; $("#valueMax").textContent=p.maxLevel; $("#valueCurrent").textContent=s.level;
+  renderCharacterValues(p,s);
 
   const moves=attacksFor(p); const unlocked=moves.filter(m=>m.level<=s.level); const next=moves.find(m=>m.level>s.level);
   $("#infoAttackCount").textContent=moves.length?`${unlocked.length} / ${moves.length}`:"—";
@@ -839,6 +848,34 @@ function renderDetail(){
   renderEvolutionTab(p);
 
   $$(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===app.activeTab)); $$(".tab-panel").forEach(x=>x.classList.add("hidden")); $(`#tab-${app.activeTab}`).classList.remove("hidden");
+}
+
+function renderCharacterValues(p,s){
+  const c=pokemonCharacterCard(p);
+  const grid=$("#typeModifierGrid");
+  if(!c){
+    $("#valueMaxHp").textContent="—"; $("#valueHpFormula").textContent="Keine Kartendaten";
+    $("#valueBaseHp").textContent="—"; $("#valueMovement").textContent="—"; $("#valueCombatRange").textContent="—"; $("#valueCombatRangeHelp").textContent="—";
+    if(grid) grid.innerHTML=`<div class="notice notice-muted"><p>Für dieses Pokémon fehlen strukturierte Charakterkartendaten.</p></div>`;
+    return;
+  }
+  const maxHp=(+c.baseHp||0)+(+s.level||0);
+  $("#valueMaxHp").textContent=maxHp;
+  $("#valueHpFormula").textContent=`${c.baseHp} + Level ${s.level}`;
+  $("#valueBaseHp").textContent=c.baseHp;
+  $("#valueMovement").textContent=c.movement;
+  $("#valueCombatRange").textContent=c.range==="ranged"?"Fernkampf":"Nahkampf";
+  $("#valueCombatRangeHelp").textContent=c.range==="ranged"?"Bogen-Symbol":"Faust-Symbol";
+  const entries=Object.entries(c.typeModifiers||{}).sort((a,b)=>a[0].localeCompare(b[0],"de"));
+  if(!grid) return;
+  grid.innerHTML=entries.length?entries.map(([type,value])=>{
+    const immune=value==="immune";
+    const numeric=immune?null:+value;
+    const cls=immune?"immune":numeric>0?"positive":"negative";
+    const label=immune?"Immun":`${numeric>0?"+":""}${numeric}`;
+    const note=immune?"keine Wirkung":numeric>0?`Kartenwert +${numeric}`:`Kartenwert ${numeric}`;
+    return `<article class="type-modifier ${cls}" style="${typeVars(type)}"><span class="modifier-type"><i></i>${escapeHtml(type)}</span><strong>${label}</strong><small>${note}</small></article>`;
+  }).join(""):`<div class="notice notice-muted"><p>Keine Typenmodifikatoren auf der Charakterkarte.</p></div>`;
 }
 
 function renderAttackTab(p,s){
@@ -870,9 +907,13 @@ function renderAttackTab(p,s){
 
 
 function buildLibraryTypeStrip(){
-  const types=["Alle",...new Set(app.attackCards.filter(c=>c.detailsAvailable!==false).map(c=>c.type).filter(Boolean))];
+  const source=app.librarySection==="pokemon"
+    ? app.pokemon.map(p=>p.type)
+    : app.attackCards.filter(c=>c.detailsAvailable!==false).map(c=>c.type);
+  const types=["Alle",...new Set(source.filter(Boolean))];
   const el=$("#libraryTypeStrip"); if(!el) return;
-  el.innerHTML=types.map(t=>`<button type="button" class="library-type-chip ${t==="Alle"?"active":""}" data-library-type="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join("");
+  if(app.libraryType!=="Alle"&&!types.includes(app.libraryType)) app.libraryType="Alle";
+  el.innerHTML=types.map(t=>`<button type="button" class="library-type-chip ${t===app.libraryType?"active":""}" data-library-type="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join("");
 }
 function filteredAttackCards(){
   const q=app.librarySearch.trim().toLowerCase();
@@ -884,25 +925,66 @@ function filteredAttackCards(){
     return `${c.name} ${c.type||""} ${CARD_KIND_LABELS[c.cardType]||""} ${effect}`.toLowerCase().includes(q);
   });
 }
+function filteredPokemonCharacterCards(){
+  const q=app.librarySearch.trim().toLowerCase();
+  return app.pokemon.filter(p=>{
+    const c=pokemonCharacterCard(p); if(!c) return false;
+    if(app.libraryType!=="Alle"&&p.type!==app.libraryType) return false;
+    if(!q) return true;
+    const range=c.range==="ranged"?"fernkampf bogen":"nahkampf faust";
+    const modTypes=Object.keys(c.typeModifiers||{}).join(" ");
+    return `${p.name} ${p.type} ${range} bewegung ${c.movement} kp ${c.baseHp} ${modTypes}`.toLowerCase().includes(q);
+  });
+}
 function renderLibrary(){
+  const pokemonMode=app.librarySection==="pokemon";
+  $$("#librarySectionSwitch [data-library-section]").forEach(b=>b.classList.toggle("active",b.dataset.librarySection===app.librarySection));
+  $("#libraryKindFilter").classList.toggle("hidden",pokemonMode);
+  $("#librarySearch").placeholder=pokemonMode?"Pokémon, Typ oder Wert suchen…":"Attacke oder Effekt suchen…";
+  buildLibraryTypeStrip();
+  $$("#libraryTypeStrip [data-library-type]").forEach(b=>b.classList.toggle("active",b.dataset.libraryType===app.libraryType));
+
+  if(pokemonMode){
+    $("#libraryEyebrow").textContent="Pokémon-Karten";
+    const list=filteredPokemonCharacterCards();
+    $("#libraryCardCount").textContent=app.pokemonCards.length;
+    $("#librarySetCount").textContent=app.pokemonCards.filter(c=>c.range==="ranged").length;
+    $("#libraryResultCount").textContent=list.length;
+    $("#libraryStat1Icon").textContent="◉"; $("#libraryStat1Label").textContent="Charakterkarten";
+    $("#libraryStat2Icon").textContent="↗"; $("#libraryStat2Label").textContent="Fernkämpfer";
+    $("#libraryStat3Icon").textContent="⌁"; $("#libraryStat3Label").textContent="Treffer";
+    $("#libraryHeading").textContent=app.libraryType!=="Alle"?`${app.libraryType}-Pokémon`:"Alle Pokémon-Karten";
+    $("#libraryEmpty").classList.toggle("hidden",list.length!==0);
+    $("#libraryGrid").innerHTML=list.map(p=>{
+      const c=pokemonCharacterCard(p); const s=stateFor(p); const maxHp=(+c.baseHp||0)+(+s.level||0);
+      const immune=Object.values(c.typeModifiers||{}).filter(v=>v==="immune").length;
+      return `<button class="library-card pokemon-library-card" data-card-pokemon="${p.id}" type="button" style="${typeVars(p.type)}"><div class="pokemon-library-top"><img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy"><div><small>#${pad(p.id)} · ${escapeHtml(p.type)}</small><h3>${escapeHtml(p.name)}</h3><span>${c.range==="ranged"?"Fernkampf":"Nahkampf"} · Bewegung ${c.movement}</span></div></div><div class="library-card-values pokemon-values"><span><small>KP-Basis</small><b>${c.baseHp}</b></span><span><small>Max. KP</small><b>${maxHp}</b></span><span><small>Immun</small><b>${immune}</b></span></div><p>Max. KP auf aktuellem Level ${s.level}: <strong>${c.baseHp} + ${s.level} = ${maxHp}</strong></p></button>`;
+    }).join("");
+    $$("#libraryGrid img").forEach(setImgFallback);
+    return;
+  }
+
+  $("#libraryEyebrow").textContent="Attackenkarten";
   const list=filteredAttackCards();
   const detailed=app.attackCards.filter(c=>c.detailsAvailable!==false);
   $("#libraryCardCount").textContent=detailed.length;
   $("#librarySetCount").textContent=detailed.reduce((sum,c)=>sum+(+c.setSize||0),0);
   $("#libraryResultCount").textContent=list.length;
+  $("#libraryStat1Icon").textContent="⚔"; $("#libraryStat1Label").textContent="Attacken";
+  $("#libraryStat2Icon").textContent="▦"; $("#libraryStat2Label").textContent="Karten im Vorrat";
+  $("#libraryStat3Icon").textContent="⌁"; $("#libraryStat3Label").textContent="Treffer";
   $("#libraryHeading").textContent=app.libraryType!=="Alle"?app.libraryType:(app.libraryKind!=="all"?CARD_KIND_LABELS[app.libraryKind]:"Alle Karten");
   $("#libraryEmpty").classList.toggle("hidden",list.length!==0);
   $$("#libraryKindFilter [data-card-kind]").forEach(b=>b.classList.toggle("active",b.dataset.cardKind===app.libraryKind));
-  $$("#libraryTypeStrip [data-library-type]").forEach(b=>b.classList.toggle("active",b.dataset.libraryType===app.libraryType));
   $("#libraryGrid").innerHTML=list.map(c=>{
-    if(c.detailsAvailable===false) return `<button class="library-card missing" data-card-open="${escapeHtml(c.name)}" type="button"><div class="library-card-top"><span class="library-kind neutral">?</span><span class="library-type">${escapeHtml(c.type||"—")}</span></div><h3>${escapeHtml(c.name)}</h3><p>Für diese Attacke wurde in den bereitgestellten Attacken-PDFs keine passende Karte gefunden.</p></button>`;
+    if(c.detailsAvailable===false) return `<button class="library-card missing" data-card-open="${escapeHtml(c.name)}" type="button"><div class="library-card-top"><span class="library-kind neutral">?</span><span class="library-type">${escapeHtml(c.type||"—")}</span></div><h3>${escapeHtml(c.name)}</h3><p>Für diese Attacke wurde in den bereitgestellten Attackenkarten keine passende Karte gefunden.</p></button>`;
     const effects=(c.effects||[]).map(e=>e.text).join(" ");
     return `<button class="library-card" data-card-open="${escapeHtml(c.name)}" type="button" style="${cardTypeVars(c.type)}"><div class="library-card-top"><span class="library-kind kind-${c.cardType}">${CARD_KIND_ICONS[c.cardType]||"•"} ${CARD_KIND_LABELS[c.cardType]||c.cardType}</span><span class="library-type">${escapeHtml(c.type)}</span></div><h3>${escapeHtml(c.name)}</h3><div class="library-card-values">${c.cardType!=="scheme"?`<span><small>Wert</small><b>${c.value}</b></span>`:""}<span><small>BOOST</small><b>${c.boost}</b></span><span><small>Kartensatz</small><b>x${c.setSize}</b></span></div>${effects?`<p>${escapeHtml(effects)}</p>`:'<p class="muted">Keine zusätzlichen Karteneffekte.</p>'}</button>`;
   }).join("");
 }
 function resetLibraryFilters(){
   app.librarySearch=""; app.libraryKind="all"; app.libraryType="Alle";
-  $("#librarySearch").value=""; renderLibrary();
+  $("#librarySearch").value=""; buildLibraryTypeStrip(); renderLibrary();
 }
 function renderCardDetail(name){
   const c=attackCard(name); if(!c) return;
@@ -1067,6 +1149,7 @@ function bindEvents(){
   $("#fightNewBattleBtn").addEventListener("click",startNextFight);
   $("#fightResetCompareBtn").addEventListener("click",()=>{app.fightBaseline={};renderFight();toast("Vergleich zurückgesetzt");});
   $("#librarySearch").addEventListener("input",e=>{app.librarySearch=e.target.value;renderLibrary();});
+  $("#librarySectionSwitch").addEventListener("click",e=>{const b=e.target.closest("[data-library-section]");if(!b)return;app.librarySection=b.dataset.librarySection;app.libraryType="Alle";app.libraryKind="all";app.librarySearch="";$("#librarySearch").value="";buildLibraryTypeStrip();renderLibrary();});
   $("#libraryKindFilter").addEventListener("click",e=>{const b=e.target.closest("[data-card-kind]");if(!b)return;app.libraryKind=b.dataset.cardKind;renderLibrary();});
   $("#libraryTypeStrip").addEventListener("click",e=>{const b=e.target.closest("[data-library-type]");if(!b)return;app.libraryType=b.dataset.libraryType;renderLibrary();});
   $("#libraryClearBtn").addEventListener("click",resetLibraryFilters);

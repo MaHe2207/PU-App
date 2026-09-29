@@ -1,4 +1,4 @@
-# PU v7 – Update
+# PU v8 Update
 
 In GitHub ersetzen:
 - `index.html`
@@ -7,8 +7,7 @@ In GitHub ersetzen:
 - `sw.js`
 - `manifest.webmanifest`
 
-Neu hinzufügen:
-- `data/attack-cards.json`
+Neu ergänzen:
+- `data/pokemon-cards.json`
 
-Neu: Kartenbibliothek, Attackendetails und korrekte physische Kartensatzmengen in der Kampfvorbereitung.
-Firebase/Spielstände müssen nicht geändert werden.
+Danach GitHub Pages kurz aktualisieren lassen und die installierte PWA einmal vollständig schließen und neu öffnen.
