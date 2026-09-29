@@ -1,0 +1,2725 @@
+{
+  "source": "Pkneu.pdf",
+  "description": "Strukturierte Charakterkartendaten aus den bereitgestellten PU-Pokémonkarten. Die PDF dient nur als Rohquelle; die App nutzt diese Daten.",
+  "rules": {
+    "maxHp": "baseHp + currentLevel",
+    "range": {
+      "melee": "Nahkampf",
+      "ranged": "Fernkampf"
+    },
+    "movement": "Graue Zahl im Kreis auf der Charakterkarte.",
+    "typeModifiers": "Attackenkarten des angegebenen Typs erhalten gegen dieses Pokémon den hinterlegten Kartenwert-Modifikator. \"immune\" bedeutet Immunität."
+  },
+  "pokemon": [
+    {
+      "id": 1,
+      "name": "Bisasam",
+      "type": "Pflanze",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": 1,
+        "Elektro": -1,
+        "Feuer": 1,
+        "Flug": 1,
+        "Kampf": -1,
+        "Pflanze": -2,
+        "Psycho": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 1
+    },
+    {
+      "id": 2,
+      "name": "Bisaknosp",
+      "type": "Pflanze",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": 1,
+        "Elektro": -1,
+        "Feuer": 1,
+        "Flug": 1,
+        "Kampf": -1,
+        "Pflanze": -2,
+        "Psycho": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 1
+    },
+    {
+      "id": 3,
+      "name": "Bisaflor",
+      "type": "Pflanze",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": 1,
+        "Elektro": -1,
+        "Feuer": 1,
+        "Flug": 1,
+        "Kampf": -1,
+        "Pflanze": -2,
+        "Psycho": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 1
+    },
+    {
+      "id": 4,
+      "name": "Glumanda",
+      "type": "Feuer",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Feuer": -1,
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Wasser": 1
+      },
+      "sourcePage": 1
+    },
+    {
+      "id": 5,
+      "name": "Glutexo",
+      "type": "Feuer",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Feuer": -1,
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Wasser": 1
+      },
+      "sourcePage": 1
+    },
+    {
+      "id": 6,
+      "name": "Glurak",
+      "type": "Feuer",
+      "baseHp": 13,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Elektro": 1,
+        "Feuer": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -2,
+        "Wasser": 1
+      },
+      "sourcePage": 1
+    },
+    {
+      "id": 7,
+      "name": "Schiggy",
+      "type": "Wasser",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 1
+    },
+    {
+      "id": 8,
+      "name": "Schillok",
+      "type": "Wasser",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 1
+    },
+    {
+      "id": 9,
+      "name": "Turtok",
+      "type": "Wasser",
+      "baseHp": 13,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 3
+    },
+    {
+      "id": 10,
+      "name": "Raupy",
+      "type": "Käfer",
+      "baseHp": 8,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Feuer": 1,
+        "Flug": 1,
+        "Gestein": 1,
+        "Kampf": -2,
+        "Käfer": -2,
+        "Pflanze": -2
+      },
+      "sourcePage": 3
+    },
+    {
+      "id": 11,
+      "name": "Safcon",
+      "type": "Käfer",
+      "baseHp": 8,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Feuer": 1,
+        "Flug": 1,
+        "Gestein": 1,
+        "Kampf": -2,
+        "Käfer": -2,
+        "Pflanze": -2
+      },
+      "sourcePage": 3
+    },
+    {
+      "id": 12,
+      "name": "Smettbo",
+      "type": "Käfer",
+      "baseHp": 8,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Eis": 1,
+        "Elektro": 1,
+        "Feuer": 1,
+        "Flug": 1,
+        "Kampf": -2,
+        "Käfer": -1,
+        "Pflanze": -2
+      },
+      "sourcePage": 3
+    },
+    {
+      "id": 13,
+      "name": "Hornliu",
+      "type": "Käfer",
+      "baseHp": 8,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Feuer": 1,
+        "Flug": 1,
+        "Gestein": 1,
+        "Gift": -1,
+        "Kampf": -2,
+        "Käfer": -1,
+        "Pflanze": -2,
+        "Psycho": 1
+      },
+      "sourcePage": 3
+    },
+    {
+      "id": 14,
+      "name": "Kokuna",
+      "type": "Käfer",
+      "baseHp": 8,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Feuer": 1,
+        "Flug": 1,
+        "Gestein": 1,
+        "Gift": -1,
+        "Kampf": -2,
+        "Käfer": -1,
+        "Pflanze": -2,
+        "Psycho": 1
+      },
+      "sourcePage": 3
+    },
+    {
+      "id": 15,
+      "name": "Bibor",
+      "type": "Käfer",
+      "baseHp": 8,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Feuer": 1,
+        "Flug": 1,
+        "Gestein": 1,
+        "Gift": -1,
+        "Kampf": -2,
+        "Käfer": -1,
+        "Pflanze": -2,
+        "Psycho": 1
+      },
+      "sourcePage": 3
+    },
+    {
+      "id": 16,
+      "name": "Taubsi",
+      "type": "Flug",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Eis": 1,
+        "Elektro": 1,
+        "Geist": "immune",
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1
+      },
+      "sourcePage": 3
+    },
+    {
+      "id": 17,
+      "name": "Tauboga",
+      "type": "Flug",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Eis": 1,
+        "Elektro": 1,
+        "Geist": "immune",
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1
+      },
+      "sourcePage": 5
+    },
+    {
+      "id": 18,
+      "name": "Tauboss",
+      "type": "Flug",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Eis": 1,
+        "Elektro": 1,
+        "Geist": "immune",
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1
+      },
+      "sourcePage": 5
+    },
+    {
+      "id": 19,
+      "name": "Rattfratz",
+      "type": "Normal",
+      "baseHp": 8,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Geist": "immune",
+        "Kampf": 1
+      },
+      "sourcePage": 5
+    },
+    {
+      "id": 20,
+      "name": "Rattikarl",
+      "type": "Normal",
+      "baseHp": 8,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Geist": "immune",
+        "Kampf": 1
+      },
+      "sourcePage": 5
+    },
+    {
+      "id": 21,
+      "name": "Habitak",
+      "type": "Flug",
+      "baseHp": 8,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Eis": 1,
+        "Elektro": 1,
+        "Geist": "immune",
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1
+      },
+      "sourcePage": 5
+    },
+    {
+      "id": 22,
+      "name": "Ibitak",
+      "type": "Flug",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Eis": 1,
+        "Elektro": 1,
+        "Geist": "immune",
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1
+      },
+      "sourcePage": 5
+    },
+    {
+      "id": 23,
+      "name": "Rettan",
+      "type": "Gift",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Gift": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 5
+    },
+    {
+      "id": 24,
+      "name": "Arbok",
+      "type": "Gift",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Gift": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 5
+    },
+    {
+      "id": 25,
+      "name": "Pikachu",
+      "type": "Elektro",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Elektro": -1,
+        "Flug": -1
+      },
+      "sourcePage": 7
+    },
+    {
+      "id": 26,
+      "name": "Raichu",
+      "type": "Elektro",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 4,
+      "typeModifiers": {
+        "Boden": 1,
+        "Elektro": -1,
+        "Flug": -1
+      },
+      "sourcePage": 7
+    },
+    {
+      "id": 27,
+      "name": "Sandan",
+      "type": "Boden",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": 1,
+        "Gestein": -1,
+        "Gift": -1,
+        "Pflanze": 1,
+        "Wasser": 1
+      },
+      "sourcePage": 7
+    },
+    {
+      "id": 28,
+      "name": "Sandamer",
+      "type": "Boden",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": 1,
+        "Gestein": -1,
+        "Gift": -1,
+        "Pflanze": 1,
+        "Wasser": 1
+      },
+      "sourcePage": 7
+    },
+    {
+      "id": 29,
+      "name": "Nidoran♀",
+      "type": "Gift",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Gift": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 7
+    },
+    {
+      "id": 30,
+      "name": "Nidorina",
+      "type": "Gift",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Gift": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 7
+    },
+    {
+      "id": 31,
+      "name": "Nidoqueen",
+      "type": "Gift",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Gift": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 7
+    },
+    {
+      "id": 32,
+      "name": "Nidoran♂",
+      "type": "Gift",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Gift": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 7
+    },
+    {
+      "id": 33,
+      "name": "Nidorino",
+      "type": "Gift",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Gift": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 9
+    },
+    {
+      "id": 34,
+      "name": "Nidoking",
+      "type": "Gift",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Gift": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 9
+    },
+    {
+      "id": 35,
+      "name": "Piepi",
+      "type": "Normal",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Drache": "immune",
+        "Geist": "immune",
+        "Gift": 1,
+        "Kampf": -1,
+        "Käfer": -1
+      },
+      "sourcePage": 9
+    },
+    {
+      "id": 36,
+      "name": "Pixi",
+      "type": "Normal",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Drache": "immune",
+        "Geist": "immune",
+        "Gift": 1,
+        "Kampf": -1,
+        "Käfer": -1
+      },
+      "sourcePage": 9
+    },
+    {
+      "id": 37,
+      "name": "Vulpix",
+      "type": "Feuer",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Feuer": -1,
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Wasser": 1
+      },
+      "sourcePage": 9
+    },
+    {
+      "id": 38,
+      "name": "Vulnona",
+      "type": "Feuer",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Feuer": -1,
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Wasser": 1
+      },
+      "sourcePage": 9
+    },
+    {
+      "id": 39,
+      "name": "Pummeluff",
+      "type": "Normal",
+      "baseHp": 8,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Drache": "immune",
+        "Geist": "immune",
+        "Gift": 1,
+        "Käfer": -1
+      },
+      "sourcePage": 9
+    },
+    {
+      "id": 40,
+      "name": "Knuddeluff",
+      "type": "Normal",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Drache": "immune",
+        "Geist": "immune",
+        "Gift": 1,
+        "Käfer": -1
+      },
+      "sourcePage": 9
+    },
+    {
+      "id": 41,
+      "name": "Zubat",
+      "type": "Gift",
+      "baseHp": 7,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Elektro": 1,
+        "Gestein": 1,
+        "Gift": -1,
+        "Kampf": -2,
+        "Käfer": -2,
+        "Pflanze": -2,
+        "Psycho": 1
+      },
+      "sourcePage": 11
+    },
+    {
+      "id": 42,
+      "name": "Golbat",
+      "type": "Gift",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Elektro": 1,
+        "Gestein": 1,
+        "Gift": -1,
+        "Kampf": -2,
+        "Käfer": -2,
+        "Pflanze": -2,
+        "Psycho": 1
+      },
+      "sourcePage": 11
+    },
+    {
+      "id": 43,
+      "name": "Myrapla",
+      "type": "Pflanze",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": 1,
+        "Elektro": -1,
+        "Feuer": 1,
+        "Flug": 1,
+        "Kampf": -1,
+        "Pflanze": -2,
+        "Psycho": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 11
+    },
+    {
+      "id": 44,
+      "name": "Duflor",
+      "type": "Pflanze",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": 1,
+        "Elektro": -1,
+        "Feuer": 1,
+        "Flug": 1,
+        "Kampf": -1,
+        "Pflanze": -2,
+        "Psycho": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 11
+    },
+    {
+      "id": 45,
+      "name": "Giflor",
+      "type": "Pflanze",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": 1,
+        "Elektro": -1,
+        "Feuer": 1,
+        "Flug": 1,
+        "Kampf": -1,
+        "Pflanze": -2,
+        "Psycho": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 11
+    },
+    {
+      "id": 46,
+      "name": "Paras",
+      "type": "Käfer",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": 1,
+        "Elektro": -1,
+        "Gestein": 1,
+        "Gift": 1,
+        "Kampf": -2,
+        "Käfer": 1,
+        "Pflanze": -2,
+        "Wasser": -1
+      },
+      "sourcePage": 11
+    },
+    {
+      "id": 47,
+      "name": "Parasek",
+      "type": "Käfer",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": 1,
+        "Elektro": -1,
+        "Gestein": 1,
+        "Gift": 1,
+        "Kampf": -2,
+        "Käfer": 1,
+        "Pflanze": -2,
+        "Wasser": -1
+      },
+      "sourcePage": 11
+    },
+    {
+      "id": 48,
+      "name": "Bluzuk",
+      "type": "Käfer",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Feuer": 1,
+        "Flug": 1,
+        "Gestein": 1,
+        "Gift": -1,
+        "Kampf": -2,
+        "Käfer": -1,
+        "Pflanze": -2,
+        "Psycho": 1
+      },
+      "sourcePage": 11
+    },
+    {
+      "id": 49,
+      "name": "Omot",
+      "type": "Käfer",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Feuer": 1,
+        "Flug": 1,
+        "Gestein": 1,
+        "Gift": -1,
+        "Kampf": -2,
+        "Käfer": -1,
+        "Pflanze": -2,
+        "Psycho": 1
+      },
+      "sourcePage": 13
+    },
+    {
+      "id": 50,
+      "name": "Digda",
+      "type": "Boden",
+      "baseHp": 8,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": 1,
+        "Gestein": -1,
+        "Gift": -1,
+        "Pflanze": 1,
+        "Wasser": 1
+      },
+      "sourcePage": 13
+    },
+    {
+      "id": 51,
+      "name": "Digdri",
+      "type": "Boden",
+      "baseHp": 8,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 4,
+      "typeModifiers": {
+        "Eis": 1,
+        "Elektro": "immune",
+        "Gestein": -1,
+        "Gift": -1,
+        "Pflanze": 1,
+        "Wasser": 1
+      },
+      "sourcePage": 13
+    },
+    {
+      "id": 52,
+      "name": "Mauzi",
+      "type": "Normal",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Geist": "immune",
+        "Kampf": 1
+      },
+      "sourcePage": 13
+    },
+    {
+      "id": 53,
+      "name": "Snobilikat",
+      "type": "Normal",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 4,
+      "typeModifiers": {
+        "Geist": "immune",
+        "Kampf": 1
+      },
+      "sourcePage": 13
+    },
+    {
+      "id": 54,
+      "name": "Enton",
+      "type": "Wasser",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 13
+    },
+    {
+      "id": 55,
+      "name": "Entoron",
+      "type": "Wasser",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 13
+    },
+    {
+      "id": 56,
+      "name": "Menki",
+      "type": "Kampf",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Flug": 1,
+        "Gestein": -1,
+        "Käfer": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 13
+    },
+    {
+      "id": 57,
+      "name": "Rasaff",
+      "type": "Kampf",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Flug": 1,
+        "Gestein": -1,
+        "Käfer": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 15
+    },
+    {
+      "id": 58,
+      "name": "Fukano",
+      "type": "Feuer",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Feuer": -1,
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Wasser": 1
+      },
+      "sourcePage": 15
+    },
+    {
+      "id": 59,
+      "name": "Arkani",
+      "type": "Feuer",
+      "baseHp": 14,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Feuer": -1,
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Wasser": 1
+      },
+      "sourcePage": 15
+    },
+    {
+      "id": 60,
+      "name": "Quapsel",
+      "type": "Wasser",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 15
+    },
+    {
+      "id": 61,
+      "name": "Quaputzi",
+      "type": "Wasser",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 15
+    },
+    {
+      "id": 62,
+      "name": "Quappo",
+      "type": "Wasser",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Flug": 1,
+        "Gestein": -1,
+        "Käfer": -1,
+        "Pflanze": 1,
+        "Psycho": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 15
+    },
+    {
+      "id": 63,
+      "name": "Abra",
+      "type": "Psycho",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Geist": 1,
+        "Kampf": -1,
+        "Käfer": 1,
+        "Psycho": -1
+      },
+      "sourcePage": 15
+    },
+    {
+      "id": 64,
+      "name": "Kadabra",
+      "type": "Psycho",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Geist": 1,
+        "Kampf": -1,
+        "Käfer": 1,
+        "Psycho": -1
+      },
+      "sourcePage": 15
+    },
+    {
+      "id": 65,
+      "name": "Simsala",
+      "type": "Psycho",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 4,
+      "typeModifiers": {
+        "Geist": 1,
+        "Kampf": -1,
+        "Käfer": 1,
+        "Psycho": -1
+      },
+      "sourcePage": 17
+    },
+    {
+      "id": 66,
+      "name": "Machollo",
+      "type": "Kampf",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Flug": 1,
+        "Gestein": -1,
+        "Käfer": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 17
+    },
+    {
+      "id": 67,
+      "name": "Maschock",
+      "type": "Kampf",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Flug": 1,
+        "Gestein": -1,
+        "Käfer": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 17
+    },
+    {
+      "id": 68,
+      "name": "Machomei",
+      "type": "Kampf",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Flug": 1,
+        "Gestein": -1,
+        "Käfer": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 17
+    },
+    {
+      "id": 69,
+      "name": "Knofensa",
+      "type": "Pflanze",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": 1,
+        "Elektro": -1,
+        "Feuer": 1,
+        "Flug": 1,
+        "Gift": -2,
+        "Kampf": -1,
+        "Psycho": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 17
+    },
+    {
+      "id": 70,
+      "name": "Ultrigaria",
+      "type": "Pflanze",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": 1,
+        "Elektro": -1,
+        "Feuer": 1,
+        "Flug": 1,
+        "Gift": -2,
+        "Kampf": -1,
+        "Psycho": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 17
+    },
+    {
+      "id": 71,
+      "name": "Sarzenia",
+      "type": "Pflanze",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": 1,
+        "Elektro": -1,
+        "Feuer": 1,
+        "Flug": 1,
+        "Gift": -2,
+        "Kampf": -1,
+        "Psycho": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 17
+    },
+    {
+      "id": 72,
+      "name": "Tentacha",
+      "type": "Wasser",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Gift": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Psycho": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 17
+    },
+    {
+      "id": 73,
+      "name": "Tentoxa",
+      "type": "Wasser",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Gift": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Psycho": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 19
+    },
+    {
+      "id": 74,
+      "name": "Kleinstein",
+      "type": "Gestein",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Feuer": -1,
+        "Flug": -1,
+        "Gestein": -1,
+        "Gift": -2,
+        "Kampf": 1,
+        "Normal": -1
+      },
+      "sourcePage": 19
+    },
+    {
+      "id": 75,
+      "name": "Georok",
+      "type": "Gestein",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Feuer": -1,
+        "Flug": -1,
+        "Gestein": -1,
+        "Gift": -2,
+        "Kampf": 1,
+        "Normal": -1
+      },
+      "sourcePage": 19
+    },
+    {
+      "id": 76,
+      "name": "Geowaz",
+      "type": "Gestein",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Feuer": -1,
+        "Flug": -1,
+        "Gestein": -1,
+        "Gift": -2,
+        "Kampf": 1,
+        "Normal": -1
+      },
+      "sourcePage": 19
+    },
+    {
+      "id": 77,
+      "name": "Ponita",
+      "type": "Feuer",
+      "baseHp": 14,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Feuer": -1,
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Wasser": 1
+      },
+      "sourcePage": 19
+    },
+    {
+      "id": 78,
+      "name": "Gallopa",
+      "type": "Feuer",
+      "baseHp": 14,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Feuer": -1,
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Wasser": 1
+      },
+      "sourcePage": 19
+    },
+    {
+      "id": 79,
+      "name": "Flegmon",
+      "type": "Wasser",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Geist": 1,
+        "Kampf": -1,
+        "Käfer": 1,
+        "Pflanze": 1,
+        "Psycho": -1,
+        "Wasser": -1
+      },
+      "sourcePage": 19
+    },
+    {
+      "id": 80,
+      "name": "Lahmus",
+      "type": "Wasser",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Geist": 1,
+        "Kampf": -1,
+        "Käfer": 1,
+        "Pflanze": 1,
+        "Psycho": -1,
+        "Wasser": -1
+      },
+      "sourcePage": 19
+    },
+    {
+      "id": 81,
+      "name": "Magnetilo",
+      "type": "Elektro",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Drache": -1,
+        "Eis": -1,
+        "Elektro": -1,
+        "Flug": -2,
+        "Gift": "immune",
+        "Käfer": "immune",
+        "Normal": -1,
+        "Pflanze": -1,
+        "Psycho": -1
+      },
+      "sourcePage": 21
+    },
+    {
+      "id": 82,
+      "name": "Magneton",
+      "type": "Elektro",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Drache": -1,
+        "Eis": -1,
+        "Elektro": -1,
+        "Flug": -2,
+        "Gift": "immune",
+        "Käfer": -1,
+        "Normal": -1,
+        "Pflanze": -1,
+        "Psycho": -1
+      },
+      "sourcePage": 21
+    },
+    {
+      "id": 83,
+      "name": "Porenta",
+      "type": "Flug",
+      "baseHp": 7,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Eis": 1,
+        "Elektro": 1,
+        "Geist": "immune",
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1
+      },
+      "sourcePage": 21
+    },
+    {
+      "id": 84,
+      "name": "Dodu",
+      "type": "Flug",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Eis": 1,
+        "Elektro": 1,
+        "Geist": "immune",
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1
+      },
+      "sourcePage": 21
+    },
+    {
+      "id": 85,
+      "name": "Dodri",
+      "type": "Flug",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 4,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Eis": 1,
+        "Elektro": 1,
+        "Geist": "immune",
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1
+      },
+      "sourcePage": 21
+    },
+    {
+      "id": 86,
+      "name": "Jurob",
+      "type": "Wasser",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 21
+    },
+    {
+      "id": 87,
+      "name": "Jugong",
+      "type": "Wasser",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -2,
+        "Elektro": 1,
+        "Gestein": 1,
+        "Kampf": 1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 21
+    },
+    {
+      "id": 88,
+      "name": "Sleima",
+      "type": "Gift",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Gift": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 21
+    },
+    {
+      "id": 89,
+      "name": "Sleimok",
+      "type": "Gift",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Gift": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 23
+    },
+    {
+      "id": 90,
+      "name": "Muschas",
+      "type": "Wasser",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 23
+    },
+    {
+      "id": 91,
+      "name": "Austos",
+      "type": "Wasser",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -2,
+        "Elektro": 1,
+        "Gestein": 1,
+        "Kampf": 1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 23
+    },
+    {
+      "id": 92,
+      "name": "Nebulak",
+      "type": "Geist",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Geist": 1,
+        "Gift": -2,
+        "Kampf": "immune",
+        "Käfer": -2,
+        "Normal": "immune",
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 23
+    },
+    {
+      "id": 93,
+      "name": "Alpollo",
+      "type": "Geist",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Geist": 1,
+        "Gift": -2,
+        "Kampf": "immune",
+        "Käfer": -2,
+        "Normal": "immune",
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 23
+    },
+    {
+      "id": 94,
+      "name": "Gengar",
+      "type": "Geist",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 4,
+      "typeModifiers": {
+        "Boden": 1,
+        "Geist": 1,
+        "Gift": -2,
+        "Kampf": "immune",
+        "Käfer": -2,
+        "Normal": "immune",
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 23
+    },
+    {
+      "id": 95,
+      "name": "Onix",
+      "type": "Gestein",
+      "baseHp": 7,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Feuer": -1,
+        "Flug": -1,
+        "Gestein": -1,
+        "Gift": -2,
+        "Kampf": 1,
+        "Normal": -1
+      },
+      "sourcePage": 23
+    },
+    {
+      "id": 96,
+      "name": "Traumato",
+      "type": "Psycho",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Geist": 1,
+        "Kampf": -1,
+        "Käfer": 1,
+        "Psycho": -1
+      },
+      "sourcePage": 23
+    },
+    {
+      "id": 97,
+      "name": "Hypno",
+      "type": "Psycho",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Geist": 1,
+        "Kampf": -1,
+        "Käfer": 1,
+        "Psycho": -1
+      },
+      "sourcePage": 25
+    },
+    {
+      "id": 98,
+      "name": "Krabby",
+      "type": "Wasser",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 25
+    },
+    {
+      "id": 99,
+      "name": "Kingler",
+      "type": "Wasser",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 25
+    },
+    {
+      "id": 100,
+      "name": "Voltobal",
+      "type": "Elektro",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Elektro": -1,
+        "Flug": -1
+      },
+      "sourcePage": 25
+    },
+    {
+      "id": 101,
+      "name": "Lektrobal",
+      "type": "Elektro",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 4,
+      "typeModifiers": {
+        "Boden": 1,
+        "Elektro": -1,
+        "Flug": -1
+      },
+      "sourcePage": 25
+    },
+    {
+      "id": 102,
+      "name": "Owei",
+      "type": "Pflanze",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": -1,
+        "Eis": 1,
+        "Elektro": -1,
+        "Feuer": 1,
+        "Flug": 1,
+        "Gift": 1,
+        "Kampf": -1,
+        "Pflanze": -1,
+        "Psycho": -1,
+        "Wasser": -1
+      },
+      "sourcePage": 25
+    },
+    {
+      "id": 103,
+      "name": "Kokowei",
+      "type": "Pflanze",
+      "baseHp": 13,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": -1,
+        "Eis": 1,
+        "Elektro": -1,
+        "Feuer": 1,
+        "Flug": 1,
+        "Gift": 1,
+        "Kampf": -1,
+        "Pflanze": -1,
+        "Psycho": -1,
+        "Wasser": -1
+      },
+      "sourcePage": 25
+    },
+    {
+      "id": 104,
+      "name": "Tragosso",
+      "type": "Boden",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": 1,
+        "Gestein": -1,
+        "Gift": -1,
+        "Pflanze": 1,
+        "Wasser": 1
+      },
+      "sourcePage": 25
+    },
+    {
+      "id": 105,
+      "name": "Knogga",
+      "type": "Boden",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": 1,
+        "Gestein": -1,
+        "Gift": -1,
+        "Pflanze": 1,
+        "Wasser": 1
+      },
+      "sourcePage": 27
+    },
+    {
+      "id": 106,
+      "name": "Kicklee",
+      "type": "Kampf",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Flug": 1,
+        "Gestein": -1,
+        "Käfer": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 27
+    },
+    {
+      "id": 107,
+      "name": "Nockchan",
+      "type": "Kampf",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Flug": 1,
+        "Gestein": -1,
+        "Käfer": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 27
+    },
+    {
+      "id": 108,
+      "name": "Schlurp",
+      "type": "Normal",
+      "baseHp": 7,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Geist": "immune",
+        "Kampf": 1
+      },
+      "sourcePage": 27
+    },
+    {
+      "id": 109,
+      "name": "Smogon",
+      "type": "Gift",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Gift": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 27
+    },
+    {
+      "id": 110,
+      "name": "Smogmog",
+      "type": "Gift",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Gift": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Psycho": 1
+      },
+      "sourcePage": 27
+    },
+    {
+      "id": 111,
+      "name": "Rihorn",
+      "type": "Boden",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": 1,
+        "Gestein": -1,
+        "Gift": -1,
+        "Pflanze": 1,
+        "Wasser": 1
+      },
+      "sourcePage": 27
+    },
+    {
+      "id": 112,
+      "name": "Rizeros",
+      "type": "Boden",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": 1,
+        "Gestein": -1,
+        "Gift": -1,
+        "Pflanze": 1,
+        "Wasser": 1
+      },
+      "sourcePage": 27
+    },
+    {
+      "id": 113,
+      "name": "Chaneira",
+      "type": "Normal",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Geist": "immune",
+        "Kampf": 1
+      },
+      "sourcePage": 29
+    },
+    {
+      "id": 114,
+      "name": "Tangela",
+      "type": "Pflanze",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": -1,
+        "Eis": 1,
+        "Elektro": -1,
+        "Feuer": 1,
+        "Flug": 1,
+        "Gift": 1,
+        "Käfer": 1,
+        "Pflanze": -1,
+        "Wasser": -1
+      },
+      "sourcePage": 29
+    },
+    {
+      "id": 115,
+      "name": "Kangama",
+      "type": "Normal",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Geist": "immune",
+        "Kampf": 1
+      },
+      "sourcePage": 29
+    },
+    {
+      "id": 116,
+      "name": "Seeper",
+      "type": "Wasser",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 29
+    },
+    {
+      "id": 117,
+      "name": "Seemon",
+      "type": "Wasser",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 29
+    },
+    {
+      "id": 118,
+      "name": "Goldini",
+      "type": "Wasser",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 29
+    },
+    {
+      "id": 119,
+      "name": "Golking",
+      "type": "Wasser",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 29
+    },
+    {
+      "id": 120,
+      "name": "Sterndu",
+      "type": "Wasser",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 29
+    },
+    {
+      "id": 121,
+      "name": "Starmie",
+      "type": "Wasser",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 4,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Geist": 1,
+        "Kampf": -1,
+        "Käfer": 1,
+        "Pflanze": 1,
+        "Psycho": -1,
+        "Wasser": -1
+      },
+      "sourcePage": 31
+    },
+    {
+      "id": 122,
+      "name": "Pantimos",
+      "type": "Psycho",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Drache": "immune",
+        "Geist": 1,
+        "Gift": 1,
+        "Kampf": -2,
+        "Psycho": -1
+      },
+      "sourcePage": 31
+    },
+    {
+      "id": 123,
+      "name": "Sichlor",
+      "type": "Käfer",
+      "baseHp": 9,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Eis": 1,
+        "Elektro": 1,
+        "Feuer": 1,
+        "Flug": 1,
+        "Kampf": -2,
+        "Käfer": -1,
+        "Pflanze": -2
+      },
+      "sourcePage": 31
+    },
+    {
+      "id": 124,
+      "name": "Rossana",
+      "type": "Eis",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -1,
+        "Feuer": 1,
+        "Geist": 1,
+        "Gestein": 1,
+        "Käfer": 1,
+        "Psycho": -1
+      },
+      "sourcePage": 31
+    },
+    {
+      "id": 125,
+      "name": "Elektek",
+      "type": "Elektro",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Elektro": -1,
+        "Flug": -1
+      },
+      "sourcePage": 31
+    },
+    {
+      "id": 126,
+      "name": "Magmar",
+      "type": "Feuer",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Feuer": -1,
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Wasser": 1
+      },
+      "sourcePage": 31
+    },
+    {
+      "id": 127,
+      "name": "Pinsir",
+      "type": "Käfer",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -1,
+        "Feuer": -1,
+        "Kampf": 1,
+        "Käfer": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 31
+    },
+    {
+      "id": 128,
+      "name": "Tauros",
+      "type": "Normal",
+      "baseHp": 11,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 4,
+      "typeModifiers": {
+        "Geist": "immune",
+        "Kampf": 1
+      },
+      "sourcePage": 31
+    },
+    {
+      "id": 129,
+      "name": "Karpador",
+      "type": "Wasser",
+      "baseHp": 7,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 33
+    },
+    {
+      "id": 130,
+      "name": "Garados",
+      "type": "Wasser",
+      "baseHp": 13,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Feuer": -1,
+        "Gestein": 1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Wasser": -1
+      },
+      "sourcePage": 33
+    },
+    {
+      "id": 131,
+      "name": "Lapras",
+      "type": "Wasser",
+      "baseHp": 13,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Eis": -2,
+        "Elektro": 1,
+        "Gestein": 1,
+        "Kampf": 1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 33
+    },
+    {
+      "id": 132,
+      "name": "Ditto",
+      "type": "Normal",
+      "baseHp": 5,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Geist": "immune",
+        "Kampf": 1
+      },
+      "sourcePage": 33
+    },
+    {
+      "id": 133,
+      "name": "Evoli",
+      "type": "Normal",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Geist": "immune",
+        "Kampf": 1
+      },
+      "sourcePage": 33
+    },
+    {
+      "id": 134,
+      "name": "Aquana",
+      "type": "Wasser",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -1,
+        "Pflanze": 1,
+        "Wasser": -1
+      },
+      "sourcePage": 33
+    },
+    {
+      "id": 135,
+      "name": "Blitza",
+      "type": "Elektro",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 4,
+      "typeModifiers": {
+        "Boden": 1,
+        "Elektro": -1,
+        "Flug": -1
+      },
+      "sourcePage": 33
+    },
+    {
+      "id": 136,
+      "name": "Flamara",
+      "type": "Feuer",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Feuer": -1,
+        "Gestein": 1,
+        "Käfer": -1,
+        "Pflanze": -1,
+        "Wasser": 1
+      },
+      "sourcePage": 33
+    },
+    {
+      "id": 137,
+      "name": "Porygon",
+      "type": "Normal",
+      "baseHp": 7,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Geist": "immune",
+        "Kampf": 1
+      },
+      "sourcePage": 35
+    },
+    {
+      "id": 138,
+      "name": "Amonitas",
+      "type": "Gestein",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -2,
+        "Flug": -1,
+        "Gift": -1,
+        "Kampf": 1,
+        "Normal": -1
+      },
+      "sourcePage": 35
+    },
+    {
+      "id": 139,
+      "name": "Amoroso",
+      "type": "Gestein",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -2,
+        "Flug": -1,
+        "Gift": -1,
+        "Kampf": 1,
+        "Normal": -1
+      },
+      "sourcePage": 35
+    },
+    {
+      "id": 140,
+      "name": "Kabuto",
+      "type": "Gestein",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 2,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -2,
+        "Flug": -1,
+        "Gift": -1,
+        "Kampf": 1,
+        "Normal": -1
+      },
+      "sourcePage": 35
+    },
+    {
+      "id": 141,
+      "name": "Kabutops",
+      "type": "Gestein",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": 1,
+        "Eis": -1,
+        "Elektro": 1,
+        "Feuer": -2,
+        "Flug": -1,
+        "Gift": -1,
+        "Kampf": 1,
+        "Normal": -1
+      },
+      "sourcePage": 35
+    },
+    {
+      "id": 142,
+      "name": "Aerodactyl",
+      "type": "Gestein",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 4,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Elektro": 1,
+        "Feuer": -1,
+        "Flug": -1,
+        "Gestein": 1,
+        "Gift": -1,
+        "Käfer": -1,
+        "Normal": -1,
+        "Wasser": 1
+      },
+      "sourcePage": 35
+    },
+    {
+      "id": 143,
+      "name": "Relaxo",
+      "type": "Normal",
+      "baseHp": 13,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Geist": "immune",
+        "Kampf": 1
+      },
+      "sourcePage": 35
+    },
+    {
+      "id": 144,
+      "name": "Arktos",
+      "type": "Eis",
+      "baseHp": 15,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Elektro": 1,
+        "Feuer": 1,
+        "Gestein": 2,
+        "Käfer": -1,
+        "Pflanze": -1
+      },
+      "sourcePage": 35
+    },
+    {
+      "id": 145,
+      "name": "Zapdos",
+      "type": "Elektro",
+      "baseHp": 15,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Eis": 1,
+        "Flug": -1,
+        "Gestein": 1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -1
+      },
+      "sourcePage": 37
+    },
+    {
+      "id": 146,
+      "name": "Lavados",
+      "type": "Feuer",
+      "baseHp": 15,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Elektro": 2,
+        "Feuer": -1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -2,
+        "Wasser": 1
+      },
+      "sourcePage": 37
+    },
+    {
+      "id": 147,
+      "name": "Dratini",
+      "type": "Drache",
+      "baseHp": 10,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 2,
+      "typeModifiers": {
+        "Drache": 1,
+        "Eis": 1,
+        "Elektro": -1,
+        "Feuer": -1,
+        "Pflanze": -1,
+        "Wasser": -1
+      },
+      "sourcePage": 37
+    },
+    {
+      "id": 148,
+      "name": "Dragonir",
+      "type": "Drache",
+      "baseHp": 12,
+      "hpFormula": "baseHp + level",
+      "range": "melee",
+      "movement": 3,
+      "typeModifiers": {
+        "Drache": 1,
+        "Eis": 1,
+        "Elektro": -1,
+        "Feuer": -1,
+        "Pflanze": -1,
+        "Wasser": -1
+      },
+      "sourcePage": 37
+    },
+    {
+      "id": 149,
+      "name": "Dragoran",
+      "type": "Drache",
+      "baseHp": 15,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Boden": "immune",
+        "Drache": 1,
+        "Feuer": -1,
+        "Gestein": 1,
+        "Kampf": -1,
+        "Käfer": -1,
+        "Pflanze": -2,
+        "Wasser": -1
+      },
+      "sourcePage": 37
+    },
+    {
+      "id": 150,
+      "name": "Mewtu",
+      "type": "Psycho",
+      "baseHp": 19,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 4,
+      "typeModifiers": {
+        "Geist": 1,
+        "Kampf": -1,
+        "Käfer": 1,
+        "Psycho": -1
+      },
+      "sourcePage": 37
+    },
+    {
+      "id": 151,
+      "name": "Mew",
+      "type": "Psycho",
+      "baseHp": 15,
+      "hpFormula": "baseHp + level",
+      "range": "ranged",
+      "movement": 3,
+      "typeModifiers": {
+        "Geist": 1,
+        "Kampf": -1,
+        "Käfer": 1,
+        "Psycho": -1
+      },
+      "sourcePage": 37
+    }
+  ]
+}
