@@ -1,19 +1,7 @@
-PU Dex v6.1 – Trainerpositionen bearbeiten
+# PU Dex Firebase v6.2
 
-In GitHub ersetzen:
-- index.html
-- app.js
-- styles.css
-- sw.js
+Fix für das Speichern von Trainerpositionen.
 
-Keine Daten- oder Firebase-Regeldateien müssen geändert werden.
+In v6.1 wurde für die Kartenkonfiguration versehentlich die Firestore-Dokument-ID `__pu_map_config__` verwendet. Firestore reserviert IDs im Muster `__.*__`; deshalb schlug das Speichern fehl. v6.2 verwendet die gültige ID `pu_map_config`.
 
-Nutzung:
-1. Als Admin anmelden.
-2. Einstellungen → Bearbeitungsmodus aktivieren.
-3. Karte öffnen.
-4. Button „Trainer“ antippen.
-5. Trainer auswählen.
-6. Neues Zielfeld auf der Karte antippen.
-
-Die neue Position wird automatisch in Firebase gespeichert und gilt für alle Spieler.
+Keine Änderung an Firestore-Regeln oder Spielerständen nötig.

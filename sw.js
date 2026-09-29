@@ -1,4 +1,4 @@
-const CACHE="pu-dex-v6-1-20260929";
+const CACHE="pu-dex-v6-2-20260929";
 const CORE=[
   "./",
   "./index.html",

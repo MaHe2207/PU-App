@@ -253,7 +253,7 @@ function mapFieldById(id){ return app.mapData?.fields?.find(f=>f.id===id) || nul
 function trainerLayer(){ return app.mapData?.layers?.Trainer || null; }
 function trainerEntries(){ return trainerLayer()?.entries || []; }
 function trainerById(id){ return trainerEntries().find(t=>t.symbolId===id) || null; }
-const MAP_CONFIG_DOC = "__pu_map_config__";
+const MAP_CONFIG_DOC = "pu_map_config";
 const MAP_CONFIG_CACHE = "pu-map-trainer-locations-v1";
 function applyTrainerLocations(locations={}){
   for(const trainer of trainerEntries()){
