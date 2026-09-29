@@ -1,0 +1,2536 @@
+{
+  "source": "PU.zip / Spielkarten/*.pdf",
+  "assignmentSource": "PU.zip / Spielkarten/Karten.xlsx",
+  "description": "Strukturierte Kartendaten aus den bereitgestellten Attackenkarten-PDFs. Kartenbilder/PDFs werden von der App nicht benötigt.",
+  "legend": {
+    "attack": "Angriff",
+    "defense": "Verteidigung",
+    "versatile": "Vielseitig",
+    "scheme": "Planung",
+    "boost": "Zahl im Kreis rechts oben",
+    "setSize": "Anzahl physischer Karten im vollständigen Kartensatz pro Pokémon"
+  },
+  "cards": [
+    {
+      "name": "Absorber",
+      "type": "Pflanze",
+      "cardType": "versatile",
+      "value": 2,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Dein Pokemon heilt sich um 50% des Schadens, welcher dem gegnerischen Pokemon zugefügt wurde (aufgerundet)."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Agilität",
+      "type": "Psycho",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 3,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Initiative des eigenen Pokemons steigt um 2."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Amnesie",
+      "type": "Psycho",
+      "cardType": "defense",
+      "value": 1,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Verteidigung des eigenen Pokemons steigt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Aquaknarre",
+      "type": "Wasser",
+      "cardType": "attack",
+      "value": 2,
+      "boost": 3,
+      "setSize": 3,
+      "effects": [],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Aurorastrahl",
+      "type": "Eis",
+      "cardType": "versatile",
+      "value": 3,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 6 sinkt der Angriff des gegnerischen Pokemons um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Aussetzer",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Entferne eine Karte der obersten Angriffs-, Vielseitigkeits- oder Verteidigungskarte mit einer Anzahl >1 aus dem Deck des gegnerischen Pokemons."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Barriere",
+      "type": "Psycho",
+      "cardType": "defense",
+      "value": 2,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Verteidigung des eigenen Pokemons steigt um 2."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Biss",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 3,
+      "boost": 3,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn du den Kampf gewonnen hast, ziehe 2 Karten."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Blättertanz",
+      "type": "Pflanze",
+      "cardType": "versatile",
+      "value": 6,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Lege diese Karte zur Seite. Füge in deinen nächsten 2 Aktionen einem zufälligen angrenzenden Pokemon 4 Schaden zu."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Blitz",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Genauigkeit des gegnerischen Pokemons sinkt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Blizzard",
+      "type": "Eis",
+      "cardType": "versatile",
+      "value": 6,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Ab 6 wird das gegnerische Pokemon eingefroren."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Blubber",
+      "type": "Wasser",
+      "cardType": "attack",
+      "value": 2,
+      "boost": 3,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 6 sinkt die Initiative des gegnerischen Pokemons um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Blubbstrahl",
+      "type": "Wasser",
+      "cardType": "attack",
+      "value": 3,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 6 sinkt die Initiative des gegnerischen Pokemons um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Blutsauger",
+      "type": "Käfer",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Dein Pokemon heilt sich um 50% des Schadens, welcher dem gegnerischen Pokemon zugefügt wurde (aufgerundet)."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Bodycheck",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 5,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Füge deinem Pokemon 1 Schaden zu."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Bodyslam",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 4,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 4 wird das gegnerische Pokemon paralysiert."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Bohrschnabel",
+      "type": "Flug",
+      "cardType": "attack",
+      "value": 4,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn du den Kampf gewonnen hast, wirft dein Gegner 1 Karte ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Brüller",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 0,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Bewege das gegnerische Pokemon um bis zu 4 Felder."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Füge angrenzend zum gegnerischen Pokemon stehenden Pokemon 2 Schaden zu."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Delegator",
+      "type": "Normal",
+      "cardType": "scheme",
+      "value": null,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "scheme",
+          "text": "Füge deinem Pokemon Schaden in Höhe von 1/4 der maximalen KP deines Pokemons (abgerundet) zu. Setze einen Sidekick, mit diesen KP angrenzend zu deinem Pokemon auf den Spielplan."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Donner",
+      "type": "Elektro",
+      "cardType": "versatile",
+      "value": 6,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 4 wird das gegnerische Pokemon paralysiert"
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Donnerblitz",
+      "type": "Elektro",
+      "cardType": "attack",
+      "value": 5,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 6 wird das gegnerische Pokemon paralysiert"
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Donnerschlag",
+      "type": "Elektro",
+      "cardType": "attack",
+      "value": 4,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 6 wird das gegnerische Pokemon paralysiert"
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Donnerschock",
+      "type": "Elektro",
+      "cardType": "versatile",
+      "value": 2,
+      "boost": 3,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 6 wird das gegnerische Pokemon paralysiert"
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Donnerwelle",
+      "type": "Elektro",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Das gegnerische Pokemon wird paralysiert."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Doppelkick",
+      "type": "Kampf",
+      "cardType": "attack",
+      "value": 2,
+      "boost": 1,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Wenn dein Pokemon diesen Zug auf einem anderen Feld begonnen hat, ist der Wert dieser Karte stattdessen 4."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Doppelteam",
+      "type": "Normal",
+      "cardType": "defense",
+      "value": 1,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Initiative des eigenen Pokemons steigt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Dornkanone",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 2,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Würfle! Ab 3 ist der Wert dieser Karte stattdessen 3, ab 5 stattdessen 4 und ab 6 stattdessen 5."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Drachenwut",
+      "type": "Drache",
+      "cardType": "versatile",
+      "value": 4,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Der Wert dieser Karte entspricht ihrem aufgedruckten Wert und kann nicht geändert werden. Der Wert der gegnerischen Karte ist stattdessen 0."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Dunkelnebel",
+      "type": "Eis",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 3,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Alle Statusveränderungen bei deinem Pokemon und dem gegnerischen Pokemon werden aufgehoben."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Duonadel",
+      "type": "Käfer",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Wenn dein Pokemon diesen Zug auf einem anderen Feld begonnen hat, ist der Wert dieser Karte stattdessen 2."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 5 wird das gegnerische Pokemon vergiftet."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Duplexhieb",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 2,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Würfle! Ab 3 ist der Wert dieser Karte stattdessen 3, ab 5 stattdessen 4 und ab 6 stattdessen 5."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Egelsamen",
+      "type": "Pflanze",
+      "cardType": "versatile",
+      "value": 0,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Erhöhe den Wert dieser Karte um 1/8 der gegn. maximalen KP (abgerundet)."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Lege diese Karte zur gegn. Pokemonkarte. Füge in deinen nächsten 4 Aktionen dem gegn. Pokemon jeweils Schaden in Höhe von 1/8 seiner maximalen KP (abgerundet) zu. Lege danach die Karte ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Eierbombe",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 5,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn du den Kampf gewonnen hast, wirft dein Gegner 1 Karte ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Einigler",
+      "type": "Normal",
+      "cardType": "defense",
+      "value": 1,
+      "boost": 1,
+      "setSize": 4,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Verteidigung des eigenen Pokemons steigt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Eishieb",
+      "type": "Eis",
+      "cardType": "versatile",
+      "value": 4,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Ab 6 wird das gegnerische Pokemon eingefroren."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Eisstrahl",
+      "type": "Eis",
+      "cardType": "versatile",
+      "value": 5,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Ab 6 wird das gegnerische Pokemon eingefroren."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Energiefokus",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 1,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Dein Gegner wirft 2 zufällige Karten ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Erdbeben",
+      "type": "Boden",
+      "cardType": "versatile",
+      "value": 5,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Füge angrenzenden Pokemon 3 Schaden zu. Füge allen Pokemon die SCHAUFLER ausführen, 6 Schaden zu."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Erholung",
+      "type": "Psycho",
+      "cardType": "defense",
+      "value": 0,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Dein Pokemon schläft ein und heilt sich vollständig. Entferne diese Karte aus deinem Deck."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Explosion",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 0,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Wenn ein wildes Pokemon mit mehr als 4 KP dies ausführt, breche alle weiteren Effekte dieser Karte ab."
+        },
+        {
+          "timing": "duringCombat",
+          "text": "Der Wert dieser Karte ist stattdessen 13."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Füge angrenzenden Pokemon 8 Schaden zu. Dein Pokemon verliert alle KP."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Fadenschuss",
+      "type": "Käfer",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 3,
+      "setSize": 4,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Initiative des gegnerischen Pokemons sinkt um 2."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Fegekick",
+      "type": "Kampf",
+      "cardType": "attack",
+      "value": 3,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 4 erhältst du eine weitere Aktion."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Feuerschlag",
+      "type": "Feuer",
+      "cardType": "attack",
+      "value": 4,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Ab 6 wird das gegnerische Pokemon verbrannt."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Feuersturm",
+      "type": "Feuer",
+      "cardType": "attack",
+      "value": 6,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Ab 6 wird das gegnerische Pokemon verbrannt."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Feuerwirbel",
+      "type": "Feuer",
+      "cardType": "versatile",
+      "value": 2,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Erhöhe den Wert dieser Karte um 1/8 der gegn. maximalen KP (abgerundet)."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Lege diese Karte zur gegn. Pokemonkarte. Füge in deinen nächsten 4 Aktionen dem gegn. Pokemon jeweils Schaden in Höhe von 1/8 seiner maximalen KP (abgerundet) zu. Lege danach die Karte ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Finale",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 0,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Wenn ein wildes Pokemon mit mehr als 4 KP dies ausführt, breche alle weiteren Effekte dieser Karte ab."
+        },
+        {
+          "timing": "duringCombat",
+          "text": "Der Wert dieser Karte ist stattdessen 10."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Füge angrenzenden Pokemon 7 Schaden zu. Dein Pokemon verliert alle KP."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Flammenwurf",
+      "type": "Feuer",
+      "cardType": "attack",
+      "value": 5,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Ab 6 wird das gegnerische Pokemon verbrannt."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Fliegen",
+      "type": "Flug",
+      "cardType": "attack",
+      "value": 0,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn dies nicht deine letzte Aktion ist, nimm das Pokemon vom Spielplan. Setze es zu Beginn seines nächsten Zuges auf einem beliebigen Feld auf den Spielplan und füge einem angrenzenden Pokemon 5 Schaden zu."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Flügelschlag",
+      "type": "Flug",
+      "cardType": "attack",
+      "value": 3,
+      "boost": 3,
+      "setSize": 4,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn du den Kampf gewonnen hast, bewege ein am Kampf beteiligtes Pokemon um 1 Feld."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Fuchtler",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 6,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Lege diese Karte zur Seite. Füge in deinen nächsten 2 Aktionen einem zufälligen angrenzenden Pokemon 4 Schaden zu. Lege danach die Karte ab, dein Pokemon wird danach verwirrt."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Furienschlag",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 2,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Würfle! Ab 3 ist der Wert dieser Karte stattdessen 3, ab 5 stattdessen 4 und ab 6 stattdessen 5."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Fußkick",
+      "type": "Kampf",
+      "cardType": "attack",
+      "value": 0,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Der Wert dieser Karte ist stattdessen so hoch wie das Level des gegnerischen Pokemons, aber niemals höher als 7."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Geduld",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 0,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Wenn dies nicht deine letzte Aktion ist, ist der Wert dieser Karte stattdessen doppelt so hoch wie der Schaden, welcher seit deinem letzten Zug diesem Pokemon zugefügt wurde."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Du verlierst 1 Aktion."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Genesung",
+      "type": "Normal",
+      "cardType": "defense",
+      "value": 0,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Dein Pokemon heilt sich um 50% seiner maximalen KP (aufgerundet)."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Geofissur",
+      "type": "Boden",
+      "cardType": "attack",
+      "value": 0,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Ermittle die Lvl-Diff! Level eigenes Pokemon minus Level gegnerisches Pokemon. Würfle! Lvl-Diff > -4 = Erfolg ab 6, Lvl-Diff > -2 = ab 5, Lvl-Diff > 0 = ab 4, Lvl-Diff > 2 = ab 3, Lvl-Diff > 4 = ab 2, Lvl-Diff > 6 = bei 1."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Wenn erfolgreich, dann füge dem gegnerischen Pokemon 13 Schaden zu."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Geowurf",
+      "type": "Kampf",
+      "cardType": "attack",
+      "value": 0,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Der Wert dieser Karte ist stattdessen so hoch wie das Level des eigenen Pokemons."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Gesang",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Das gegnerische Pokemon schläft ein."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Giftblick",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 1,
+      "boost": 3,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Das gegnerische Pokemon wird paralysiert."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Giftpuder",
+      "type": "Gift",
+      "cardType": "defense",
+      "value": 1,
+      "boost": 1,
+      "setSize": 4,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Das gegnerische Pokemon wird vergiftet."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Giftstachel",
+      "type": "Gift",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 3,
+      "setSize": 4,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 6 wird das gegnerische Pokemon vergiftet."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Giftwolke",
+      "type": "Gift",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 3,
+      "setSize": 4,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Das gegnerische Pokemon wird vergiftet."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Glut",
+      "type": "Feuer",
+      "cardType": "versatile",
+      "value": 2,
+      "boost": 3,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Ab 6 wird das gegnerische Pokemon verbrannt."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Guillotine",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 0,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Ermittle die Lvl-Diff! Level eigenes Pokemon minus Level gegnerisches Pokemon. Würfle! Lvl-Diff > -4 = Erfolg ab 9, Lvl-Diff > -2 = ab 8, Lvl-Diff > 0 = ab 7, Lvl-Diff > 2 = ab 6, Lvl-Diff > 4 = ab 5, Lvl-Diff > 6 = bei 4."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Wenn erfolgreich, dann füge dem gegnerischen Pokemon 8 Schaden zu."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Härtner",
+      "type": "Normal",
+      "cardType": "defense",
+      "value": 1,
+      "boost": 2,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Verteidigung des eigenen Pokemons steigt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Heuler",
+      "type": "Normal",
+      "cardType": "defense",
+      "value": 1,
+      "boost": 2,
+      "setSize": 4,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Der Angriff des gegnerischen Pokemons sinkt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Himmelsfeger",
+      "type": "Flug",
+      "cardType": "attack",
+      "value": 10,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Dein Gegner wirft 1 zufällige Karte ab."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 4 erhältst du eine weitere Aktion."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Hornattacke",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 3,
+      "boost": 1,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn du den Kampf gewonnen hast, ziehe 1 Karte."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Hornbohrer",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 0,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Ermittle die Lvl-Diff! Level eigenes Pokemon minus Level gegnerisches Pokemon. Würfle! Lvl-Diff > -4 = Erfolg ab 9, Lvl-Diff > -2 = ab 8, Lvl-Diff > 0 = ab 7, Lvl-Diff > 2 = ab 6, Lvl-Diff > 4 = ab 5, Lvl-Diff > 6 = bei 4."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Wenn erfolgreich, dann füge dem gegnerischen Pokemon 8 Schaden zu."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Hydropumpe",
+      "type": "Wasser",
+      "cardType": "attack",
+      "value": 6,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn du den Kampf gewonnen hast, bewege das gegnerische Pokemon um 2 Felder."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Hyperstrahl",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 8,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Wenn dies deine letzte Aktion ist, ist der Wert dieser Karte stattdessen 0."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Du verlierst 1 Aktion."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Hyperzahn",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 4,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 6 erhältst du eine weitere Aktion."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Hypnose",
+      "type": "Psycho",
+      "cardType": "versatile",
+      "value": 0,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Das gegnerische Pokemon schläft ein."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Irrschlag",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 4,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 4 wird das gegnerische Pokemon verwirrt."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Karateschlag",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 3,
+      "boost": 2,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Dein Gegner wirft 1 zufällige Karte ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Kaskade",
+      "type": "Wasser",
+      "cardType": "attack",
+      "value": 4,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 5 erhältst du eine weitere Aktion."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Klammer",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 3,
+      "boost": 2,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn du den Kampf gewonnen hast, wirft dein Gegner 1 Karte ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Klammergriff",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 1,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Erhöhe den Wert dieser Karte um 1/8 der gegn. maximalen KP (abgerundet)."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Lege diese Karte zur gegn. Pokemonkarte. Füge in deinen nächsten 4 Aktionen dem gegn. Pokemon jeweils Schaden in Höhe von 1/8 seiner maximalen KP (abgerundet) zu. Lege danach die Karte ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Klingensturm",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 4,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Wenn dies deine letzte Aktion ist, ist der Wert dieser Karte stattdessen 0."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Du verlierst 1 Aktion. Dein Gegner wirft 1 zufällige Karte ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Knochenkeule",
+      "type": "Boden",
+      "cardType": "attack",
+      "value": 3,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 6 erhältst du eine weitere Aktion."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Knochmerang",
+      "type": "Boden",
+      "cardType": "versatile",
+      "value": 3,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Wenn dein Pokemon diesen Zug auf einem anderen Feld begonnen hat, ist der Wert dieser Karte stattdessen 6."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Kometenhieb",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 2,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Würfle! Ab 3 ist der Wert dieser Karte stattdessen 3, ab 5 stattdessen 4 und ab 6 stattdessen 5."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Komprimator",
+      "type": "Normal",
+      "cardType": "defense",
+      "value": 1,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Genauigkeit des gegnerischen Pokemons sinkt um 1. Die Initiative des eigenen Pokemons steigt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Konfusion",
+      "type": "Psycho",
+      "cardType": "versatile",
+      "value": 3,
+      "boost": 3,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 6 wird das gegnerische Pokemon verwirrt."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Konfusstrahl",
+      "type": "Geist",
+      "cardType": "versatile",
+      "value": 2,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Das gegnerische Pokemon wird verwirrt."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Konter",
+      "type": "Kampf",
+      "cardType": "attack",
+      "value": 0,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Der Wert dieser Karte ist stattdessen doppelt so hoch wie der letzte Schaden den das eigene Pokemon bekommen hat, außer es war eine Geist- oder Psycho-Attacke. Dann ist der Wert dieser Karte stattdessen 0."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Kopfnuss",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 4,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 4 erhältst du eine weitere Aktion."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Krabbhammer",
+      "type": "Wasser",
+      "cardType": "versatile",
+      "value": 5,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Dein Gegner wirft 1 zufällige Karte ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Kratzer",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 2,
+      "boost": 3,
+      "setSize": 4,
+      "effects": [],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Kratzfurie",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 2,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Würfle! Ab 3 ist der Wert dieser Karte stattdessen 3, ab 5 stattdessen 4 und ab 6 stattdessen 5."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Kreideschrei",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 3,
+      "setSize": 4,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Verteidigung des gegnerischen Pokemons sinkt um 2."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Lichtschild",
+      "type": "Psycho",
+      "cardType": "defense",
+      "value": 0,
+      "boost": 1,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Halbiere den Schaden, der deinem Pokemon in dieser Aktion des gegnerischen Pokemons zugefügt wird."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Meditation",
+      "type": "Psycho",
+      "cardType": "defense",
+      "value": 1,
+      "boost": 3,
+      "setSize": 4,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Der Angriff des eigenen Pokemons steigt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Megahieb",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 4,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn du den Kampf gewonnen hast, bewege das gegnerische Pokemon um bis zu 2 Felder."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Megakick",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 6,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Megasauger",
+      "type": "Pflanze",
+      "cardType": "versatile",
+      "value": 4,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Dein Pokemon heilt sich um 50% des Schadens, welcher dem gegnerischen Pokemon zugefügt wurde (aufgerundet)."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Metronom",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 0,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Lose eine Angriffs- oder Vielseitigkeitskarte aus dem Vorrat aus. Jede Karte hat die selbe Chance. Führe diese Karte aus und lege sie zurück in den Vorrat."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Mimikry",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Mische einen kompletten Satz der obersten Angriffs-, Vielseitigkeits- oder Verteidigungskarte auf dem Ablagestapel des gegnerisch Pokemons, in das Deck deines Pokemons."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Nachtnebel",
+      "type": "Geist",
+      "cardType": "versatile",
+      "value": 0,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Der Wert dieser Karte ist stattdessen so hoch wie das Level des eigenen Pokemons."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Nadelrakete",
+      "type": "Käfer",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Würfle! Ab 3 ist der Wert dieser Karte stattdessen 3, ab 5 stattdessen 4 und ab 6 stattdessen 5."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Panzerschutz",
+      "type": "Wasser",
+      "cardType": "defense",
+      "value": 2,
+      "boost": 1,
+      "setSize": 4,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Verteidigung des eigenen Pokemons steigt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Pfund",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 2,
+      "boost": 2,
+      "setSize": 4,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn du den Kampf gewonnen hast, bewege das gegnerische Pokemon um 1 Feld."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Pilzspore",
+      "type": "Pflanze",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Das gegnerische Pokemon schläft ein."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Platscher",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 0,
+      "boost": 2,
+      "setSize": 4,
+      "effects": [],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Psychokinese",
+      "type": "Psycho",
+      "cardType": "versatile",
+      "value": 5,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Verteidigung des gegnerischen Pokemons sinkt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Psykraft",
+      "type": "Psycho",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Genauigkeit des gegnerischen Pokemons sinkt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Psystrahl",
+      "type": "Psycho",
+      "cardType": "versatile",
+      "value": 4,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 6 wird das gegnerische Pokemon verwirrt."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Psywelle",
+      "type": "Psycho",
+      "cardType": "versatile",
+      "value": 0,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Würfle! Der Wert dieser Karte ist stattdessen das Level des eigenen Pokemons plus den Würfelwert minus 3."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Rankenhieb",
+      "type": "Pflanze",
+      "cardType": "attack",
+      "value": 2,
+      "boost": 2,
+      "setSize": 3,
+      "effects": [],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Raserei",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Der Angriff des eigenen Pokemons steigt um 1, wenn es seit seinem letzten Zug Schaden erlitten hat."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Rasierblatt",
+      "type": "Pflanze",
+      "cardType": "versatile",
+      "value": 3,
+      "boost": 2,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Dein Gegner wirft 1 zufällige Karte ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Rauchwolke",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Genauigkeit des gegnerischen Pokemons sinkt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Reflektor",
+      "type": "Psycho",
+      "cardType": "defense",
+      "value": 0,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Halbiere den Schaden, der deinem Pokemon in dieser Aktion des gegnerischen Pokemons zugefügt wird. Außer bei Geist- und Psychoattacken."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Risikotackle",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 6,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Füge deinem Pokemon 2 Schaden zu."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Ruckzuckhieb",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 2,
+      "boost": 2,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Der Wert der gegnerischen Karte ist stattdessen 0."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Rutenschlag",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 1,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Verteidigung des gegnerischen Pokemons sinkt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Sandwirbel",
+      "type": "Boden",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Genauigkeit des gegnerischen Pokemons sinkt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Säure",
+      "type": "Gift",
+      "cardType": "versatile",
+      "value": 2,
+      "boost": 2,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Verteidigung des gegnerischen Pokemons sinkt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Säurepanzer",
+      "type": "Gift",
+      "cardType": "defense",
+      "value": 1,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Verteidigung des eigenen Pokemons steigt um 2."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Schädelwumme",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 7,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Wenn dies deine letzte Aktion ist, ist der Wert dieser Karte stattdessen 0."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Du verlierst 1 Aktion. Der Angriff des eigenen Pokemons steigt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Schärfer",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 3,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Der Angriff des eigenen Pokemons steigt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Schaufler",
+      "type": "Boden",
+      "cardType": "attack",
+      "value": 0,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn dies nicht deine letzte Aktion ist, nimm das Pokemon vom Spielplan. Setze es zu Beginn seines nächsten Zuges auf einem beliebigen Feld auf den Spielplan und füge einem angrenzenden Pokemon 4 Schaden zu."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Schlafpuder",
+      "type": "Pflanze",
+      "cardType": "defense",
+      "value": 1,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Das gegnerische Pokemon schläft ein."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Schlammbad",
+      "type": "Gift",
+      "cardType": "versatile",
+      "value": 3,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 4 wird das gegnerische Pokemon vergiftet."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Schlecker",
+      "type": "Geist",
+      "cardType": "attack",
+      "value": 2,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 4 wird das gegnerische Pokemon paralysiert."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Schlitzer",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 4,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Dein Gegner wirft 1 zufällige Karte ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Schnabel",
+      "type": "Flug",
+      "cardType": "versatile",
+      "value": 2,
+      "boost": 2,
+      "setSize": 4,
+      "effects": [],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Schnapper",
+      "type": "Wasser",
+      "cardType": "attack",
+      "value": 2,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Erhöhe den Wert dieser Karte um 1/8 der gegn. maximalen KP (abgerundet)."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Lege diese Karte zur gegn. Pokemonkarte. Füge in deinen nächsten 4 Aktionen dem gegn. Pokemon jeweils Schaden in Höhe von 1/8 seiner maximalen KP (abgerundet) zu. Lege danach die Karte ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Schwerttanz",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Der Angriff des eigenen Pokemons steigt um 2."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Silberblick",
+      "type": "Normal",
+      "cardType": "defense",
+      "value": 1,
+      "boost": 2,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Verteidigung des gegnerischen Pokemons sinkt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Slam",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 4,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn du den Kampf gewonnen hast, bewege das gegnerische Pokemon um bis zu 3 Felder."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Smog",
+      "type": "Gift",
+      "cardType": "versatile",
+      "value": 2,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 3 wird das gegnerische Pokemon vergiftet."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Solarstrahl",
+      "type": "Pflanze",
+      "cardType": "attack",
+      "value": 10,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Wenn dies deine letzte Aktion ist, ist der Wert dieser Karte stattdessen 0."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Du verlierst 1 Aktion."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Spiegeltrick",
+      "type": "Flug",
+      "cardType": "attack",
+      "value": 0,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Führe die letzte Angriffs- oder Vielseitigkeitskarte des gegnerischen Pokemons aus."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Sprungkick",
+      "type": "Kampf",
+      "cardType": "attack",
+      "value": 5,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Würfle! Bei 1 ist der Wert dieser Karte stattdessen 0."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Wenn der Wert dieser Karte 0 war, füge deinem Pokemon 2 Schaden zu."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Stachelspore",
+      "type": "Pflanze",
+      "cardType": "defense",
+      "value": 1,
+      "boost": 2,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Das gegnerische Pokemon wird paralysiert."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Stakkato",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 4,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Würfle! Ab 3 ist der Wert dieser Karte stattdessen 6, ab 5 stattdessen 8 und ab 6 stattdessen 10."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Stampfer",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 3,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 4 erhältst du eine weitere Aktion."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Stärke",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 4,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Steinhagel",
+      "type": "Gestein",
+      "cardType": "versatile",
+      "value": 4,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 4 erhältst du eine weitere Aktion."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Steinwurf",
+      "type": "Gestein",
+      "cardType": "attack",
+      "value": 3,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Sternschauer",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 3,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Der Wert dieser Karte entspricht ihrem aufgedruckten Wert und kann nicht geändert werden. Der Wert der gegnerischen Karte ist stattdessen 0."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Superschall",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Das gegnerische Pokemon wird verwirrt."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Superzahn",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 0,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Der Wert dieser Karte ist stattdessen die Hälfte der KP des Gegners (aufgerundet)."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Surfer",
+      "type": "Wasser",
+      "cardType": "versatile",
+      "value": 5,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn du den Kampf gewonnen hast, bewege dein eigenes Pokemon um 2 Felder."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Tackle",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 3,
+      "boost": 2,
+      "setSize": 4,
+      "effects": [],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Teleport",
+      "type": "Psycho",
+      "cardType": "scheme",
+      "value": null,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "scheme",
+          "text": "Versetze dein Pokemon auf ein beliebiges freies Feld. Erhalte 1 Aktion."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Todeskuss",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 2,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Das gegnerische Pokemon schläft ein."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Toxin",
+      "type": "Gift",
+      "cardType": "versatile",
+      "value": 3,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Das gegnerische Pokemon wird vergiftet."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Traumfresser",
+      "type": "Psycho",
+      "cardType": "attack",
+      "value": 5,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Wenn das gegnerische Pokemon nicht schläft ist der Wert dieser Karte stattdessen 0."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Dein Pokemon heilt sich um 50% des Schadens, welcher dem gegnerischen Pokemon zugefügt wurde (aufgerundet)."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Triplette",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 4,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Würfle! Ab 4 wird das gegnerische Pokemon paralysiert, bei 5 verbrannt und bei 6 eingefroren"
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Turmkick",
+      "type": "Kampf",
+      "cardType": "attack",
+      "value": 7,
+      "boost": 2,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Würfle! Bei 1 ist der Wert dieser Karte stattdessen 0."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Wenn der Wert dieser Karte 0 war, füge deinem Pokemon 3 Schaden zu."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Überroller",
+      "type": "Kampf",
+      "cardType": "versatile",
+      "value": 4,
+      "boost": 3,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Füge deinem Pokemon 1 Schaden zu."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Ultraschall",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 2,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Der Wert dieser Karte entspricht ihrem aufgedruckten Wert und kann nicht geändert werden. Der Wert der gegnerischen Karte ist stattdessen 0."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Umklammerung",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 1,
+      "setSize": 4,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Die Initiative des gegnerischen Pokemons sinkt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Umwandlung",
+      "type": "Normal",
+      "cardType": "scheme",
+      "value": null,
+      "boost": 3,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "scheme",
+          "text": "Kopiert den Typ eines der gegnerischen Pokemon. Alle Attacken haben im restlichen Kampf auch den Typ dieses gegnerischen Pokemons."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Verzweifler",
+      "type": "Normal",
+      "cardType": null,
+      "value": null,
+      "boost": null,
+      "setSize": null,
+      "effects": [],
+      "detailsAvailable": false,
+      "note": "In den bereitgestellten Attacken-PDFs wurde keine passende Karte gefunden."
+    },
+    {
+      "name": "Wachstum",
+      "type": "Normal",
+      "cardType": "defense",
+      "value": 1,
+      "boost": 2,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Der Angriff des eigenen Pokemons steigt um 1."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Wandler",
+      "type": "Normal",
+      "cardType": "scheme",
+      "value": null,
+      "boost": 1,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "scheme",
+          "text": "Kopiert die KP und den Typ und den Status des Gegners. Stelle das gesamte Deck des Gegners zusammen und ziehe die selbe Anzahl an Handkarten, lege die selbe Zahl an Karten ab und lege den Rest als Nachziehstapel bereit. Du spielst den Rest des Kampfes mit diesem Deck."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Weichei",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 0,
+      "boost": 3,
+      "setSize": 1,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Dein Pokemon heilt sich um 50% seiner maximalen KP (aufgerundet)."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Weißnebel",
+      "type": "Eis",
+      "cardType": "versatile",
+      "value": 1,
+      "boost": 1,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Lege diese Karte zur Pokemonkarte deines eigenen Pokemons. Solange diese Karte dort liegt, ist dein eigenes Pokemon vor Statusveränder-ungen geschützt."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Lege diese Karte nach den nächsten 5 Aktionen deines Pokemon ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Wickel",
+      "type": "Normal",
+      "cardType": "attack",
+      "value": 1,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "duringCombat",
+          "text": "Erhöhe den Wert dieser Karte um 1/8 der gegn. maximalen KP (abgerundet)."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Lege diese Karte zur gegn. Pokemonkarte. Füge in deinen nächsten 4 Aktionen dem gegn. Pokemon jeweils Schaden in Höhe von 1/8 seiner maximalen KP (abgerundet) zu. Lege danach die Karte ab."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Windstoß",
+      "type": "Flug",
+      "cardType": "versatile",
+      "value": 2,
+      "boost": 2,
+      "setSize": 4,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn du den Kampf gewonnen hast, ziehe 1 Karte."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Wirbelwind",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 0,
+      "boost": 3,
+      "setSize": 2,
+      "effects": [
+        {
+          "timing": "immediately",
+          "text": "Bewege das gegnerische Pokemon um bis zu 4 Felder."
+        },
+        {
+          "timing": "afterCombat",
+          "text": "Füge angrenzend zum gegnerischen Pokemon stehenden Pokemon 1 Schaden zu."
+        }
+      ],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Zahltag",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 2,
+      "boost": 1,
+      "setSize": 2,
+      "effects": [],
+      "detailsAvailable": true
+    },
+    {
+      "name": "Zerschneider",
+      "type": "Normal",
+      "cardType": "versatile",
+      "value": 3,
+      "boost": 1,
+      "setSize": 3,
+      "effects": [
+        {
+          "timing": "afterCombat",
+          "text": "Wenn du den Kampf gewonnen hast, wirft dein Gegner 1 Karte ab."
+        }
+      ],
+      "detailsAvailable": true
+    }
+  ]
+}
