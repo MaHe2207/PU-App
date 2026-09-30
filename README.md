@@ -1,25 +1,11 @@
-# PU – Pokémon × Unmatched · v9
+# PU Dex v10 – Spielerziele
 
-v9 ergänzt die PWA um ein persönliches Spieler-Dashboard.
+Neu in v10:
+- 47 Ziele aus `Aufgaben.pdf` als strukturierte Daten in `data/goals.json`
+- pro Spieler bis zu 3 aktive Ziele
+- Ziele werden im Admin-Bearbeitungsmodus auf dem Dashboard aktiviert/deaktiviert
+- Zielerfüllung wird automatisch aus dem aktuellen Pokédex berechnet
+- Fortschrittsanzeige pro Ziel; kein manueller Erledigt-Status nötig
+- Speicherung der aktiven Ziele in `profile.activeGoals` des bestehenden Firebase-Spielerdokuments
 
-## Neu in v9
-- Dashboard ist jetzt die Startseite jedes Spielerlinks
-- Trainerstufe 0–13 pro Spieler, im Admin-Bearbeitungsmodus änderbar und in Firebase gespeichert
-- aktueller Standort wird automatisch aus der Trainerposition auf der Weltkarte übernommen
-- Dex-Fortschritt und Prozentanzeige
-- Favoriten als Schnellzugriff
-- stärkste gefangene Pokémon nach Level
-- Fortschritt nach Pokémon-Typ
-- direkter Sprung vom Dashboard zum Standort auf der Karte
-
-## Aktualisierung von v8
-Ersetzen:
-- `index.html`
-- `app.js`
-- `styles.css`
-- `sw.js`
-- `manifest.webmanifest`
-
-Es sind keine neuen Datendateien und keine Änderungen an den Firestore-Regeln nötig.
-
-Beim ersten Öffnen ist die Trainerstufe vorhandener Spieler `0`. Als Admin: Bearbeitungsmodus aktivieren → Dashboard → Trainerstufe einstellen.
+Es sind keine Änderungen an Firestore-Regeln und kein erneuter Spielerimport nötig.

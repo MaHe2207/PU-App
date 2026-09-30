@@ -21,8 +21,8 @@ const TYPE_COLORS = {
 };
 
 const app = {
-  pokemon: [], attacks: {}, attackCards: [], attackCardMap: new Map(), pokemonCards: [], pokemonCardMap: new Map(), evolutionGroups: [], players: [], player: null,
-  state: {}, publishedState: {}, profile: {trainerLevel:0}, publishedProfile: {trainerLevel:0}, filter: "all", type: "Alle", search: "", editMode: false,
+  pokemon: [], goals: [], attacks: {}, attackCards: [], attackCardMap: new Map(), pokemonCards: [], pokemonCardMap: new Map(), evolutionGroups: [], players: [], player: null,
+  state: {}, publishedState: {}, profile: {trainerLevel:0,activeGoals:[]}, publishedProfile: {trainerLevel:0,activeGoals:[]}, filter: "all", type: "Alle", search: "", editMode: false,
   selectedId: null, activeTab: "info", user: null, isAdmin: false,
   saveTimer: null, saving: false, dirty: false,
   view: "dashboard", fightSource: "owned", fightRole: "own", fightSelectedId: null,
@@ -63,7 +63,12 @@ function normalizeState(raw={}){
 }
 function stateFor(p){ return app.state[p.name]||{owned:false,favorite:false,level:p.minLevel,ep:0}; }
 function normalizeProfile(raw={}){
-  return { trainerLevel: Math.max(0,Math.min(13,Number.isFinite(+raw.trainerLevel)?Math.round(+raw.trainerLevel):0)) };
+  const validGoalIds=new Set((app.goals||[]).map(g=>g.id));
+  const activeGoals=Array.isArray(raw.activeGoals)?raw.activeGoals.filter(id=>validGoalIds.has(id)).slice(0,3):[];
+  return {
+    trainerLevel: Math.max(0,Math.min(13,Number.isFinite(+raw.trainerLevel)?Math.round(+raw.trainerLevel):0)),
+    activeGoals
+  };
 }
 function cacheProfile(){ if(app.player) localStorage.setItem(profileKey(app.player.id),JSON.stringify(app.profile)); }
 function normalizeName(value){ return String(value||"").trim().toLocaleLowerCase("de").replace(/[^a-z0-9äöüß]/g,""); }
@@ -72,6 +77,14 @@ function currentTrainerEntry(){
   const key=normalizeName(app.player.name);
   return trainerEntries().find(t=>normalizeName(t.name)===key) || null;
 }
+
+function goalById(id){ return (app.goals||[]).find(g=>g.id===id)||null; }
+function goalOwnedCount(goal){ return goal ? app.pokemon.filter(p=>p.type===goal.type && stateFor(p).owned).length : 0; }
+function goalProgress(goal){
+  const count=goalOwnedCount(goal), target=Math.max(1,+goal.target||1);
+  return {count,target,done:count>=target,pct:Math.min(100,Math.round(count/target*100))};
+}
+function activeGoals(){ return (app.profile.activeGoals||[]).map(goalById).filter(Boolean); }
 
 function cacheState(){ if(app.player) localStorage.setItem(playerKey(app.player.id), JSON.stringify(app.state)); }
 function attacksFor(p){ return app.attacks[p.name]||[]; }
@@ -712,6 +725,8 @@ async function init(){
   try { app.pokemon=await loadJson("data/pokemon.json"); }
   catch(err){ document.body.innerHTML=`<main style="padding:24px"><h1>Dex konnte nicht geladen werden</h1><p>Bitte über GitHub Pages oder einen Webserver öffnen.</p><pre>${String(err)}</pre></main>`; return; }
 
+  try { const data=await loadJson("data/goals.json"); app.goals=data.goals||[]; }
+  catch(err){ console.warn("Zieldaten nicht geladen",err); app.goals=[]; }
   try { const data=await loadJson("data/attacks.json"); app.attacks=data.pokemon||data||{}; }
   catch(err){ console.warn("Attackendaten nicht geladen",err); app.attacks={}; }
   try {
@@ -749,7 +764,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=9.0").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=10.0").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
@@ -851,6 +866,22 @@ function renderDashboard(){
   $("#dashboardOwnedHint").textContent=`${ownedCount} gefangen`;
   $("#dashboardAdminPanel").classList.toggle("hidden",!(app.isAdmin&&app.editMode));
 
+  const goals=activeGoals();
+  const completed=goals.filter(g=>goalProgress(g).done).length;
+  $("#dashboardGoalsActive").textContent=`${goals.length} / 3 aktiv`;
+  $("#dashboardGoalsDone").textContent=`${completed} erfüllt`;
+  $("#dashboardManageGoalsBtn").classList.toggle("hidden",!(app.isAdmin&&app.editMode));
+  const goalList=$("#dashboardGoalsList");
+  if(goals.length){
+    goalList.innerHTML=goals.map(g=>{
+      const pr=goalProgress(g);
+      return `<article class="dashboard-goal ${pr.done?"done":""}" style="${typeVars(g.type)}"><div class="dashboard-goal-head"><span class="goal-type-dot"></span><div><strong>${escapeHtml(g.label)}</strong><small>${escapeHtml(g.type)} · ${pr.count}/${pr.target} gefangen</small></div><em>${pr.done?"✓ Erfüllt":"Offen"}</em></div><div class="dashboard-goal-track"><span style="width:${pr.pct}%"></span></div></article>`;
+    }).join("");
+    if(goals.length<3) goalList.insertAdjacentHTML("beforeend",Array.from({length:3-goals.length},()=>`<div class="dashboard-goal-slot">Noch kein Ziel aktiviert</div>`).join(""));
+  } else {
+    goalList.innerHTML=`<div class="dashboard-empty">Für diesen Spieler sind noch keine Ziele aktiviert.</div>`;
+  }
+
   const favRow=$("#dashboardFavoriteRow");
   favRow.innerHTML=favorites.length?favorites.slice(0,8).map(p=>dashboardPokemonCard(p)).join(""):`<div class="dashboard-empty">Noch keine gefangenen Favoriten.</div>`;
   favRow.querySelectorAll("img").forEach(setImgFallback);
@@ -876,6 +907,33 @@ function dashboardPokemonCard(p){
   const st=stateFor(p);
   return `<button type="button" class="dashboard-mon" data-dashboard-pokemon="${p.id}" style="${typeVars(p.type)}"><div><img src="${p.image}" alt="${escapeHtml(p.name)}"></div><strong>${escapeHtml(p.name)}</strong><small>Lvl ${st.level}</small></button>`;
 }
+function renderGoalEditList(){
+  const wrap=$("#goalEditList"); if(!wrap) return;
+  const active=new Set(app.profile.activeGoals||[]);
+  const q=($("#goalSearch")?.value||"").trim().toLocaleLowerCase("de");
+  const list=(app.goals||[]).filter(g=>!q || `${g.label} ${g.type}`.toLocaleLowerCase("de").includes(q));
+  $("#goalSelectionCount").textContent=`${active.size} / 3 aktiv`;
+  const groups=[...new Set(list.map(g=>g.type))];
+  wrap.innerHTML=groups.map(type=>{
+    const items=list.filter(g=>g.type===type);
+    return `<section class="goal-edit-group" style="${typeVars(type)}"><h3><i></i>${escapeHtml(type)}</h3>${items.map(g=>{
+      const pr=goalProgress(g), on=active.has(g.id);
+      return `<button class="goal-edit-row ${on?"active":""} ${pr.done?"done":""}" data-goal-id="${escapeHtml(g.id)}" type="button"><span class="goal-check">${on?"✓":""}</span><span class="goal-edit-copy"><strong>${escapeHtml(g.label)}</strong><small>${pr.count}/${pr.target} gefangen${pr.done?" · bereits erfüllt":""}</small></span><em>${pr.done?"Erfüllt":`${pr.pct}%`}</em></button>`;
+    }).join("")}</section>`;
+  }).join("") || `<div class="dashboard-empty">Keine Ziele gefunden.</div>`;
+}
+function openGoalEditor(){
+  if(!app.isAdmin||!app.editMode){ toast("Bearbeitungsmodus erforderlich"); return; }
+  $("#goalSearch").value=""; renderGoalEditList(); openSheet("#goalEditSheet");
+}
+function toggleGoal(id){
+  if(!app.isAdmin||!app.editMode) return;
+  const current=[...(app.profile.activeGoals||[])]; const ix=current.indexOf(id);
+  if(ix>=0) current.splice(ix,1);
+  else { if(current.length>=3){ toast("Maximal drei Ziele pro Spieler"); return; } current.push(id); }
+  app.profile.activeGoals=current; cacheProfile(); app.dirty=true; renderDashboard(); renderGoalEditList(); scheduleSave();
+}
+
 function updateTrainerLevel(value){
   if(!app.isAdmin||!app.editMode){ toast("Bearbeitungsmodus erforderlich"); return; }
   app.profile.trainerLevel=Math.max(0,Math.min(13,Math.round(+value||0)));
@@ -1204,6 +1262,9 @@ function bindEvents(){
   $("#ownedToggle").addEventListener("change",e=>mutateSelected(s=>s.owned=e.target.checked)); $("#favoriteToggle").addEventListener("change",e=>mutateSelected(s=>s.favorite=e.target.checked)); $("#levelSlider").addEventListener("input",e=>mutateSelected(s=>s.level=+e.target.value)); $$(".stepper [data-ep]").forEach(b=>b.addEventListener("click",()=>changeEP(+b.dataset.ep)));
   $("#evolutionContent").addEventListener("click",e=>{const b=e.target.closest("[data-evo-id]"); if(!b)return; app.selectedId=+b.dataset.evoId; app.activeTab="entwicklung"; window.scrollTo({top:0,behavior:"smooth"}); renderDetail();});
   $("#dashboardTrainerLevelSlider").addEventListener("input",e=>updateTrainerLevel(e.target.value));
+  $("#dashboardManageGoalsBtn").addEventListener("click",openGoalEditor);
+  $("#goalSearch").addEventListener("input",renderGoalEditList);
+  $("#goalEditList").addEventListener("click",e=>{const b=e.target.closest("[data-goal-id]");if(b)toggleGoal(b.dataset.goalId);});
   $("#dashboardFavoriteRow").addEventListener("click",e=>{const b=e.target.closest("[data-dashboard-pokemon]");if(b)openDetail(+b.dataset.dashboardPokemon);});
   $("#dashboardStrongList").addEventListener("click",e=>{const b=e.target.closest("[data-dashboard-pokemon]");if(b)openDetail(+b.dataset.dashboardPokemon);});
   $("#dashboardAllFavoritesBtn").addEventListener("click",()=>{app.filter="favorite";app.type="Alle";app.search="";$("#searchInput").value="";showModule("dex");$$("[data-filter]").forEach(b=>b.classList.toggle("active",b.dataset.filter==="favorite"));renderGrid();});

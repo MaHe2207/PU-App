@@ -1,4 +1,4 @@
-const CACHE="pu-dex-v9-dashboard-20260929";
+const CACHE="pu-dex-v10-goals-20260930";
 const CORE=[
   "./",
   "./index.html",
@@ -16,7 +16,8 @@ const CORE=[
   "./data/pokemon-cards.json",
   "./data/evolutions.json",
   "./data/encounters.json",
-  "./data/map.json"
+  "./data/map.json",
+  "./data/goals.json"
 ];
 
 self.addEventListener("install",e=>{
