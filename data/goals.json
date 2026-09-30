@@ -1,0 +1,289 @@
+{
+  "version": 1,
+  "source": "Aufgaben.pdf",
+  "maxActive": 3,
+  "goals": [
+    {
+      "id": "normal-4",
+      "type": "Normal",
+      "target": 4,
+      "label": "4 Pokémon des Typs Normal"
+    },
+    {
+      "id": "normal-8",
+      "type": "Normal",
+      "target": 8,
+      "label": "8 Pokémon des Typs Normal"
+    },
+    {
+      "id": "normal-12",
+      "type": "Normal",
+      "target": 12,
+      "label": "12 Pokémon des Typs Normal"
+    },
+    {
+      "id": "normal-16",
+      "type": "Normal",
+      "target": 16,
+      "label": "16 Pokémon des Typs Normal"
+    },
+    {
+      "id": "feuer-3",
+      "type": "Feuer",
+      "target": 3,
+      "label": "3 Pokémon des Typs Feuer"
+    },
+    {
+      "id": "feuer-6",
+      "type": "Feuer",
+      "target": 6,
+      "label": "6 Pokémon des Typs Feuer"
+    },
+    {
+      "id": "feuer-8",
+      "type": "Feuer",
+      "target": 8,
+      "label": "8 Pokémon des Typs Feuer"
+    },
+    {
+      "id": "feuer-10",
+      "type": "Feuer",
+      "target": 10,
+      "label": "10 Pokémon des Typs Feuer"
+    },
+    {
+      "id": "wasser-7",
+      "type": "Wasser",
+      "target": 7,
+      "label": "7 Pokémon des Typs Wasser"
+    },
+    {
+      "id": "wasser-14",
+      "type": "Wasser",
+      "target": 14,
+      "label": "14 Pokémon des Typs Wasser"
+    },
+    {
+      "id": "wasser-21",
+      "type": "Wasser",
+      "target": 21,
+      "label": "21 Pokémon des Typs Wasser"
+    },
+    {
+      "id": "wasser-27",
+      "type": "Wasser",
+      "target": 27,
+      "label": "27 Pokémon des Typs Wasser"
+    },
+    {
+      "id": "elektro-3",
+      "type": "Elektro",
+      "target": 3,
+      "label": "3 Pokémon des Typs Elektro"
+    },
+    {
+      "id": "elektro-5",
+      "type": "Elektro",
+      "target": 5,
+      "label": "5 Pokémon des Typs Elektro"
+    },
+    {
+      "id": "elektro-7",
+      "type": "Elektro",
+      "target": 7,
+      "label": "7 Pokémon des Typs Elektro"
+    },
+    {
+      "id": "pflanze-3",
+      "type": "Pflanze",
+      "target": 3,
+      "label": "3 Pokémon des Typs Pflanze"
+    },
+    {
+      "id": "pflanze-6",
+      "type": "Pflanze",
+      "target": 6,
+      "label": "6 Pokémon des Typs Pflanze"
+    },
+    {
+      "id": "pflanze-9",
+      "type": "Pflanze",
+      "target": 9,
+      "label": "9 Pokémon des Typs Pflanze"
+    },
+    {
+      "id": "pflanze-12",
+      "type": "Pflanze",
+      "target": 12,
+      "label": "12 Pokémon des Typs Pflanze"
+    },
+    {
+      "id": "flug-2",
+      "type": "Flug",
+      "target": 2,
+      "label": "2 Pokémon des Typs Flug"
+    },
+    {
+      "id": "flug-4",
+      "type": "Flug",
+      "target": 4,
+      "label": "4 Pokémon des Typs Flug"
+    },
+    {
+      "id": "flug-6",
+      "type": "Flug",
+      "target": 6,
+      "label": "6 Pokémon des Typs Flug"
+    },
+    {
+      "id": "flug-8",
+      "type": "Flug",
+      "target": 8,
+      "label": "8 Pokémon des Typs Flug"
+    },
+    {
+      "id": "kaefer-3",
+      "type": "Käfer",
+      "target": 3,
+      "label": "3 Pokémon des Typs Käfer"
+    },
+    {
+      "id": "kaefer-6",
+      "type": "Käfer",
+      "target": 6,
+      "label": "6 Pokémon des Typs Käfer"
+    },
+    {
+      "id": "kaefer-9",
+      "type": "Käfer",
+      "target": 9,
+      "label": "9 Pokémon des Typs Käfer"
+    },
+    {
+      "id": "kaefer-12",
+      "type": "Käfer",
+      "target": 12,
+      "label": "12 Pokémon des Typs Käfer"
+    },
+    {
+      "id": "gift-4",
+      "type": "Gift",
+      "target": 4,
+      "label": "4 Pokémon des Typs Gift"
+    },
+    {
+      "id": "gift-8",
+      "type": "Gift",
+      "target": 8,
+      "label": "8 Pokémon des Typs Gift"
+    },
+    {
+      "id": "gift-11",
+      "type": "Gift",
+      "target": 11,
+      "label": "11 Pokémon des Typs Gift"
+    },
+    {
+      "id": "gift-14",
+      "type": "Gift",
+      "target": 14,
+      "label": "14 Pokémon des Typs Gift"
+    },
+    {
+      "id": "gestein-3",
+      "type": "Gestein",
+      "target": 3,
+      "label": "3 Pokémon des Typs Gestein"
+    },
+    {
+      "id": "gestein-5",
+      "type": "Gestein",
+      "target": 5,
+      "label": "5 Pokémon des Typs Gestein"
+    },
+    {
+      "id": "gestein-7",
+      "type": "Gestein",
+      "target": 7,
+      "label": "7 Pokémon des Typs Gestein"
+    },
+    {
+      "id": "gestein-9",
+      "type": "Gestein",
+      "target": 9,
+      "label": "9 Pokémon des Typs Gestein"
+    },
+    {
+      "id": "boden-2",
+      "type": "Boden",
+      "target": 2,
+      "label": "2 Pokémon des Typs Boden"
+    },
+    {
+      "id": "boden-4",
+      "type": "Boden",
+      "target": 4,
+      "label": "4 Pokémon des Typs Boden"
+    },
+    {
+      "id": "boden-6",
+      "type": "Boden",
+      "target": 6,
+      "label": "6 Pokémon des Typs Boden"
+    },
+    {
+      "id": "boden-8",
+      "type": "Boden",
+      "target": 8,
+      "label": "8 Pokémon des Typs Boden"
+    },
+    {
+      "id": "kampf-3",
+      "type": "Kampf",
+      "target": 3,
+      "label": "3 Pokémon des Typs Kampf"
+    },
+    {
+      "id": "kampf-5",
+      "type": "Kampf",
+      "target": 5,
+      "label": "5 Pokémon des Typs Kampf"
+    },
+    {
+      "id": "kampf-7",
+      "type": "Kampf",
+      "target": 7,
+      "label": "7 Pokémon des Typs Kampf"
+    },
+    {
+      "id": "eis-1",
+      "type": "Eis",
+      "target": 1,
+      "label": "1 Pokémon des Typs Eis"
+    },
+    {
+      "id": "psycho-3",
+      "type": "Psycho",
+      "target": 3,
+      "label": "3 Pokémon des Typs Psycho"
+    },
+    {
+      "id": "psycho-6",
+      "type": "Psycho",
+      "target": 6,
+      "label": "6 Pokémon des Typs Psycho"
+    },
+    {
+      "id": "geist-3",
+      "type": "Geist",
+      "target": 3,
+      "label": "3 Pokémon des Typs Geist"
+    },
+    {
+      "id": "drache-3",
+      "type": "Drache",
+      "target": 3,
+      "label": "3 Pokémon des Typs Drache"
+    }
+  ]
+}
