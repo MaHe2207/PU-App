@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>PU Dex</title>
-  <link rel="manifest" href="manifest.webmanifest?v=7.0">
+  <link rel="manifest" href="manifest.webmanifest?v=9.0">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=7.0">
+  <link rel="stylesheet" href="styles.css?v=9.0">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -35,6 +35,63 @@
         <p id="noPlayerText">Öffne deinen persönlichen Spieler-Link. Als Spielleiter kannst du dich über ☰ anmelden.</p>
         <button class="primary-btn" type="button" onclick="document.getElementById('settingsBtn').click()">Admin-Anmeldung</button>
       </div>
+    </main>
+
+    <main id="dashboardView" class="dashboard-view hidden">
+      <section class="dashboard-hero">
+        <div class="dashboard-identity">
+          <span class="dashboard-avatar" id="dashboardAvatar">?</span>
+          <div>
+            <p class="eyebrow">Spieler-Dashboard</p>
+            <h1 id="dashboardName">Spieler</h1>
+            <div class="dashboard-meta">
+              <span id="dashboardTrainerLevel">Trainerstufe 0</span>
+              <span id="dashboardLocation">Standort unbekannt</span>
+            </div>
+          </div>
+        </div>
+        <button class="dashboard-map-btn" id="dashboardMapBtn" type="button">⌖ Karte</button>
+      </section>
+
+      <section class="dashboard-kpis">
+        <article><span>◉</span><div><strong id="dashboardOwned">0</strong><small>von 151 gefangen</small></div></article>
+        <article><span>★</span><div><strong id="dashboardFavorites">0</strong><small>Favoriten</small></div></article>
+        <article><span>↟</span><div><strong id="dashboardAvgLevel">0</strong><small>Ø Level</small></div></article>
+      </section>
+
+      <section class="dashboard-progress-card">
+        <div class="dashboard-progress-head"><div><p class="eyebrow">Dex-Fortschritt</p><h2 id="dashboardProgressText">0 % abgeschlossen</h2></div><strong id="dashboardProgressFraction">0 / 151</strong></div>
+        <div class="dashboard-progress-track"><span id="dashboardProgressBar"></span></div>
+      </section>
+
+      <section class="dashboard-admin hidden" id="dashboardAdminPanel">
+        <div class="dashboard-section-head"><div><p class="eyebrow">Bearbeitungsmodus</p><h2>Trainerprofil</h2></div><span>Firebase</span></div>
+        <div class="dashboard-level-edit">
+          <div><strong>Trainerstufe</strong><small>Stufe 0 bis 13</small></div>
+          <strong id="dashboardTrainerLevelValue">0</strong>
+        </div>
+        <input id="dashboardTrainerLevelSlider" type="range" min="0" max="13" step="1" value="0">
+      </section>
+
+      <section class="dashboard-section">
+        <div class="dashboard-section-head"><div><p class="eyebrow">Favoriten</p><h2>Deine Auswahl</h2></div><button class="text-btn" id="dashboardAllFavoritesBtn" type="button">Alle anzeigen</button></div>
+        <div class="dashboard-pokemon-row" id="dashboardFavoriteRow"></div>
+      </section>
+
+      <section class="dashboard-section">
+        <div class="dashboard-section-head"><div><p class="eyebrow">Teamstärke</p><h2>Höchste Level</h2></div><span id="dashboardOwnedHint">0 gefangen</span></div>
+        <div class="dashboard-strong-list" id="dashboardStrongList"></div>
+      </section>
+
+      <section class="dashboard-section">
+        <div class="dashboard-section-head"><div><p class="eyebrow">Sammlung</p><h2>Fortschritt nach Typ</h2></div></div>
+        <div class="dashboard-type-progress" id="dashboardTypeProgress"></div>
+      </section>
+
+      <section class="dashboard-location-card" id="dashboardLocationCard">
+        <div><p class="eyebrow">Aktueller Standort</p><h2 id="dashboardLocationName">Nicht auf Karte gesetzt</h2><p id="dashboardLocationDescription">Für diesen Spieler ist aktuell keine Trainerposition hinterlegt.</p></div>
+        <button class="secondary-btn" id="dashboardLocationOpenBtn" type="button">Auf Karte zeigen</button>
+      </section>
     </main>
 
     <main id="mainView">
@@ -427,7 +484,8 @@
     </main>
 
     <nav class="app-nav hidden" id="moduleNav" aria-label="App-Bereiche">
-      <button class="active" data-module="dex" type="button"><span>◉</span><small>Dex</small></button>
+      <button class="active" data-module="dashboard" type="button"><span>⌂</span><small>Dashboard</small></button>
+      <button data-module="dex" type="button"><span>◉</span><small>Dex</small></button>
       <button data-module="map" type="button"><span>⌖</span><small>Karte</small></button>
       <button data-module="encounter" type="button"><span>🎲</span><small>Begegnung</small></button>
       <button data-module="fight" type="button"><span>⚔</span><small>Kampf</small></button>
@@ -494,11 +552,11 @@
         <button class="setting-button" id="installAppBtn" type="button"><span>▣</span><div><strong>App installieren</strong><small id="installAppStatus">Installationsstatus wird geprüft…</small></div></button>
         <a class="setting-button admin-link" href="admin-import.html"><span>＋</span><div><strong>Spielstände importieren</strong><small>Nur für den ersten Import oder neue Spieler</small></div></a>
       </div>
-      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v7.0</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung und Zufallsgenerator bleiben lokal auf dem jeweiligen Gerät und verändern keinen Spielstand.</p></div>
+      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v9.0</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung und Zufallsgenerator bleiben lokal auf dem jeweiligen Gerät und verändern keinen Spielstand.</p></div>
     </aside>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script type="module" src="app.js?v=7.0"></script>
+  <script type="module" src="app.js?v=9.0"></script>
 </body>
 </html>

@@ -22,10 +22,10 @@ const TYPE_COLORS = {
 
 const app = {
   pokemon: [], attacks: {}, attackCards: [], attackCardMap: new Map(), pokemonCards: [], pokemonCardMap: new Map(), evolutionGroups: [], players: [], player: null,
-  state: {}, publishedState: {}, filter: "all", type: "Alle", search: "", editMode: false,
+  state: {}, publishedState: {}, profile: {trainerLevel:0}, publishedProfile: {trainerLevel:0}, filter: "all", type: "Alle", search: "", editMode: false,
   selectedId: null, activeTab: "info", user: null, isAdmin: false,
   saveTimer: null, saving: false, dirty: false,
-  view: "dex", fightSource: "owned", fightRole: "own", fightSelectedId: null,
+  view: "dashboard", fightSource: "owned", fightRole: "own", fightSelectedId: null,
   fightSelectedLevel: 1, fightTeam: [], fightBaseline: {},
   encounterData: null, encounterField: null, encounterTS: 3, encounterResult: null,
   mapData: null, mapActiveArea: null, mapSymbolLayers: new Set(), mapSelectedField: null, mapLayerSearch: "",
@@ -39,6 +39,7 @@ const clone = v => JSON.parse(JSON.stringify(v));
 const pad = n => String(n).padStart(3,"0");
 const initials = name => (name||"?").trim().split(/\s+/).map(x=>x[0]).join("").slice(0,2).toUpperCase();
 const playerKey = id => `pu-dex-cache-${id}`;
+const profileKey = id => `pu-profile-cache-${id}`;
 const fightKey = id => `pu-fight-v4-${id}`;
 const LAST_PLAYER_KEY = "pu-last-player";
 let deferredInstallPrompt = null;
@@ -61,6 +62,17 @@ function normalizeState(raw={}){
   return out;
 }
 function stateFor(p){ return app.state[p.name]||{owned:false,favorite:false,level:p.minLevel,ep:0}; }
+function normalizeProfile(raw={}){
+  return { trainerLevel: Math.max(0,Math.min(13,Number.isFinite(+raw.trainerLevel)?Math.round(+raw.trainerLevel):0)) };
+}
+function cacheProfile(){ if(app.player) localStorage.setItem(profileKey(app.player.id),JSON.stringify(app.profile)); }
+function normalizeName(value){ return String(value||"").trim().toLocaleLowerCase("de").replace(/[^a-z0-9äöüß]/g,""); }
+function currentTrainerEntry(){
+  if(!app.player) return null;
+  const key=normalizeName(app.player.name);
+  return trainerEntries().find(t=>normalizeName(t.name)===key) || null;
+}
+
 function cacheState(){ if(app.player) localStorage.setItem(playerKey(app.player.id), JSON.stringify(app.state)); }
 function attacksFor(p){ return app.attacks[p.name]||[]; }
 const CARD_KIND_LABELS={attack:"Angriff",defense:"Verteidigung",versatile:"Vielseitig",scheme:"Planung"};
@@ -608,17 +620,19 @@ function renderDiffList(target,counts,emptyText){
 }
 function showModule(view){
   if(!app.player){ showNoPlayer(); return; }
-  app.view=["dex","map","encounter","fight","library"].includes(view)?view:"dex";
+  app.view=["dashboard","dex","map","encounter","fight","library"].includes(view)?view:"dashboard";
   app.selectedId=null;
   $("#detailView").classList.add("hidden");
+  $("#dashboardView").classList.toggle("hidden",app.view!=="dashboard");
   $("#mainView").classList.toggle("hidden",app.view!=="dex");
   $("#mapView").classList.toggle("hidden",app.view!=="map");
   $("#encounterView").classList.toggle("hidden",app.view!=="encounter");
   $("#fightView").classList.toggle("hidden",app.view!=="fight");
   $("#libraryView").classList.toggle("hidden",app.view!=="library");
-  $("#brandLabel").textContent=app.view==="fight"?"Kampf":app.view==="encounter"?"Begegnung":app.view==="map"?"Karte":app.view==="library"?"Bibliothek":"Dex";
+  $("#brandLabel").textContent=app.view==="dashboard"?"PU":app.view==="fight"?"Kampf":app.view==="encounter"?"Begegnung":app.view==="map"?"Karte":app.view==="library"?"Bibliothek":"Dex";
   $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module===app.view));
-  if(app.view==="fight") renderFight();
+  if(app.view==="dashboard") renderDashboard();
+  else if(app.view==="fight") renderFight();
   else if(app.view==="encounter") renderEncounter();
   else if(app.view==="map") renderMap();
   else if(app.view==="library") renderLibrary();
@@ -735,7 +749,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=8.0").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=9.0").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
@@ -754,11 +768,14 @@ async function selectPlayer(id,close=true){
     localStorage.setItem(LAST_PLAYER_KEY,id);
     app.publishedState=normalizeState(data.pokemon||{});
     app.state=clone(app.publishedState);
+    app.publishedProfile=normalizeProfile(data.profile||{});
+    app.profile=clone(app.publishedProfile);
     localStorage.setItem(playerKey(id),JSON.stringify(app.state));
-    app.selectedId=null; app.editMode=app.isAdmin && app.editMode; app.view="dex"; app.encounterResult=null; app.mapSelectedField=null; loadFightState(id);
+    cacheProfile();
+    app.selectedId=null; app.editMode=app.isAdmin && app.editMode; app.view="dashboard"; app.encounterResult=null; app.mapSelectedField=null; loadFightState(id);
     history.replaceState(null,"",`${location.pathname}?player=${encodeURIComponent(id)}`);
-    $("#mainView").classList.remove("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
-    $("#brandLabel").textContent="Dex"; $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module==="dex"));
+    $("#dashboardView").classList.remove("hidden"); $("#mainView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
+    $("#brandLabel").textContent="PU"; $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module==="dashboard"));
     if(close) closeSheets();
     render();
     return true;
@@ -767,8 +784,10 @@ async function selectPlayer(id,close=true){
     const cached=localStorage.getItem(playerKey(id));
     if(cached){
       app.player={id,name:"Offline-Spielstand"};
-      app.state=normalizeState(JSON.parse(cached)); app.publishedState=clone(app.state); app.view="dex"; app.encounterResult=null; app.mapSelectedField=null; loadFightState(id);
-      $("#mainView").classList.remove("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
+      app.state=normalizeState(JSON.parse(cached)); app.publishedState=clone(app.state);
+      try{ app.profile=normalizeProfile(JSON.parse(localStorage.getItem(profileKey(id))||"{}")); }catch{ app.profile=normalizeProfile({}); }
+      app.publishedProfile=clone(app.profile); app.view="dashboard"; app.encounterResult=null; app.mapSelectedField=null; loadFightState(id);
+      $("#dashboardView").classList.remove("hidden"); $("#mainView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
       toast("Offline-Kopie geladen");
       render();
       return true;
@@ -779,8 +798,8 @@ async function selectPlayer(id,close=true){
 }
 
 function showNoPlayer(msg="Öffne deinen persönlichen Spieler-Link. Als Spielleiter kannst du dich über ☰ anmelden."){
-  app.player=null; app.state={}; app.publishedState={}; app.selectedId=null; app.fightTeam=[]; app.fightBaseline={}; app.encounterResult=null;
-  $("#detailView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#moduleNav").classList.add("hidden"); $("#noPlayerView").classList.remove("hidden");
+  app.player=null; app.state={}; app.publishedState={}; app.profile=normalizeProfile({}); app.publishedProfile=clone(app.profile); app.selectedId=null; app.fightTeam=[]; app.fightBaseline={}; app.encounterResult=null;
+  $("#detailView").classList.add("hidden"); $("#dashboardView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#moduleNav").classList.add("hidden"); $("#noPlayerView").classList.remove("hidden");
   $("#noPlayerText").textContent=msg;
 }
 
@@ -801,12 +820,73 @@ function filteredPokemon(){
 function render(){
   if(app.player){
     $("#playerNameTop").textContent=app.player.name; $("#playerAvatar").textContent=initials(app.player.name); $("#welcomeLabel").textContent=`${app.player.name}s Dex`;
-    renderStats(); renderGrid(); if(app.view==="fight") renderFight(); else if(app.view==="encounter") renderEncounter(); else if(app.view==="map") renderMap(); else if(app.view==="library") renderLibrary();
+    renderStats(); renderGrid(); if(app.view==="dashboard") renderDashboard(); else if(app.view==="fight") renderFight(); else if(app.view==="encounter") renderEncounter(); else if(app.view==="map") renderMap(); else if(app.view==="library") renderLibrary();
   } else { $("#playerNameTop").textContent=app.isAdmin?"Spieler wählen":"Dex"; $("#playerAvatar").textContent=app.isAdmin?"A":"?"; }
   renderPlayerList(); updateAuthUI();
   $("#editModeToggle").checked=app.editMode;
   if(app.selectedId) renderDetail();
 }
+function renderDashboard(){
+  if(!app.player) return;
+  const owned=app.pokemon.filter(p=>stateFor(p).owned);
+  const favorites=owned.filter(p=>stateFor(p).favorite);
+  const ownedCount=owned.length, favCount=favorites.length;
+  const avg=ownedCount ? owned.reduce((sum,p)=>sum+stateFor(p).level,0)/ownedCount : 0;
+  const percent=app.pokemon.length ? Math.round(ownedCount/app.pokemon.length*100) : 0;
+  const trainer=currentTrainerEntry();
+  const field=trainer ? mapFieldById(trainer.fieldId) : null;
+
+  $("#dashboardAvatar").textContent=initials(app.player.name);
+  $("#dashboardName").textContent=app.player.name;
+  $("#dashboardTrainerLevel").textContent=`Trainerstufe ${app.profile.trainerLevel}`;
+  $("#dashboardTrainerLevelValue").textContent=app.profile.trainerLevel;
+  $("#dashboardTrainerLevelSlider").value=app.profile.trainerLevel;
+  $("#dashboardLocation").textContent=field?`${field.id} · ${field.name||"Standort"}`:"Standort nicht gesetzt";
+  $("#dashboardOwned").textContent=ownedCount;
+  $("#dashboardFavorites").textContent=favCount;
+  $("#dashboardAvgLevel").textContent=ownedCount?avg.toFixed(1).replace(".",","):"—";
+  $("#dashboardProgressText").textContent=`${percent} % abgeschlossen`;
+  $("#dashboardProgressFraction").textContent=`${ownedCount} / ${app.pokemon.length}`;
+  $("#dashboardProgressBar").style.width=`${percent}%`;
+  $("#dashboardOwnedHint").textContent=`${ownedCount} gefangen`;
+  $("#dashboardAdminPanel").classList.toggle("hidden",!(app.isAdmin&&app.editMode));
+
+  const favRow=$("#dashboardFavoriteRow");
+  favRow.innerHTML=favorites.length?favorites.slice(0,8).map(p=>dashboardPokemonCard(p)).join(""):`<div class="dashboard-empty">Noch keine gefangenen Favoriten.</div>`;
+  favRow.querySelectorAll("img").forEach(setImgFallback);
+
+  const strong=[...owned].sort((a,b)=>stateFor(b).level-stateFor(a).level || stateFor(b).ep-stateFor(a).ep || a.id-b.id).slice(0,6);
+  $("#dashboardStrongList").innerHTML=strong.length?strong.map((p,i)=>{
+    const st=stateFor(p); return `<button type="button" class="dashboard-strong-row" data-dashboard-pokemon="${p.id}" style="${typeVars(p.type)}"><b>${i+1}</b><img src="${p.image}" alt=""><span><strong>${escapeHtml(p.name)}</strong><small>${escapeHtml(p.type)} · ${st.ep}/10 EP</small></span><em>Lvl ${st.level}</em></button>`;
+  }).join(""):`<div class="dashboard-empty">Noch keine Pokémon gefangen.</div>`;
+  $("#dashboardStrongList").querySelectorAll("img").forEach(setImgFallback);
+
+  const byType=[...new Set(app.pokemon.map(p=>p.type))].sort((a,b)=>a.localeCompare(b,"de"));
+  $("#dashboardTypeProgress").innerHTML=byType.map(type=>{
+    const all=app.pokemon.filter(p=>p.type===type), got=all.filter(p=>stateFor(p).owned).length, pct=all.length?Math.round(got/all.length*100):0;
+    return `<article style="${typeVars(type)}"><div class="dashboard-type-line"><span><i></i><strong>${escapeHtml(type)}</strong></span><b>${got}/${all.length}</b></div><div class="dashboard-type-track"><span style="width:${pct}%"></span></div></article>`;
+  }).join("");
+
+  $("#dashboardLocationName").textContent=field?`${field.name||field.id} · ${field.id}`:"Nicht auf Karte gesetzt";
+  $("#dashboardLocationDescription").textContent=field?(field.description||"Keine Beschreibung hinterlegt."):"Für diesen Spieler ist aktuell keine Trainerposition hinterlegt.";
+  $("#dashboardLocationOpenBtn").disabled=!field;
+  $("#dashboardMapBtn").disabled=!field;
+}
+function dashboardPokemonCard(p){
+  const st=stateFor(p);
+  return `<button type="button" class="dashboard-mon" data-dashboard-pokemon="${p.id}" style="${typeVars(p.type)}"><div><img src="${p.image}" alt="${escapeHtml(p.name)}"></div><strong>${escapeHtml(p.name)}</strong><small>Lvl ${st.level}</small></button>`;
+}
+function updateTrainerLevel(value){
+  if(!app.isAdmin||!app.editMode){ toast("Bearbeitungsmodus erforderlich"); return; }
+  app.profile.trainerLevel=Math.max(0,Math.min(13,Math.round(+value||0)));
+  cacheProfile(); app.dirty=true; renderDashboard(); scheduleSave();
+}
+function openDashboardLocation(){
+  const trainer=currentTrainerEntry(); const field=trainer?mapFieldById(trainer.fieldId):null;
+  if(!field){ toast("Keine Trainerposition hinterlegt"); return; }
+  app.mapSymbolLayers.add("Trainer"); app.mapSelectedField=field; showModule("map"); openMapField(field);
+}
+
 function renderStats(){ const vals=app.pokemon.map(p=>stateFor(p)); $("#ownedCount").textContent=vals.filter(s=>s.owned).length; $("#favoriteCount").textContent=vals.filter(s=>s.favorite).length; $("#totalCount").textContent=app.pokemon.length; }
 function renderGrid(){
   const list=filteredPokemon();
@@ -822,7 +902,7 @@ function renderPlayerList(){
   wrap.innerHTML=app.players.map(p=>`<button class="player-option ${app.player?.id===p.id?"active":""}" data-player="${p.id}"><span class="player-avatar">${initials(p.name)}</span><span><strong>${escapeHtml(p.name)}</strong><small>${app.player?.id===p.id?"Aktuell ausgewählt":"Dex öffnen"}</small></span></button>`).join("")||`<div class="notice"><strong>Noch keine Spieler</strong><p>Importiere zuerst deine JSON-Spielstände über <code>admin-import.html</code>.</p></div>`;
 }
 
-function openDetail(id){ app.view="dex"; app.selectedId=Number(id); app.activeTab="info"; $("#mainView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#detailView").classList.remove("hidden"); window.scrollTo({top:0,behavior:"instant"}); renderDetail(); }
+function openDetail(id){ app.view="dex"; app.selectedId=Number(id); app.activeTab="info"; $("#dashboardView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#detailView").classList.remove("hidden"); window.scrollTo({top:0,behavior:"instant"}); renderDetail(); }
 function closeDetail(){ app.selectedId=null; $("#detailView").classList.add("hidden"); $("#mainView").classList.remove("hidden"); app.view="dex"; renderGrid(); }
 function selectedPokemon(){ return app.pokemon.find(p=>p.id===app.selectedId); }
 
@@ -1041,7 +1121,7 @@ function scheduleSave(){ clearTimeout(app.saveTimer); setSyncLabel("Änderungen�
 async function saveToFirebase(){
   if(!app.isAdmin||!app.player||!app.dirty||app.saving) return;
   app.saving=true; setSyncLabel("Speichert…");
-  try { await setDoc(doc(db,"players",app.player.id),{name:app.player.name,version:1,pokemon:app.state,updatedAt:serverTimestamp()},{merge:true}); app.publishedState=clone(app.state); app.dirty=false; setSyncLabel("Gespeichert ✓"); }
+  try { await setDoc(doc(db,"players",app.player.id),{name:app.player.name,version:1,pokemon:app.state,profile:app.profile,updatedAt:serverTimestamp()},{merge:true}); app.publishedState=clone(app.state); app.publishedProfile=clone(app.profile); app.dirty=false; setSyncLabel("Gespeichert ✓"); }
   catch(err){ console.error(err); setSyncLabel("Speichern fehlgeschlagen"); toast("Firebase-Speichern fehlgeschlagen"); }
   finally { app.saving=false; }
 }
@@ -1118,11 +1198,17 @@ function bindEvents(){
   $$('[data-filter]').forEach(b=>b.addEventListener("click",()=>{app.filter=b.dataset.filter; $$('[data-filter]').forEach(x=>x.classList.toggle("active",x===b));renderGrid();}));
   $("#typeStrip").addEventListener("click",e=>{const b=e.target.closest("[data-type]");if(!b)return;app.type=b.dataset.type;$$(".type-chip").forEach(x=>x.classList.toggle("active",x===b));renderGrid();});
   $("#clearFiltersBtn").addEventListener("click",resetFilters); $("#dexGrid").addEventListener("click",e=>{const c=e.target.closest(".dex-card");if(c)openDetail(c.dataset.id);});
-  $("#backBtn").addEventListener("click",closeDetail); $("#homeBtn").addEventListener("click",()=>{if(app.selectedId)closeDetail();else if(app.player&&app.view!=="dex")showModule("dex");else if(app.player)resetFilters();});
+  $("#backBtn").addEventListener("click",closeDetail); $("#homeBtn").addEventListener("click",()=>{if(app.selectedId)showModule("dashboard");else if(app.player&&app.view!=="dashboard")showModule("dashboard");});
   $("#prevBtn").addEventListener("click",()=>{app.selectedId=app.selectedId<=1?app.pokemon.length:app.selectedId-1;renderDetail();}); $("#nextBtn").addEventListener("click",()=>{app.selectedId=app.selectedId>=app.pokemon.length?1:app.selectedId+1;renderDetail();});
   $("#detailFavoriteBtn").addEventListener("click",()=>mutateSelected(s=>s.favorite=!s.favorite)); $$(".tab").forEach(b=>b.addEventListener("click",()=>{app.activeTab=b.dataset.tab;renderDetail();}));
   $("#ownedToggle").addEventListener("change",e=>mutateSelected(s=>s.owned=e.target.checked)); $("#favoriteToggle").addEventListener("change",e=>mutateSelected(s=>s.favorite=e.target.checked)); $("#levelSlider").addEventListener("input",e=>mutateSelected(s=>s.level=+e.target.value)); $$(".stepper [data-ep]").forEach(b=>b.addEventListener("click",()=>changeEP(+b.dataset.ep)));
   $("#evolutionContent").addEventListener("click",e=>{const b=e.target.closest("[data-evo-id]"); if(!b)return; app.selectedId=+b.dataset.evoId; app.activeTab="entwicklung"; window.scrollTo({top:0,behavior:"smooth"}); renderDetail();});
+  $("#dashboardTrainerLevelSlider").addEventListener("input",e=>updateTrainerLevel(e.target.value));
+  $("#dashboardFavoriteRow").addEventListener("click",e=>{const b=e.target.closest("[data-dashboard-pokemon]");if(b)openDetail(+b.dataset.dashboardPokemon);});
+  $("#dashboardStrongList").addEventListener("click",e=>{const b=e.target.closest("[data-dashboard-pokemon]");if(b)openDetail(+b.dataset.dashboardPokemon);});
+  $("#dashboardAllFavoritesBtn").addEventListener("click",()=>{app.filter="favorite";app.type="Alle";app.search="";$("#searchInput").value="";showModule("dex");$$("[data-filter]").forEach(b=>b.classList.toggle("active",b.dataset.filter==="favorite"));renderGrid();});
+  $("#dashboardLocationOpenBtn").addEventListener("click",openDashboardLocation);
+  $("#dashboardMapBtn").addEventListener("click",openDashboardLocation);
   $("#moduleNav").addEventListener("click",e=>{const b=e.target.closest("[data-module]");if(b)showModule(b.dataset.module);});
   $("#mapLayerBtn").addEventListener("click",()=>{renderMapLayerMenu();openSheet("#mapLayerSheet");});
   $("#mapTrainerEditBtn").addEventListener("click",()=>{renderTrainerEditList();openSheet("#trainerEditSheet");});
@@ -1162,7 +1248,7 @@ function bindEvents(){
   $("#editModeToggle").addEventListener("change",e=>{if(!app.isAdmin){e.target.checked=false;toast("Admin-Anmeldung erforderlich");return;}app.editMode=e.target.checked;if(!app.editMode)app.mapTrainerMoveId=null;render();toast(app.editMode?"Bearbeitungsmodus aktiv":"Ansichtsmodus aktiv");});
   $("#exportBtn").addEventListener("click",exportState); $("#shareBtn").addEventListener("click",sharePlayer); $("#saveNowBtn").addEventListener("click",saveToFirebase); $("#installAppBtn").addEventListener("click",installPwa);
   $("#loginBtn").addEventListener("click",doLogin); $("#logoutBtn").addEventListener("click",doLogout); $("#adminPassword").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
-  window.addEventListener("beforeunload",()=>{ if(app.dirty) cacheState(); });
+  window.addEventListener("beforeunload",()=>{ if(app.dirty){ cacheState(); cacheProfile(); } });
 }
 
 init();
