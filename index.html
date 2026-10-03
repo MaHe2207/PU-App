@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>PU Dex</title>
-  <link rel="manifest" href="manifest.webmanifest?v=10.0">
+  <link rel="manifest" href="manifest.webmanifest?v=11.0">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=10.0">
+  <link rel="stylesheet" href="styles.css?v=11.0">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -492,6 +492,39 @@
       <p class="library-source-note">Karteninformationen wurden einmalig aus deinen bereitgestellten Spielmaterialien strukturiert. Die App arbeitet mit den Daten und benötigt die PDFs selbst nicht.</p>
     </main>
 
+    <main id="directorView" class="director-view hidden">
+      <section class="hero director-hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Spielleiter-Zentrale</p>
+          <h1>Alle Trainer im Blick.</h1>
+          <p>Fortschritt, Standort und Ziele der gesamten Kampagne auf einer Seite.</p>
+        </div>
+        <div class="director-orb" aria-hidden="true">♟</div>
+      </section>
+
+      <section class="director-kpis" aria-label="Kampagnenübersicht">
+        <article><span>♟</span><div><strong id="directorPlayerCount">0</strong><small>Spieler</small></div></article>
+        <article><span>◉</span><div><strong id="directorDexAverage">0 %</strong><small>Ø Dex</small></div></article>
+        <article><span>✓</span><div><strong id="directorGoalCount">0</strong><small>Ziele erfüllt</small></div></article>
+        <article><span>⌖</span><div><strong id="directorLocationCount">0</strong><small>auf Karte</small></div></article>
+      </section>
+
+      <section class="director-toolbar">
+        <label class="director-search"><span aria-hidden="true">⌕</span><input id="directorSearch" type="search" placeholder="Spieler suchen…" autocomplete="off"></label>
+        <label class="director-sort"><span>Sortieren</span><select id="directorSort"><option value="name">Name</option><option value="dex">Dex-Fortschritt</option><option value="trainer">Trainerstufe</option><option value="goals">Ziele erfüllt</option></select></label>
+        <button class="secondary-btn director-refresh" id="directorRefreshBtn" type="button">↻ Aktualisieren</button>
+      </section>
+
+      <section class="director-attention hidden" id="directorAttention"></section>
+
+      <section class="section-head director-head">
+        <div><p class="eyebrow">Spieler</p><h2 id="directorHeading">Alle Trainer</h2></div>
+        <span class="data-pill" id="directorResultCount">0 Spieler</span>
+      </section>
+      <section class="director-grid" id="directorGrid"></section>
+      <p class="empty-state hidden" id="directorEmpty">Keine Spieler gefunden.</p>
+    </main>
+
     <nav class="app-nav hidden" id="moduleNav" aria-label="App-Bereiche">
       <button class="active" data-module="dashboard" type="button"><span>⌂</span><small>Dashboard</small></button>
       <button data-module="dex" type="button"><span>◉</span><small>Dex</small></button>
@@ -564,17 +597,18 @@
           <div><strong>Bearbeitungsmodus</strong><small>Änderungen werden automatisch mit Firebase synchronisiert.</small></div>
           <label class="switch"><input id="editModeToggle" type="checkbox"><span></span></label>
         </div>
+        <button class="setting-button hidden" id="directorBtn" type="button"><span>♟</span><div><strong>Spielleiter-Zentrale</strong><small>Alle Spieler, Standorte und Fortschritte im Überblick</small></div></button>
         <button class="setting-button" id="shareBtn"><span>↗</span><div><strong>Spieler-Link kopieren</strong><small>Nur dieser Dex wird über den Link geöffnet</small></div></button>
         <button class="setting-button" id="saveNowBtn"><span>☁</span><div><strong>Jetzt synchronisieren</strong><small id="syncStatus">Firebase bereit</small></div></button>
         <button class="setting-button" id="exportBtn"><span>⇩</span><div><strong>Backup exportieren</strong><small>Aktuellen Spielstand als JSON speichern</small></div></button>
         <button class="setting-button" id="installAppBtn" type="button"><span>▣</span><div><strong>App installieren</strong><small id="installAppStatus">Installationsstatus wird geprüft…</small></div></button>
         <a class="setting-button admin-link" href="admin-import.html"><span>＋</span><div><strong>Spielstände importieren</strong><small>Nur für den ersten Import oder neue Spieler</small></div></a>
       </div>
-      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v10.0</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung und Zufallsgenerator bleiben lokal auf dem jeweiligen Gerät und verändern keinen Spielstand.</p></div>
+      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v11.0</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung und Zufallsgenerator bleiben lokal auf dem jeweiligen Gerät und verändern keinen Spielstand.</p></div>
     </aside>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script type="module" src="app.js?v=10.0"></script>
+  <script type="module" src="app.js?v=11.0"></script>
 </body>
 </html>
