@@ -1,4 +1,4 @@
-const CACHE="pu-dex-v11-director-20261003";
+const CACHE="pu-dex-v12-battle-table-20261003";
 const CORE=[
   "./",
   "./index.html",
@@ -17,7 +17,8 @@ const CORE=[
   "./data/evolutions.json",
   "./data/encounters.json",
   "./data/map.json",
-  "./data/goals.json"
+  "./data/goals.json",
+  "./data/battle-rules.json"
 ];
 
 self.addEventListener("install",e=>{

@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>PU Dex</title>
-  <link rel="manifest" href="manifest.webmanifest?v=11.0">
+  <link rel="manifest" href="manifest.webmanifest?v=12.0">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=11.0">
+  <link rel="stylesheet" href="styles.css?v=12.0">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -26,6 +26,12 @@
         <button class="icon-btn" id="settingsBtn" type="button" aria-label="Einstellungen">☰</button>
       </div>
     </header>
+
+    <button id="activeBattleBanner" class="active-battle-banner hidden" type="button">
+      <span class="active-battle-icon">⚔</span>
+      <span class="active-battle-copy"><strong>Laufender Kampf</strong><small id="activeBattleBannerText">Kampf öffnen</small></span>
+      <span class="active-battle-open">Öffnen ›</span>
+    </button>
 
     <main id="noPlayerView" class="no-player-view hidden">
       <div class="no-player-card">
@@ -409,6 +415,16 @@
         <div class="fight-team" id="fightTeamList"></div>
       </section>
 
+      <section class="fight-panel live-launch-panel">
+        <div class="fight-panel-head">
+          <div><p class="eyebrow">Synchronisierter Kampftisch</p><h2>Kampf auf allen Geräten starten</h2></div>
+          <span class="data-pill">Firebase</span>
+        </div>
+        <div class="fight-launch-info" id="fightLaunchInfo"><strong>0 vs 0 Pokémon</strong><span>Startfeld wählen</span></div>
+        <p class="fight-help" id="fightLaunchHint">Wähle auf beiden Seiten gleich viele Start-Pokémon (1 oder 2).</p>
+        <button class="primary-btn" id="fightStartLiveBtn" type="button" disabled>Kampf starten</button>
+      </section>
+
       <section class="fight-panel compare-panel">
         <div class="fight-panel-head compare-head">
           <div><p class="eyebrow">Attackenkarten</p><h2>Vergleich zum letzten Kampf</h2></div>
@@ -447,6 +463,45 @@
     </main>
 
 
+
+    <main id="battleView" class="battle-view hidden">
+      <section class="battle-top">
+        <div>
+          <p class="eyebrow">PU · Synchronisierter Kampftisch</p>
+          <h1 id="battleTitle">Laufender Kampf</h1>
+          <div class="battle-top-meta"><span id="battleFieldSize">1 gegen 1</span><span>max. 6 Pokémon je Team</span></div>
+        </div>
+        <div class="battle-top-actions">
+          <button class="secondary-btn" id="battleBackBtn" type="button">Zur Vorbereitung</button>
+          <button class="danger-btn" id="battleEndBtn" type="button">Kampf beenden</button>
+        </div>
+      </section>
+
+      <section class="battle-event-card">
+        <span>LIVE</span><strong id="battleLastEvent">Kampf läuft</strong>
+      </section>
+      <section class="battle-victory hidden" id="battleVictoryBanner"></section>
+
+      <section class="battle-table-grid">
+        <div class="battle-side" id="battleOwnSide"></div>
+        <div class="battle-side" id="battleOpponentSide"></div>
+      </section>
+
+      <section class="battle-calculator">
+        <div class="battle-calc-head">
+          <div><p class="eyebrow">Kampfrechner</p><h2>Angriff auflösen</h2></div>
+          <span class="data-pill">Karten + Typen</span>
+        </div>
+        <div class="battle-calc-grid">
+          <label><span>Angreifer</span><select id="battleCalcAttacker"></select></label>
+          <label><span>Verteidiger</span><select id="battleCalcDefender"></select></label>
+          <label><span>Angriffskarte</span><select id="battleCalcAttackCard"></select></label>
+          <label><span>Verteidigungskarte</span><select id="battleCalcDefenseCard"></select></label>
+        </div>
+        <button class="primary-btn battle-calc-btn" id="battleCalculateBtn" type="button">Schaden & Effekte berechnen</button>
+        <div class="battle-calc-result" id="battleCalcResult"></div>
+      </section>
+    </main>
 
     <main id="libraryView" class="library-view hidden">
       <section class="hero library-hero">
@@ -578,6 +633,12 @@
       <div id="cardDetailBody" class="card-detail-body"></div>
     </aside>
 
+    <aside class="bottom-sheet battle-fighter-sheet hidden" id="battleFighterSheet" aria-label="Kämpfer verwalten">
+      <div class="sheet-handle"></div>
+      <div class="sheet-head"><div><p class="eyebrow">Kampftisch</p><h2 id="battleFighterSheetName">Pokémon</h2></div><button class="round-btn close-sheet" type="button">×</button></div>
+      <div id="battleFighterSheetBody" class="battle-fighter-sheet-body"></div>
+    </aside>
+
     <aside class="bottom-sheet hidden" id="settingsSheet" aria-label="Dex Einstellungen">
       <div class="sheet-handle"></div>
       <div class="sheet-head"><div><p class="eyebrow">Einstellungen</p><h2>Dex verwalten</h2></div><button class="round-btn close-sheet" type="button">×</button></div>
@@ -604,11 +665,11 @@
         <button class="setting-button" id="installAppBtn" type="button"><span>▣</span><div><strong>App installieren</strong><small id="installAppStatus">Installationsstatus wird geprüft…</small></div></button>
         <a class="setting-button admin-link" href="admin-import.html"><span>＋</span><div><strong>Spielstände importieren</strong><small>Nur für den ersten Import oder neue Spieler</small></div></a>
       </div>
-      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v11.0</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung und Zufallsgenerator bleiben lokal auf dem jeweiligen Gerät und verändern keinen Spielstand.</p></div>
+      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v12.0</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung bleibt lokal. Ein gestarteter Kampftisch wird als temporärer aktiver Kampf über Firebase auf allen Geräten synchronisiert.</p></div>
     </aside>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script type="module" src="app.js?v=11.0"></script>
+  <script type="module" src="app.js?v=12.0"></script>
 </body>
 </html>

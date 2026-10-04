@@ -9,10 +9,10 @@
     "standalone",
     "minimal-ui"
   ],
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "background_color": "#f7f8fb",
   "theme_color": "#f7f8fb",
-  "description": "Mobile Begleit-App für PU – Spieler-Dashboard, Spielleiter-Zentrale mit Kampagnenübersicht, Ziele, Dex, Weltkarte, Begegnungen, Kampfvorbereitung und Kartenbibliothek für Pokémon × Unmatched",
+  "description": "Begleit-App für PU – Dex, Weltkarte, Begegnungen, Kampfvorbereitung, synchronisierter Kampftisch und Kartenbibliothek für Pokémon × Unmatched",
   "lang": "de",
   "categories": [
     "games",

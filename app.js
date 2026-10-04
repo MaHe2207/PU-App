@@ -3,7 +3,7 @@ import {
   getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-auth.js";
 import {
-  getFirestore, doc, getDoc, getDocs, collection, setDoc, serverTimestamp
+  getFirestore, doc, getDoc, getDocs, collection, setDoc, updateDoc, onSnapshot, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js";
 import { firebaseConfig, ADMIN_UID } from "./firebase-config.js";
 
@@ -31,7 +31,9 @@ const app = {
   mapData: null, mapActiveArea: null, mapSymbolLayers: new Set(), mapSelectedField: null, mapLayerSearch: "",
   mapTrainerMoveId: null,
   librarySearch: "", libraryKind: "all", libraryType: "Alle", librarySection: "attacks", selectedCardName: null,
-  directorSearch: "", directorSort: "name"
+  directorSearch: "", directorSort: "name",
+  battleRules: null, activeBattle: null, battleUnsub: null, battleSelectedFighter: null,
+  battleCalc: {attacker:null,defender:null,attackCard:null,defenseCard:"",result:null}
 };
 
 const $ = s => document.querySelector(s);
@@ -578,14 +580,14 @@ function loadFightState(id){
   app.fightTeam=[]; app.fightBaseline={}; app.fightSelectedId=null; app.fightSelectedLevel=1; app.fightSource="owned"; app.fightRole="own";
   try {
     const raw=JSON.parse(localStorage.getItem(fightKey(id))||"{}");
-    if(Array.isArray(raw.team)) app.fightTeam=raw.team.map(m=>({uid:m.uid||newFightUid(),id:+m.id,level:+m.level,role:m.role==="opponent"?"opponent":"own",freeLevel:!!m.freeLevel})).filter(m=>fightPokemon(m.id));
+    if(Array.isArray(raw.team)) app.fightTeam=raw.team.map(m=>({uid:m.uid||newFightUid(),id:+m.id,level:+m.level,role:m.role==="opponent"?"opponent":"own",freeLevel:!!m.freeLevel,startActive:!!m.startActive})).filter(m=>fightPokemon(m.id));
     if(raw.baseline&&typeof raw.baseline==="object") app.fightBaseline=Object.fromEntries(Object.entries(raw.baseline).filter(([,v])=>Number.isFinite(+v)&&+v>0).map(([k,v])=>[k,(raw.version>=7?+v:+v*cardSetSize(k))]));
   } catch(err){ console.warn("Kampfstand konnte nicht geladen werden",err); }
   ensureFightSelection(true);
 }
 function saveFightState(){
   if(!app.player) return;
-  localStorage.setItem(fightKey(app.player.id),JSON.stringify({version:7,team:app.fightTeam,baseline:app.fightBaseline}));
+  localStorage.setItem(fightKey(app.player.id),JSON.stringify({version:12,team:app.fightTeam,baseline:app.fightBaseline}));
 }
 function fightChoices(){
   if(app.fightSource==="favorite") return app.pokemon.filter(p=>stateFor(p).owned && stateFor(p).favorite);
@@ -644,6 +646,7 @@ function showModule(view){
     $("#mapView").classList.add("hidden");
     $("#encounterView").classList.add("hidden");
     $("#fightView").classList.add("hidden");
+    $("#battleView").classList.add("hidden");
     $("#libraryView").classList.add("hidden");
     $("#noPlayerView").classList.add("hidden");
     $("#directorView").classList.remove("hidden");
@@ -662,6 +665,7 @@ function showModule(view){
   $("#mapView").classList.toggle("hidden",app.view!=="map");
   $("#encounterView").classList.toggle("hidden",app.view!=="encounter");
   $("#fightView").classList.toggle("hidden",app.view!=="fight");
+  $("#battleView").classList.add("hidden");
   $("#libraryView").classList.toggle("hidden",app.view!=="library");
   $("#brandLabel").textContent=app.view==="dashboard"?"PU":app.view==="fight"?"Kampf":app.view==="encounter"?"Begegnung":app.view==="map"?"Karte":app.view==="library"?"Bibliothek":"Dex";
   $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module===app.view));
@@ -709,9 +713,14 @@ function renderFight(){
   }
 
   const team=$("#fightTeamList");
-  $("#fightTeamHeading").textContent=app.fightTeam.length?`${app.fightTeam.length} ${app.fightTeam.length===1?"Pokémon":"Pokémon"}`:"Noch kein Pokémon";
-  team.innerHTML=app.fightTeam.length?app.fightTeam.map((m,index)=>{ const mon=fightPokemon(m.id); const type=mon?.type||"Normal"; const learnedMoves=mon?attacksFor(mon).filter(a=>a.level<=m.level):[]; const copies=learnedMoves.reduce((sum,a)=>sum+cardSetSize(a.name),0); return `<article class="fight-member" style="${typeVars(type)}"><div class="fight-member-art"><img src="${mon?.image||FALLBACK_IMAGE}" alt="${escapeHtml(mon?.name||"Pokémon")}" loading="lazy"></div><div class="fight-member-copy"><small>${m.role==="opponent"?"Gegner":"Mein Team"} · #${pad(mon?.id||0)}</small><strong>${escapeHtml(mon?.name||"Pokémon")}</strong><span>Lvl ${m.level} · ${learnedMoves.length} Attacken · ${copies} Karten</span></div><div class="fight-member-actions"><div class="mini-level"><button data-fight-step="-1" data-fight-uid="${m.uid}" type="button">−</button><b>${m.level}</b><button data-fight-step="1" data-fight-uid="${m.uid}" type="button">＋</button></div><button class="fight-remove" data-fight-remove="${m.uid}" type="button" aria-label="${escapeHtml(mon?.name||"Pokémon")} entfernen">×</button></div></article>`; }).join(""):`<div class="fight-empty"><span>⚔</span><strong>Team noch leer</strong><p>Füge oben Pokémon hinzu. Die benötigten Attackenkarten werden sofort berechnet.</p></div>`;
+  const ownTeam=app.fightTeam.filter(m=>m.role!=="opponent"), oppTeam=app.fightTeam.filter(m=>m.role==="opponent");
+  $("#fightTeamHeading").textContent=app.fightTeam.length?`${ownTeam.length} eigenes · ${oppTeam.length} Gegner`:"Noch kein Pokémon";
+  team.innerHTML=app.fightTeam.length?app.fightTeam.map((m,index)=>{
+    const mon=fightPokemon(m.id); const type=mon?.type||"Normal"; const learnedMoves=mon?attacksFor(mon).filter(a=>a.level<=m.level):[]; const copies=learnedMoves.reduce((sum,a)=>sum+cardSetSize(a.name),0);
+    return `<article class="fight-member ${m.startActive?"fight-start-active":""}" style="${typeVars(type)}"><div class="fight-member-art"><img src="${mon?.image||FALLBACK_IMAGE}" alt="${escapeHtml(mon?.name||"Pokémon")}" loading="lazy"></div><div class="fight-member-copy"><small>${m.role==="opponent"?"Gegner":"Mein Team"} · #${pad(mon?.id||0)}</small><strong>${escapeHtml(mon?.name||"Pokémon")}</strong><span>Lvl ${m.level} · ${learnedMoves.length} Attacken · ${copies} Karten</span><button class="fight-start-toggle ${m.startActive?"active":""}" data-fight-start="${m.uid}" type="button">${m.startActive?"✓ Startfeld":"Startfeld"}</button></div><div class="fight-member-actions"><div class="mini-level"><button data-fight-step="-1" data-fight-uid="${m.uid}" type="button">−</button><b>${m.level}</b><button data-fight-step="1" data-fight-uid="${m.uid}" type="button">＋</button></div><button class="fight-remove" data-fight-remove="${m.uid}" type="button" aria-label="${escapeHtml(mon?.name||"Pokémon")} entfernen">×</button></div></article>`;
+  }).join(""):`<div class="fight-empty"><span>⚔</span><strong>Team noch leer</strong><p>Füge oben Pokémon hinzu. Pro Seite sind bis zu 6 Pokémon möglich, davon starten 1 oder 2 gleichzeitig auf dem Feld.</p></div>`;
   $$("#fightTeamList img").forEach(setImgFallback);
+  renderFightLaunchState();
 
   const current=cardsForFightTeam(); const diff=diffFightCards(current,app.fightBaseline);
   $("#fightTeamCount").textContent=app.fightTeam.length; $("#fightUniqueCount").textContent=Object.keys(current).length; $("#fightCopyCount").textContent=totalCopies(current);
@@ -728,8 +737,30 @@ function renderFight(){
 }
 function addFightPokemon(){
   const p=fightPokemon(app.fightSelectedId); if(!p) return;
-  app.fightTeam.push({uid:newFightUid(),id:p.id,level:app.fightSelectedLevel,role:app.fightRole});
+  const sideCount=app.fightTeam.filter(m=>m.role===app.fightRole).length;
+  if(sideCount>=6){ toast("Pro Seite sind maximal 6 Pokémon möglich"); return; }
+  const sideStarts=app.fightTeam.filter(m=>m.role===app.fightRole && m.startActive).length;
+  app.fightTeam.push({uid:newFightUid(),id:p.id,level:app.fightSelectedLevel,role:app.fightRole,startActive:sideStarts===0});
   renderFight(); toast(`${p.name} hinzugefügt`);
+}
+function toggleFightStart(uid){
+  const m=app.fightTeam.find(x=>x.uid===uid); if(!m) return;
+  if(!m.startActive){
+    const n=app.fightTeam.filter(x=>x.role===m.role&&x.startActive).length;
+    if(n>=2){ toast("Maximal 2 Pokémon pro Seite können gleichzeitig starten"); return; }
+  }
+  m.startActive=!m.startActive; saveFightState(); renderFight();
+}
+function renderFightLaunchState(){
+  const el=$("#fightLaunchInfo"), btn=$("#fightStartLiveBtn"); if(!el||!btn) return;
+  const own=app.fightTeam.filter(m=>m.role!=="opponent"), opp=app.fightTeam.filter(m=>m.role==="opponent");
+  const ownStart=own.filter(m=>m.startActive).length, oppStart=opp.filter(m=>m.startActive).length;
+  const ready=own.length>=1&&opp.length>=1&&own.length<=6&&opp.length<=6&&ownStart>=1&&ownStart<=2&&ownStart===oppStart;
+  const activeText=app.activeBattle?" · aktuell läuft bereits ein synchronisierter Kampf":"";
+  el.innerHTML=`<strong>${own.length} vs ${opp.length} Pokémon</strong><span>Startfeld: ${ownStart} vs ${oppStart}${activeText}</span>`;
+  btn.disabled=!ready;
+  btn.textContent=app.activeBattle?"Laufenden Kampf ersetzen":"Kampf starten";
+  $("#fightLaunchHint").textContent=ready?`Start mit ${ownStart} gegen ${oppStart}. Reserve-Pokémon können nur nachrücken, wenn ein aktives Pokémon besiegt wurde.`:"Wähle auf beiden Seiten gleich viele Start-Pokémon (1 oder 2) und mindestens ein Pokémon pro Team.";
 }
 function stepFightMember(uid,delta){
   const m=app.fightTeam.find(x=>x.uid===uid); if(!m)return; const p=fightPokemon(m.id); if(!p)return;
@@ -741,6 +772,364 @@ function startNextFight(){
   if(!app.fightTeam.length && !Object.keys(current).length){ toast("Stelle zuerst einen Kampf zusammen"); return; }
   app.fightBaseline=current; app.fightTeam=[]; saveFightState(); renderFight(); toast("Kartenstand gemerkt · neues Team wählen");
 }
+
+const ACTIVE_BATTLE_DOC="active";
+const BATTLE_STATUS_KEYS=["paralyzed","confused","poisoned","burned","sleeping","frozen"];
+const BATTLE_STATUS_ICONS={paralyzed:"⚡",confused:"?",poisoned:"☠",burned:"🔥",sleeping:"Zz",frozen:"❄"};
+const BATTLE_STAT_LABELS={attack:"Angriff",defense:"Verteidigung",accuracy:"Genauigkeit",initiative:"Initiative"};
+
+function battleDocRef(){ return doc(db,"battles",ACTIVE_BATTLE_DOC); }
+function battleStatusTemplate(){ return Object.fromEntries(BATTLE_STATUS_KEYS.map(k=>[k,{active:false,actions:0}])); }
+function battleFighterFromMember(m){
+  const p=fightPokemon(m.id), c=pokemonCharacterCard(m.id);
+  const maxHp=Math.max(1,(+c?.baseHp||10)+(+m.level||1));
+  return {
+    uid:m.uid, pokemonId:+m.id, level:+m.level, currentHp:maxHp, maxHp, defeated:false,
+    drawPile:30, extraDraws:0,
+    stats:{attack:0,defense:0,accuracy:0,initiative:0}, statuses:battleStatusTemplate()
+  };
+}
+function battleSideFromTeam(label,team,fieldSize){
+  const roster={}; for(const m of team) roster[m.uid]=battleFighterFromMember(m);
+  const selected=team.filter(m=>m.startActive).slice(0,fieldSize).map(m=>m.uid);
+  return {label,activeSlots:Array.from({length:fieldSize},(_,i)=>selected[i]||null),roster};
+}
+async function startLiveBattle(){
+  if(!app.player){ toast("Wähle zuerst einen Spieler"); return; }
+  const own=app.fightTeam.filter(m=>m.role!=="opponent"), opp=app.fightTeam.filter(m=>m.role==="opponent");
+  if(!own.length||!opp.length){ toast("Beide Seiten brauchen mindestens ein Pokémon"); return; }
+  if(own.length>6||opp.length>6){ toast("Maximal 6 Pokémon pro Seite"); return; }
+  const ownStart=own.filter(m=>m.startActive), oppStart=opp.filter(m=>m.startActive);
+  if(!ownStart.length||ownStart.length>2||ownStart.length!==oppStart.length){ toast("Startfeld muss auf beiden Seiten gleich groß sein: 1 gegen 1 oder 2 gegen 2"); return; }
+  if(app.activeBattle && !confirm("Es läuft bereits ein Kampf. Soll er durch diesen Kampf ersetzt werden?")) return;
+  const fieldSize=ownStart.length;
+  const payload={
+    version:12,status:"running",fieldSize,sourcePlayerId:app.player.id,sourcePlayerName:app.player.name,
+    createdAt:serverTimestamp(),updatedAt:serverTimestamp(),lastEvent:{text:`Kampf gestartet · ${fieldSize} gegen ${fieldSize}`,time:Date.now()},
+    sides:{
+      own:battleSideFromTeam(app.player.name,own,fieldSize),
+      opponent:battleSideFromTeam("Gegner",opp,fieldSize)
+    }
+  };
+  try{
+    await setDoc(battleDocRef(),payload);
+    toast("Kampf in Firebase gestartet"); showBattleDashboard();
+  }catch(err){ console.error(err); toast("Kampf konnte nicht gespeichert werden · Firestore-Regeln v12 prüfen"); }
+}
+function subscribeActiveBattle(){
+  try{
+    if(app.battleUnsub) app.battleUnsub();
+    app.battleUnsub=onSnapshot(battleDocRef(),snap=>{
+      const data=snap.exists()?snap.data():null;
+      app.activeBattle=data?.status==="running"?data:null;
+      if(!app.activeBattle && app.view==="battle"){
+        if(app.player) showModule("fight"); else { app.view="dashboard"; showNoPlayer(); }
+      }
+      renderBattleBanner();
+      if(app.view==="battle") renderBattleDashboard();
+      if(app.battleSelectedFighter && !$("#battleFighterSheet")?.classList.contains("hidden")) renderBattleFighterSheet();
+      if(app.view==="fight"&&app.player) renderFight();
+    },err=>{ console.warn("Aktiver Kampf nicht lesbar",err); app.activeBattle=null; renderBattleBanner(); });
+  }catch(err){ console.warn(err); }
+}
+function activeBattleNames(side){
+  const s=app.activeBattle?.sides?.[side]; if(!s) return "—";
+  return (s.activeSlots||[]).map(uid=>uid&&s.roster?.[uid]).filter(Boolean).map(f=>fightPokemon(f.pokemonId)?.name||"Pokémon").join(" + ")||"freier Platz";
+}
+function renderBattleBanner(){
+  const b=$("#activeBattleBanner"); if(!b) return;
+  b.classList.toggle("hidden",!app.activeBattle);
+  if(!app.activeBattle) return;
+  const own=app.activeBattle.sides?.own?.label||"Team A", opp=app.activeBattle.sides?.opponent?.label||"Team B";
+  $("#activeBattleBannerText").textContent=`${own}: ${activeBattleNames("own")} · ${opp}: ${activeBattleNames("opponent")}`;
+}
+function hideAllMainViews(){
+  ["#noPlayerView","#dashboardView","#mainView","#detailView","#mapView","#encounterView","#fightView","#libraryView","#directorView"].forEach(sel=>$(sel)?.classList.add("hidden"));
+}
+function showBattleDashboard(){
+  if(!app.activeBattle){ toast("Aktuell läuft kein Kampf"); return; }
+  app.view="battle"; app.selectedId=null; hideAllMainViews(); $("#battleView").classList.remove("hidden");
+  $("#brandLabel").textContent="Kampftisch"; $$("#moduleNav [data-module]").forEach(b=>b.classList.remove("active"));
+  if(app.player) $("#moduleNav").classList.remove("hidden"); else $("#moduleNav").classList.add("hidden");
+  closeSheets(); renderBattleDashboard(); window.scrollTo({top:0,behavior:"instant"});
+}
+function battleRoster(side){ return app.activeBattle?.sides?.[side]?.roster||{}; }
+function battleFighter(side,uid){ return battleRoster(side)?.[uid]||null; }
+function battleActiveSlots(side){ return app.activeBattle?.sides?.[side]?.activeSlots||[]; }
+function battleActiveFighters(side){ return battleActiveSlots(side).map(uid=>uid?battleFighter(side,uid):null).filter(Boolean); }
+function battleFighterPokemon(f){ return f?fightPokemon(f.pokemonId):null; }
+function battleSideOfUid(uid){ for(const side of ["own","opponent"]) if(battleFighter(side,uid)) return side; return null; }
+function battleOtherSide(side){ return side==="own"?"opponent":"own"; }
+function battleRefValue(side,uid){ return `${side}|${uid}`; }
+function parseBattleRef(value){ const [side,uid]=String(value||"").split("|"); return {side,uid,fighter:battleFighter(side,uid)}; }
+function battleMovement(f){ const c=pokemonCharacterCard(f?.pokemonId); return Math.max(2,(+c?.movement||2)+(+f?.stats?.initiative||0)); }
+function battleRangeLabel(f){ return pokemonCharacterCard(f?.pokemonId)?.range==="ranged"?"Fernkampf":"Nahkampf"; }
+function battleStatusLabel(key){ return app.battleRules?.statuses?.[key]?.label||({paralyzed:"Paralysiert",confused:"Verwirrt",poisoned:"Vergiftet",burned:"Verbrannt",sleeping:"Schlafend",frozen:"Eingefroren"}[key]||key); }
+function battleStatusPills(f){
+  const entries=BATTLE_STATUS_KEYS.filter(k=>f?.statuses?.[k]?.active);
+  return entries.length?entries.map(k=>`<span class="battle-status-pill status-${k}">${BATTLE_STATUS_ICONS[k]||"•"} ${battleStatusLabel(k)}</span>`).join(""):`<span class="battle-status-pill muted">kein Zustand</span>`;
+}
+function battleTypeModifiersHtml(f){
+  const mods=pokemonCharacterCard(f?.pokemonId)?.typeModifiers||{};
+  const rows=Object.entries(mods).sort((a,b)=>a[0].localeCompare(b[0],"de"));
+  return rows.length?rows.map(([type,val])=>`<span class="battle-type-mod ${val==="immune"?"immune":(+val>0?"weak":"resist")}">${escapeHtml(type)} ${val==="immune"?"×":(+val>0?`+${val}`:val)}</span>`).join(""):`<span class="battle-type-mod neutral">keine Modifikatoren</span>`;
+}
+function battleAllDefeated(side,overrideUid=null,overrideHp=null){
+  const roster=battleRoster(side); const vals=Object.values(roster);
+  return vals.length>0 && vals.every(f=>(f.uid===overrideUid?overrideHp:f.currentHp)<=0);
+}
+function renderBattleFighterCard(side,f,compact=false){
+  const p=battleFighterPokemon(f), type=p?.type||"Normal", hpPct=Math.max(0,Math.min(100,Math.round((f.currentHp/f.maxHp)*100)));
+  const status=battleStatusPills(f), stats=f.stats||{};
+  if(compact){
+    const free=battleActiveSlots(side).some(x=>!x);
+    return `<article class="battle-bench-card ${f.currentHp<=0?"defeated":""}" style="${typeVars(type)}"><img src="${p?.image||FALLBACK_IMAGE}" alt="${escapeHtml(p?.name||"Pokémon")}"><div><strong>${escapeHtml(p?.name||"Pokémon")}</strong><span>Lv ${f.level} · ${f.currentHp}/${f.maxHp} KP</span></div>${f.currentHp>0&&free?`<button class="battle-promote-btn" data-battle-promote="${f.uid}" data-battle-side="${side}" type="button">Aufs Feld</button>`:""}</article>`;
+  }
+  const hasTurn=f.statuses?.poisoned?.active||f.statuses?.burned?.active;
+  const hasAttack=BATTLE_STATUS_KEYS.some(k=>f.statuses?.[k]?.active&&(app.battleRules?.statuses?.[k]?.actions||[]).includes("attack")) || (+stats.accuracy<0);
+  const hasMan=BATTLE_STATUS_KEYS.some(k=>f.statuses?.[k]?.active&&(app.battleRules?.statuses?.[k]?.actions||[]).includes("maneuver"));
+  return `<article class="battle-fighter" style="${typeVars(type)}" data-battle-fighter="${f.uid}">
+    <header class="battle-fighter-head"><img src="${p?.image||FALLBACK_IMAGE}" alt="${escapeHtml(p?.name||"Pokémon")}"><div><small>#${pad(p?.id||0)} · ${escapeHtml(type)}</small><h3>${escapeHtml(p?.name||"Pokémon")}</h3><span>Lv ${f.level} · ${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span></div><button data-battle-manage="${f.uid}" data-battle-side="${side}" class="battle-manage-btn" type="button">Status & Werte</button></header>
+    <div class="battle-hp-row"><div><small>KP</small><strong>${f.currentHp} / ${f.maxHp}</strong></div><div class="battle-hp-track"><span style="width:${hpPct}%"></span></div></div>
+    <div class="battle-step-row"><button data-battle-hp="-5" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−5</button><button data-battle-hp="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−1</button><button data-battle-hp="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+1</button><button data-battle-hp="5" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+5</button></div>
+    <div class="battle-status-row">${status}</div>
+    <div class="battle-stat-strip"><span>Angr ${stats.attack>=0?"+":""}${stats.attack||0}</span><span>Vert ${stats.defense>=0?"+":""}${stats.defense||0}</span><span>Gen ${stats.accuracy>=0?"+":""}${stats.accuracy||0}</span><span>Init ${stats.initiative>=0?"+":""}${stats.initiative||0}</span></div>
+    <div class="battle-modifiers">${battleTypeModifiersHtml(f)}</div>
+    <div class="battle-deck-grid"><div><small>Nachziehstapel</small><div class="battle-counter"><button data-battle-counter="drawPile" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−</button><strong>${f.drawPile??30}</strong><button data-battle-counter="drawPile" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+</button></div></div><div><small>Zusatznachzüge</small><div class="battle-counter"><button data-battle-counter="extraDraws" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−</button><strong>${f.extraDraws??0}</strong><button data-battle-counter="extraDraws" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+</button></div></div></div>
+    <div class="battle-assistant-actions">${hasTurn?`<button data-battle-status-action="turnStart" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Zugbeginn</button>`:""}${hasAttack?`<button data-battle-status-action="attack" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Angriff prüfen</button>`:""}${hasMan?`<button data-battle-status-action="maneuver" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Manöver prüfen</button>`:""}</div>
+  </article>`;
+}
+function renderBattleSide(side){
+  const root=$(side==="own"?"#battleOwnSide":"#battleOpponentSide"), s=app.activeBattle?.sides?.[side]; if(!root||!s) return;
+  const slots=s.activeSlots||[], roster=Object.values(s.roster||{});
+  const activeIds=new Set(slots.filter(Boolean)); const reserve=roster.filter(f=>f.currentHp>0&&!activeIds.has(f.uid)); const defeated=roster.filter(f=>f.currentHp<=0);
+  root.innerHTML=`<div class="battle-side-head"><div><p class="eyebrow">${side==="own"?"Spieler":"Gegner"}</p><h2>${escapeHtml(s.label||"")}</h2></div><span>${roster.length} Pokémon</span></div>
+    <div class="battle-field-label">Auf dem Feld</div><div class="battle-field-grid">${Array.from({length:app.activeBattle.fieldSize||1},(_,i)=>{const uid=slots[i],f=uid?battleFighter(side,uid):null;return f?renderBattleFighterCard(side,f,false):`<div class="battle-empty-slot"><span>＋</span><strong>Freier Feldplatz</strong><small>Reserve-Pokémon wählen</small></div>`;}).join("")}</div>
+    <div class="battle-bench-block"><div class="battle-subhead"><strong>Reservebank</strong><span>${reserve.length}</span></div><div class="battle-bench-list">${reserve.length?reserve.map(f=>renderBattleFighterCard(side,f,true)).join(""):`<div class="battle-small-empty">Keine Reserve</div>`}</div></div>
+    <div class="battle-bench-block defeated-block"><div class="battle-subhead"><strong>Besiegt</strong><span>${defeated.length}</span></div><div class="battle-bench-list">${defeated.length?defeated.map(f=>renderBattleFighterCard(side,f,true)).join(""):`<div class="battle-small-empty">Noch niemand besiegt</div>`}</div></div>`;
+  root.querySelectorAll("img").forEach(setImgFallback);
+}
+function renderBattleDashboard(){
+  const view=$("#battleView"); if(!view) return;
+  if(!app.activeBattle){ view.innerHTML=""; return; }
+  $("#battleTitle").textContent=`${app.activeBattle.sides?.own?.label||"Team A"} vs ${app.activeBattle.sides?.opponent?.label||"Team B"}`;
+  $("#battleFieldSize").textContent=`${app.activeBattle.fieldSize||1} gegen ${app.activeBattle.fieldSize||1}`;
+  const evt=app.activeBattle.lastEvent?.text||"Kampf läuft"; $("#battleLastEvent").textContent=evt;
+  renderBattleSide("own"); renderBattleSide("opponent"); renderBattleCalculator();
+  const ownLost=battleAllDefeated("own"), oppLost=battleAllDefeated("opponent");
+  const result=$("#battleVictoryBanner"); result.classList.toggle("hidden",!ownLost&&!oppLost);
+  if(ownLost||oppLost) result.innerHTML=`<strong>⚑ Kampf entschieden</strong><span>${ownLost&&oppLost?"Beide Teams sind besiegt.":ownLost?`${escapeHtml(app.activeBattle.sides?.opponent?.label||"Gegner")} hat gewonnen.`:`${escapeHtml(app.activeBattle.sides?.own?.label||"Spieler")} hat gewonnen.`}</span>`;
+}
+async function battleUpdate(fields,eventText=null){
+  if(!app.activeBattle) return;
+  const payload={...fields,updatedAt:serverTimestamp()}; if(eventText) payload.lastEvent={text:eventText,time:Date.now()};
+  try{ await updateDoc(battleDocRef(),payload); }
+  catch(err){ console.error(err); toast("Kampf konnte nicht synchronisiert werden · Firestore-Regeln v12 prüfen"); }
+}
+async function setBattleHp(side,uid,delta){
+  const f=battleFighter(side,uid); if(!f) return;
+  const next=Math.max(0,Math.min(f.maxHp,(+f.currentHp||0)+delta));
+  const fields={[`sides.${side}.roster.${uid}.currentHp`]:next,[`sides.${side}.roster.${uid}.defeated`]:next<=0};
+  if(next<=0){ const slots=[...battleActiveSlots(side)].map(x=>x===uid?null:x); fields[`sides.${side}.activeSlots`]=slots; }
+  const name=battleFighterPokemon(f)?.name||"Pokémon";
+  let msg=`${name}: ${f.currentHp} → ${next} KP`;
+  if(next<=0) msg+=` · besiegt`;
+  await battleUpdate(fields,msg);
+}
+async function changeBattleCounter(side,uid,field,delta){
+  const f=battleFighter(side,uid); if(!f||!["drawPile","extraDraws"].includes(field)) return;
+  const next=Math.max(0,Math.min(99,(+f[field]||0)+delta));
+  await battleUpdate({[`sides.${side}.roster.${uid}.${field}`]:next},`${battleFighterPokemon(f)?.name||"Pokémon"}: ${field==="drawPile"?"Nachziehstapel":"Zusatznachzüge"} ${next}`);
+}
+async function promoteBattleFighter(side,uid){
+  const f=battleFighter(side,uid); if(!f||f.currentHp<=0) return;
+  const slots=[...battleActiveSlots(side)]; const idx=slots.findIndex(x=>!x); if(idx<0){ toast("Kein freier Feldplatz"); return; }
+  if(slots.includes(uid)) return;
+  slots[idx]=uid; await battleUpdate({[`sides.${side}.activeSlots`]:slots},`${battleFighterPokemon(f)?.name||"Pokémon"} kommt von der Reserve aufs Feld`);
+}
+function openBattleFighterSheet(side,uid){ app.battleSelectedFighter={side,uid}; renderBattleFighterSheet(); openSheet("#battleFighterSheet"); }
+function renderBattleFighterSheet(){
+  const sel=app.battleSelectedFighter; if(!sel) return; const f=battleFighter(sel.side,sel.uid), p=battleFighterPokemon(f); if(!f||!p) return;
+  $("#battleFighterSheetName").textContent=p.name;
+  const stats=f.stats||{};
+  $("#battleFighterSheetBody").innerHTML=`<div class="battle-sheet-summary"><img src="${p.image||FALLBACK_IMAGE}" alt="${escapeHtml(p.name)}"><div><strong>${escapeHtml(p.name)} · Lv ${f.level}</strong><span>${f.currentHp}/${f.maxHp} KP · ${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span></div></div>
+    <h3>Zustände</h3><div class="battle-status-toggle-grid">${BATTLE_STATUS_KEYS.map(k=>{const st=f.statuses?.[k]||{};return `<button class="${st.active?"active":""}" data-battle-status-toggle="${k}" type="button"><span>${BATTLE_STATUS_ICONS[k]||"•"}</span><strong>${battleStatusLabel(k)}</strong><small>${st.active&&st.actions?`${st.actions} Aktionen`:st.active?"aktiv":"inaktiv"}</small></button>`;}).join("")}</div>
+    <h3>Statuswerte</h3><div class="battle-stat-edit">${["attack","defense","accuracy","initiative"].map(k=>`<div><span>${BATTLE_STAT_LABELS[k]}</span><div class="battle-counter"><button data-battle-stat-step="${k}" data-battle-delta="-1" type="button">−</button><strong>${stats[k]>=0?"+":""}${stats[k]||0}</strong><button data-battle-stat-step="${k}" data-battle-delta="1" type="button">+</button></div></div>`).join("")}</div>
+    <p class="battle-sheet-note">Genauigkeit -1/-2 sowie Zustandswürfe folgen den Angaben aus Kblatt.pdf. Eingefroren hat dort keine Endbedingung und wird deshalb nur manuell entfernt.</p>`;
+  $("#battleFighterSheetBody").querySelectorAll("img").forEach(setImgFallback);
+}
+async function toggleBattleStatus(key){
+  const sel=app.battleSelectedFighter, f=sel&&battleFighter(sel.side,sel.uid); if(!f||!BATTLE_STATUS_KEYS.includes(key)) return;
+  const cur=f.statuses?.[key]||{active:false,actions:0}, next={active:!cur.active,actions:0};
+  await battleUpdate({[`sides.${sel.side}.roster.${sel.uid}.statuses.${key}`]:next},`${battleFighterPokemon(f)?.name||"Pokémon"}: ${battleStatusLabel(key)} ${next.active?"aktiviert":"entfernt"}`);
+}
+async function stepBattleStat(key,delta){
+  const sel=app.battleSelectedFighter, f=sel&&battleFighter(sel.side,sel.uid); if(!f||!BATTLE_STAT_LABELS[key]) return;
+  let next=(+f.stats?.[key]||0)+delta; next=key==="accuracy"?Math.max(-2,Math.min(0,next)):Math.max(-6,Math.min(6,next));
+  await battleUpdate({[`sides.${sel.side}.roster.${sel.uid}.stats.${key}`]:next},`${battleFighterPokemon(f)?.name||"Pokémon"}: ${BATTLE_STAT_LABELS[key]} ${next>=0?"+":""}${next}`);
+}
+function rollD10(){ return Math.floor(Math.random()*10)+1; }
+async function runBattleStatusAction(side,uid,action){
+  const f=battleFighter(side,uid); if(!f) return; const p=battleFighterPokemon(f); const fields={}; const notes=[]; let hp=f.currentHp;
+  if(action==="turnStart"){
+    let loss=0; if(f.statuses?.poisoned?.active) loss++; if(f.statuses?.burned?.active) loss++;
+    if(!loss){ toast("Kein Zustand mit Effekt zu Zugbeginn"); return; }
+    hp=Math.max(0,hp-loss); fields[`sides.${side}.roster.${uid}.currentHp`]=hp; fields[`sides.${side}.roster.${uid}.defeated`]=hp<=0; notes.push(`Zugbeginn: -${loss} KP`);
+    if(hp<=0) fields[`sides.${side}.activeSlots`]=battleActiveSlots(side).map(x=>x===uid?null:x);
+  } else {
+    let blocked=false;
+    const processTimed=key=>{ const st=f.statuses?.[key]; if(!st?.active) return {actions:0}; const n=(+st.actions||0)+1; return {actions:n}; };
+    if(f.statuses?.frozen?.active){ blocked=true; notes.push("Eingefroren: Aktion verfällt · Karten zurück auf die Hand"); }
+    if(f.statuses?.sleeping?.active){
+      const r=rollD10(), st=processTimed("sleeping"); notes.push(`Schlaf: D10 = ${r}`);
+      blocked=true; const end=r>=8||st.actions>=4; fields[`sides.${side}.roster.${uid}.statuses.sleeping`]={active:!end,actions:end?0:st.actions}; notes.push(end?`Aktion verfällt · Schlaf endet ${r>=8?"durch den D10-Wurf":"nach 4 Aktionen"}`:"Aktion verfällt · Karten zurück auf die Hand");
+    }
+    if(f.statuses?.paralyzed?.active){
+      const r=rollD10(), st=processTimed("paralyzed"), fail=r>=8, end=st.actions>=6; notes.push(`Paralyse: D10 = ${r}${fail?" → Aktion verfällt":" → Aktion möglich"}`); blocked=blocked||fail; fields[`sides.${side}.roster.${uid}.statuses.paralyzed`]={active:!end,actions:end?0:st.actions}; if(end) notes.push("Paralyse endet nach 6 Aktionen");
+    }
+    if(action==="attack"&&f.statuses?.confused?.active){
+      const r=rollD10(), st=processTimed("confused"), fail=r>=8, end=fail||st.actions>=6; notes.push(`Verwirrung: D10 = ${r}${fail?" → Angriff verfällt, -1 KP":" → Angriff möglich"}`); blocked=blocked||fail; if(fail){hp=Math.max(0,hp-1);fields[`sides.${side}.roster.${uid}.currentHp`]=hp;fields[`sides.${side}.roster.${uid}.defeated`]=hp<=0;} fields[`sides.${side}.roster.${uid}.statuses.confused`]={active:!end,actions:end?0:st.actions}; if(end)notes.push("Verwirrung endet"); if(hp<=0)fields[`sides.${side}.activeSlots`]=battleActiveSlots(side).map(x=>x===uid?null:x);
+    }
+    if(action==="attack"&&+f.stats?.accuracy<0){
+      const acc=String(+f.stats.accuracy), rule=app.battleRules?.accuracy?.[acc], r=rollD10(); const fail=rule? r>=rule.failOnMin:false; notes.push(`Genauigkeit ${acc}: D10 = ${r}${fail?" → Angriffswert 0, Kartentext ignorieren":" → keine Einschränkung"}`);
+    }
+    if(!blocked&&!notes.length) notes.push("Keine Zustandsprüfung erforderlich");
+  }
+  await battleUpdate(fields,`${p?.name||"Pokémon"}: ${notes.join(" · ")}`);
+}
+function handleBattleAreaClick(e){
+  const hp=e.target.closest("[data-battle-hp]"); if(hp){setBattleHp(hp.dataset.battleSide,hp.dataset.battleUid,+hp.dataset.battleHp);return;}
+  const counter=e.target.closest("[data-battle-counter]"); if(counter){changeBattleCounter(counter.dataset.battleSide,counter.dataset.battleUid,counter.dataset.battleCounter,+counter.dataset.battleDelta);return;}
+  const promote=e.target.closest("[data-battle-promote]"); if(promote){promoteBattleFighter(promote.dataset.battleSide,promote.dataset.battlePromote);return;}
+  const manage=e.target.closest("[data-battle-manage]"); if(manage){openBattleFighterSheet(manage.dataset.battleSide,manage.dataset.battleManage);return;}
+  const act=e.target.closest("[data-battle-status-action]"); if(act){runBattleStatusAction(act.dataset.battleSide,act.dataset.battleUid,act.dataset.battleStatusAction);}
+}
+function handleBattleFighterSheetClick(e){
+  const s=e.target.closest("[data-battle-status-toggle]"); if(s){toggleBattleStatus(s.dataset.battleStatusToggle);return;}
+  const st=e.target.closest("[data-battle-stat-step]"); if(st){stepBattleStat(st.dataset.battleStatStep,+st.dataset.battleDelta);}
+}
+async function endLiveBattle(){
+  if(!app.activeBattle) return; if(!confirm("Laufenden Kampf wirklich beenden?")) return;
+  try{ await updateDoc(battleDocRef(),{status:"ended",endedAt:serverTimestamp(),updatedAt:serverTimestamp(),lastEvent:{text:"Kampf beendet",time:Date.now()}}); toast("Kampf beendet"); }
+  catch(err){console.error(err);toast("Kampf konnte nicht beendet werden");}
+}
+
+function activeBattleRefs(){
+  const arr=[]; for(const side of ["own","opponent"]){ for(const f of battleActiveFighters(side)) arr.push({side,uid:f.uid,f}); } return arr;
+}
+function battleRefLabel(ref){ const s=app.activeBattle?.sides?.[ref.side], p=battleFighterPokemon(ref.f); return `${s?.label||ref.side} · ${p?.name||"Pokémon"} Lv ${ref.f.level}`; }
+function learnedBattleCards(f,mode){
+  const p=battleFighterPokemon(f); if(!p) return [];
+  return attacksFor(p).filter(m=>m.level<=f.level).map(m=>attackCard(m.name)).filter(Boolean).filter(c=>mode==="attack"?["attack","versatile"].includes(c.cardType):["defense","versatile"].includes(c.cardType)).sort((a,b)=>a.name.localeCompare(b.name,"de"));
+}
+function ensureBattleCalc(){
+  const refs=activeBattleRefs(); if(refs.length<2){app.battleCalc.result=null;return;}
+  if(!refs.some(r=>battleRefValue(r.side,r.uid)===app.battleCalc.attacker)) app.battleCalc.attacker=battleRefValue(refs.find(r=>r.side==="own")?.side||refs[0].side,refs.find(r=>r.side==="own")?.uid||refs[0].uid);
+  let a=parseBattleRef(app.battleCalc.attacker); let defenders=refs.filter(r=>r.uid!==a.uid);
+  if(!defenders.some(r=>battleRefValue(r.side,r.uid)===app.battleCalc.defender)){const d=defenders.find(r=>r.side!==a.side)||defenders[0];app.battleCalc.defender=d?battleRefValue(d.side,d.uid):null;}
+  const atkCards=learnedBattleCards(a.fighter,"attack"); if(!atkCards.some(c=>c.name===app.battleCalc.attackCard)) app.battleCalc.attackCard=atkCards[0]?.name||null;
+  const d=parseBattleRef(app.battleCalc.defender); const defCards=learnedBattleCards(d.fighter,"defense"); if(app.battleCalc.defenseCard && !defCards.some(c=>c.name===app.battleCalc.defenseCard)) app.battleCalc.defenseCard="";
+}
+function renderBattleCalculator(){
+  if(!app.activeBattle) return; ensureBattleCalc(); const refs=activeBattleRefs();
+  const atkSel=$("#battleCalcAttacker"), defSel=$("#battleCalcDefender");
+  atkSel.innerHTML=refs.map(r=>`<option value="${battleRefValue(r.side,r.uid)}" ${battleRefValue(r.side,r.uid)===app.battleCalc.attacker?"selected":""}>${escapeHtml(battleRefLabel(r))}</option>`).join("");
+  const ar=parseBattleRef(app.battleCalc.attacker), defenders=refs.filter(r=>r.uid!==ar.uid); defSel.innerHTML=defenders.map(r=>`<option value="${battleRefValue(r.side,r.uid)}" ${battleRefValue(r.side,r.uid)===app.battleCalc.defender?"selected":""}>${escapeHtml(battleRefLabel(r))}</option>`).join("");
+  const atkCards=learnedBattleCards(ar.fighter,"attack"); $("#battleCalcAttackCard").innerHTML=atkCards.map(c=>`<option value="${escapeHtml(c.name)}" ${c.name===app.battleCalc.attackCard?"selected":""}>${escapeHtml(c.name)} · ${c.value} · ${CARD_KIND_LABELS[c.cardType]}</option>`).join("");
+  const dr=parseBattleRef(app.battleCalc.defender), defCards=learnedBattleCards(dr.fighter,"defense"); $("#battleCalcDefenseCard").innerHTML=`<option value="">Keine Verteidigung</option>`+defCards.map(c=>`<option value="${escapeHtml(c.name)}" ${c.name===app.battleCalc.defenseCard?"selected":""}>${escapeHtml(c.name)} · ${c.value} · ${CARD_KIND_LABELS[c.cardType]}</option>`).join("");
+  $("#battleCalculateBtn").disabled=!ar.fighter||!dr.fighter||!app.battleCalc.attackCard;
+  renderBattleCalcResult();
+}
+function calcCardValue(card,owner,opponent,ctx){
+  let value=+card?.value||0, locked=false, opponentZero=false, specialSuccess=null; const notes=[], rolls=[];
+  const effects=(card?.effects||[]).filter(e=>["duringCombat","immediately"].includes(e.timing));
+  for(const e of effects){ const t=e.text||"", low=t.toLowerCase();
+    if(low.includes("aufgedruckten wert")&&low.includes("kann nicht geändert")){value=+card.value||0;locked=true;notes.push("Kartenwert ist unveränderbar");}
+    if(low.includes("wert der gegnerischen karte ist stattdessen 0")){opponentZero=true;notes.push("Gegnerische Karte = 0");}
+    let m=t.match(/Erhöhe den Wert dieser Karte um 1\/8 der gegn\. maximalen KP \(abgerundet\)/i); if(m){const add=Math.floor(opponent.maxHp/8);value+=add;notes.push(`+${add} durch 1/8 der gegnerischen max. KP`);continue;}
+    if(/so hoch wie das Level des eigenen Pokemons/i.test(t)){value=owner.level;notes.push(`Wert = eigenes Level (${value})`);continue;}
+    if(/so hoch wie das Level des gegnerischen Pokemons, aber niemals höher als 7/i.test(t)){value=Math.min(7,opponent.level);notes.push(`Wert = Gegnerlevel, max. 7 (${value})`);continue;}
+    if(/Hälfte der KP des Gegners \(aufgerundet\)/i.test(t)){value=Math.ceil(opponent.currentHp/2);notes.push(`Wert = Hälfte gegnerischer KP (${value})`);continue;}
+    m=t.match(/Der Wert dieser Karte ist stattdessen (\d+)\./i); if(m&&!/Würfle/i.test(t)){value=+m[1];notes.push(`Kartenwert = ${value}`);continue;}
+    if(/Würfle! Der Wert dieser Karte ist stattdessen das Level des eigenen Pokemons plus den Würfelwert minus 3/i.test(t)){const r=rollD10();value=owner.level+r-3;rolls.push(`D10 ${r}`);notes.push(`Wert = ${owner.level} + ${r} − 3 = ${value}`);continue;}
+    if(/Würfle! Bei 1 ist der Wert dieser Karte stattdessen 0/i.test(t)){const r=rollD10();rolls.push(`D10 ${r}`);if(r===1)value=0;notes.push(r===1?"Wurf 1 → Kartenwert 0":"Wurf ≠ 1 → aufgedruckter Wert");continue;}
+    if(/Würfle! Ab 3 ist der Wert dieser Karte stattdessen/i.test(t)){const r=rollD10();rolls.push(`D10 ${r}`);const pairs=[...t.matchAll(/ab (\d+) (?:ist der Wert dieser Karte )?stattdessen (\d+)/gi)].map(x=>[+x[1],+x[2]]).sort((a,b)=>a[0]-b[0]);for(const [thr,val] of pairs)if(r>=thr)value=val;notes.push(`D10 ${r} → Kartenwert ${value}`);continue;}
+    if(/Lvl-Diff!/i.test(t)&&/Würfle!/i.test(t)){const diff=owner.level-opponent.level,r=rollD10();let threshold=null;if(card.name==="Geofissur")threshold=diff>6?1:diff>4?2:diff>2?3:diff>0?4:diff>-2?5:diff>-4?6:null;else threshold=diff>6?4:diff>4?5:diff>2?6:diff>0?7:diff>-2?8:diff>-4?9:null;specialSuccess=threshold!==null&&r>=threshold;rolls.push(`D10 ${r}`);notes.push(`Leveldiff ${diff} · ${threshold===null?"kein Erfolgswert":`Erfolg ab ${threshold}`} → ${specialSuccess?"Erfolg":"kein Erfolg"}`);continue;}
+    if(/nicht schläft ist der Wert dieser Karte stattdessen 0/i.test(t)){if(!opponent.statuses?.sleeping?.active)value=0;notes.push(opponent.statuses?.sleeping?.active?"Gegner schläft → normaler Wert":"Gegner schläft nicht → Wert 0");continue;}
+    notes.push(`Manuell prüfen: ${t}`);
+  }
+  return {value,locked,opponentZero,specialSuccess,notes,rolls};
+}
+function normalizedStatusKey(text){const l=text.toLowerCase();if(l.includes("paralys"))return"paralyzed";if(l.includes("verwirrt"))return"confused";if(l.includes("vergift"))return"poisoned";if(l.includes("verbrannt"))return"burned";if(l.includes("schläft")||l.includes("schlaf"))return"sleeping";if(l.includes("eingefror"))return"frozen";return null;}
+function parseAfterEffects(card,ownerRef,oppRef,ctx){
+  const effects=[],manual=[]; if(!card||ctx.ignoreText)return{effects,manual};
+  for(const e of (card.effects||[]).filter(x=>x.timing==="afterCombat"||x.timing==="scheme")){const t=e.text||"",low=t.toLowerCase();let handled=false;let applies=true,roll=null;const thr=t.match(/Ab (\d+)/i);if(thr){roll=rollD10();applies=roll>=+thr[1];}
+    const status=normalizedStatusKey(t);if(status&&!/statusveränderungen/i.test(low)&&!/triplette/i.test(low)){const target=/dein pokemon|eigenen pokemon/i.test(t)&&!/gegner/i.test(t)?ownerRef:oppRef;effects.push({kind:"status",target,status,applies,roll,text:t});handled=true;}
+    let m=t.match(/heilt sich um 50% des Schadens/i);if(m){effects.push({kind:"healDamageHalf",target:ownerRef,applies,roll,text:t});handled=true;}
+    if(/heilt sich um 50% seiner maximalen KP/i.test(t)){effects.push({kind:"healMaxHalf",target:ownerRef,applies,roll,text:t});handled=true;}
+    if(/heilt sich vollständig/i.test(t)){effects.push({kind:"healFull",target:ownerRef,applies,roll,text:t});handled=true;}
+    m=t.match(/Füge deinem Pokemon (\d+) Schaden zu/i);if(m){effects.push({kind:"selfDamage",target:ownerRef,amount:+m[1],applies,roll,text:t});handled=true;}
+    if(/Dein Pokemon verliert alle KP/i.test(t)){effects.push({kind:"loseAllHp",target:ownerRef,applies,roll,text:t});handled=true;}
+    m=t.match(/Wenn erfolgreich, dann füge dem gegnerischen Pokemon (\d+) Schaden zu/i);if(m){effects.push({kind:"directDamage",target:oppRef,amount:+m[1],applies:!!ctx.specialSuccess,roll:null,text:t});handled=true;}
+    m=t.match(/(Angriff|Verteidigung|Genauigkeit|Initiative) des (eigenen|gegnerischen) Pokemons (steigt|sinkt) um (\d+)/i);if(m){const key={angriff:"attack",verteidigung:"defense",genauigkeit:"accuracy",initiative:"initiative"}[m[1].toLowerCase()];const target=m[2].toLowerCase()==="eigenen"?ownerRef:oppRef;const delta=(m[3].toLowerCase()==="steigt"?1:-1)*(+m[4]);effects.push({kind:"stat",target,key,delta,applies,roll,text:t});handled=true;}
+    if(!handled)manual.push({text:t,roll,applies});
+  }
+  return {effects,manual};
+}
+function calculateBattleCombat(){
+  const ar=parseBattleRef(app.battleCalc.attacker), dr=parseBattleRef(app.battleCalc.defender), atk=attackCard(app.battleCalc.attackCard), def=app.battleCalc.defenseCard?attackCard(app.battleCalc.defenseCard):null;
+  if(!ar.fighter||!dr.fighter||!atk)return;
+  const notes=[],rolls=[];let ignoreText=false;
+  const accuracy=+ar.fighter.stats?.accuracy||0;if(accuracy<0){const rule=app.battleRules?.accuracy?.[String(accuracy)],r=rollD10();rolls.push(`Genauigkeit D10 ${r}`);if(rule&&r>=rule.failOnMin){ignoreText=true;notes.push(`Genauigkeit ${accuracy}: Angriffswert 0, Angriffskartentext ignoriert`);}}
+  let atkRes=ignoreText?{value:0,locked:false,opponentZero:false,specialSuccess:null,notes:[],rolls:[]}:calcCardValue(atk,ar.fighter,dr.fighter,{});
+  let defRes=def?calcCardValue(def,dr.fighter,ar.fighter,{}):{value:0,locked:false,opponentZero:false,specialSuccess:null,notes:[],rolls:[]};rolls.push(...atkRes.rolls,...defRes.rolls);notes.push(...atkRes.notes,...defRes.notes.map(x=>`Verteidigung: ${x}`));
+  let attackValue=atkRes.value, defenseValue=defRes.value;
+  if(defRes.opponentZero)attackValue=0;if(atkRes.opponentZero)defenseValue=0;
+  const typeMod=pokemonCharacterCard(dr.fighter.pokemonId)?.typeModifiers?.[atk.type];const immune=typeMod==="immune";if(immune){attackValue=0;ignoreText=true;notes.push(`${atk.type}: Immunität → Angriffswert 0`);}else if(!atkRes.locked&&Number.isFinite(+typeMod)&&+typeMod!==0){attackValue+=+typeMod;notes.push(`Typmodifikator ${atk.type}: ${+typeMod>0?"+":""}${typeMod}`);}
+  if(!atkRes.locked&&!ignoreText){attackValue+=(+ar.fighter.stats?.attack||0);if(+ar.fighter.stats?.attack)notes.push(`Angriffswert: ${+ar.fighter.stats.attack>0?"+":""}${ar.fighter.stats.attack}`);}
+  if(!defRes.locked&&def){defenseValue+=(+dr.fighter.stats?.defense||0);if(+dr.fighter.stats?.defense)notes.push(`Verteidigungswert: ${+dr.fighter.stats.defense>0?"+":""}${dr.fighter.stats.defense}`);}
+  if(ar.fighter.statuses?.burned?.active&&!ignoreText){attackValue=attackValue/2;notes.push("Verbrannt: Angriff halbiert");}
+  let rawDamage=Math.max(0,attackValue-defenseValue);
+  if(def){for(const e of (def.effects||[]).filter(x=>x.timing==="immediately")){const l=e.text.toLowerCase();if(l.includes("halbiere den schaden")){if(l.includes("außer bei geist- und psychoattacken")&&["Geist","Psycho"].includes(atk.type))notes.push("Reflektor greift bei Geist/Psycho nicht");else{rawDamage=rawDamage/2;notes.push(`${def.name}: Schaden halbiert`);}}}}
+  const suggested=Math.max(0,Math.floor(rawDamage));if(!Number.isInteger(rawDamage))notes.push(`Rohschaden ${rawDamage}; Vorschlag ${suggested}. Rundung ist im vorliegenden Regeltext nicht festgelegt und kann angepasst werden.`);
+  const atkAfter=parseAfterEffects(atk,{side:ar.side,uid:ar.uid},{side:dr.side,uid:dr.uid},{ignoreText,specialSuccess:atkRes.specialSuccess});
+  const defAfter=def?parseAfterEffects(def,{side:dr.side,uid:dr.uid},{side:ar.side,uid:ar.uid},{ignoreText:false,specialSuccess:defRes.specialSuccess}):{effects:[],manual:[]};
+  app.battleCalc.result={attacker:{side:ar.side,uid:ar.uid},defender:{side:dr.side,uid:dr.uid},attackCard:atk.name,defenseCard:def?.name||null,attackValue,defenseValue,rawDamage,finalDamage:suggested,notes,rolls,effects:[...atkAfter.effects,...defAfter.effects],manual:[...atkAfter.manual,...defAfter.manual],ignoreText};
+  renderBattleCalcResult();
+}
+function effectTargetName(t){const f=battleFighter(t.side,t.uid);return battleFighterPokemon(f)?.name||"Pokémon";}
+function renderBattleCalcResult(){
+  const root=$("#battleCalcResult"),r=app.battleCalc.result;if(!root)return;if(!r){root.innerHTML=`<div class="battle-calc-empty">Angriffs- und Verteidigungskarte wählen und anschließend berechnen.</div>`;return;}
+  const effects=r.effects.map(e=>`<li class="${e.applies?"auto":"muted"}">${e.roll?`D10 ${e.roll} · `:""}${e.applies?"✓ ":"○ "}${escapeHtml(e.text)}</li>`).join("");
+  const manual=r.manual.map(e=>`<li>${e.roll?`D10 ${e.roll} · `:""}${escapeHtml(e.text)} <em>manuell</em></li>`).join("");
+  root.innerHTML=`<div class="battle-calc-score"><div><small>Angriff</small><strong>${Number.isInteger(r.attackValue)?r.attackValue:r.attackValue.toFixed(1)}</strong></div><span>−</span><div><small>Verteidigung</small><strong>${Number.isInteger(r.defenseValue)?r.defenseValue:r.defenseValue.toFixed(1)}</strong></div><span>=</span><div class="damage"><small>Rohschaden</small><strong>${Number.isInteger(r.rawDamage)?r.rawDamage:r.rawDamage.toFixed(1)}</strong></div></div>
+    ${r.rolls.length?`<div class="battle-rolls">🎲 ${r.rolls.map(escapeHtml).join(" · ")}</div>`:""}
+    ${r.notes.length?`<ul class="battle-calc-notes">${r.notes.map(n=>`<li>${escapeHtml(n)}</li>`).join("")}</ul>`:""}
+    ${(effects||manual)?`<div class="battle-effects"><strong>Nach dem Kampf</strong><ul>${effects}${manual}</ul></div>`:""}
+    <label class="battle-final-damage"><span>Schaden anwenden</span><input id="battleFinalDamageInput" type="number" min="0" max="99" step="1" value="${r.finalDamage}"></label>
+    <button class="primary-btn" id="battleApplyResultBtn" type="button">Ergebnis anwenden</button>
+    <p class="battle-calc-help">Kartenzähler werden bewusst nicht automatisch verändert. Nicht eindeutig automatisierbare Kartentexte bleiben als manueller Hinweis sichtbar.</p>`;
+}
+function applyEffectToFighter(cloneF,e,damage){
+  if(!e.applies)return;
+  if(e.kind==="status"){cloneF.statuses=cloneF.statuses||battleStatusTemplate();cloneF.statuses[e.status]={active:true,actions:0};}
+  else if(e.kind==="healDamageHalf")cloneF.currentHp=Math.min(cloneF.maxHp,cloneF.currentHp+Math.ceil(damage/2));
+  else if(e.kind==="healMaxHalf")cloneF.currentHp=Math.min(cloneF.maxHp,cloneF.currentHp+Math.ceil(cloneF.maxHp/2));
+  else if(e.kind==="healFull")cloneF.currentHp=cloneF.maxHp;
+  else if(e.kind==="selfDamage"||e.kind==="directDamage")cloneF.currentHp=Math.max(0,cloneF.currentHp-(e.amount||0));
+  else if(e.kind==="loseAllHp")cloneF.currentHp=0;
+  else if(e.kind==="stat"){cloneF.stats=cloneF.stats||{attack:0,defense:0,accuracy:0,initiative:0};let next=(+cloneF.stats[e.key]||0)+e.delta;if(e.key==="accuracy")next=Math.max(-2,Math.min(0,next));else next=Math.max(-6,Math.min(6,next));cloneF.stats[e.key]=next;}
+  cloneF.defeated=cloneF.currentHp<=0;
+}
+async function applyBattleCombatResult(){
+  const r=app.battleCalc.result;if(!r||!app.activeBattle)return;const damage=Math.max(0,+r.finalDamage||0);
+  const refs=new Map(); for(const t of [r.attacker,r.defender,...r.effects.map(e=>e.target)]){if(!t)continue;const key=battleRefValue(t.side,t.uid);if(!refs.has(key)){const f=battleFighter(t.side,t.uid);if(f)refs.set(key,{ref:t,f:clone(f)});}}
+  const defKey=battleRefValue(r.defender.side,r.defender.uid);const d=refs.get(defKey);if(d){d.f.currentHp=Math.max(0,d.f.currentHp-damage);d.f.defeated=d.f.currentHp<=0;}
+  for(const e of r.effects){const x=refs.get(battleRefValue(e.target.side,e.target.uid));if(x)applyEffectToFighter(x.f,e,damage);}
+  const fields={};for(const {ref,f} of refs.values()){fields[`sides.${ref.side}.roster.${ref.uid}`]=f;if(f.currentHp<=0)fields[`sides.${ref.side}.activeSlots`]=battleActiveSlots(ref.side).map(x=>x===ref.uid?null:x);}
+  const aName=effectTargetName(r.attacker),dName=effectTargetName(r.defender);await battleUpdate(fields,`${aName} → ${dName}: ${damage} Schaden (${r.attackCard}${r.defenseCard?` gegen ${r.defenseCard}`:""})`);app.battleCalc.result=null;toast("Kampfergebnis angewendet");
+}
+
 
 async function init(){
   try { app.pokemon=await loadJson("data/pokemon.json"); }
@@ -766,9 +1155,11 @@ async function init(){
   } catch(err){ console.warn("Zufallsdaten nicht geladen",err); app.encounterData=null; }
   try { app.mapData=await loadJson("data/map.json"); }
   catch(err){ console.warn("Kartendaten nicht geladen",err); app.mapData=null; }
+  try { app.battleRules=await loadJson("data/battle-rules.json"); }
+  catch(err){ console.warn("Kampfregeln nicht geladen",err); app.battleRules=null; }
   if(app.mapData) await loadMapTrainerConfig();
 
-  buildTypeStrip(); buildLibraryTypeStrip(); bindEvents(); setupMapCanvas();
+  buildTypeStrip(); buildLibraryTypeStrip(); bindEvents(); setupMapCanvas(); subscribeActiveBattle();
   onAuthStateChanged(auth, async user=>{
     app.user=user||null; app.isAdmin=!!user && user.uid===ADMIN_UID;
     updateAuthUI();
@@ -785,7 +1176,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=11.0").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=12.0").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
@@ -818,7 +1209,7 @@ async function selectPlayer(id,close=true){
     cacheProfile();
     app.selectedId=null; app.editMode=app.isAdmin && app.editMode; app.view="dashboard"; app.encounterResult=null; app.mapSelectedField=null; loadFightState(id);
     history.replaceState(null,"",`${location.pathname}?player=${encodeURIComponent(id)}`);
-    $("#directorView").classList.add("hidden"); $("#dashboardView").classList.remove("hidden"); $("#mainView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
+    $("#directorView").classList.add("hidden"); $("#dashboardView").classList.remove("hidden"); $("#mainView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#battleView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
     $("#brandLabel").textContent="PU"; $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module==="dashboard"));
     if(close) closeSheets();
     render();
@@ -831,7 +1222,7 @@ async function selectPlayer(id,close=true){
       app.state=normalizeState(JSON.parse(cached)); app.publishedState=clone(app.state);
       try{ app.profile=normalizeProfile(JSON.parse(localStorage.getItem(profileKey(id))||"{}")); }catch{ app.profile=normalizeProfile({}); }
       app.publishedProfile=clone(app.profile); app.view="dashboard"; app.encounterResult=null; app.mapSelectedField=null; loadFightState(id);
-      $("#directorView").classList.add("hidden"); $("#dashboardView").classList.remove("hidden"); $("#mainView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
+      $("#directorView").classList.add("hidden"); $("#dashboardView").classList.remove("hidden"); $("#mainView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#battleView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#noPlayerView").classList.add("hidden"); $("#moduleNav").classList.remove("hidden");
       toast("Offline-Kopie geladen");
       render();
       return true;
@@ -843,7 +1234,7 @@ async function selectPlayer(id,close=true){
 
 function showNoPlayer(msg="Öffne deinen persönlichen Spieler-Link. Als Spielleiter kannst du dich über ☰ anmelden."){
   app.player=null; app.state={}; app.publishedState={}; app.profile=normalizeProfile({}); app.publishedProfile=clone(app.profile); app.selectedId=null; app.fightTeam=[]; app.fightBaseline={}; app.encounterResult=null;
-  $("#detailView").classList.add("hidden"); $("#directorView").classList.add("hidden"); $("#dashboardView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#moduleNav").classList.add("hidden"); $("#noPlayerView").classList.remove("hidden");
+  $("#detailView").classList.add("hidden"); $("#directorView").classList.add("hidden"); $("#dashboardView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#battleView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#moduleNav").classList.add("hidden"); $("#noPlayerView").classList.remove("hidden");
   $("#noPlayerText").textContent=msg;
 }
 
@@ -862,6 +1253,8 @@ function filteredPokemon(){
   });
 }
 function render(){
+  renderBattleBanner();
+  if(app.view==="battle"){ renderBattleDashboard(); updateAuthUI(); return; }
   if(app.player){
     $("#playerNameTop").textContent=app.player.name; $("#playerAvatar").textContent=initials(app.player.name); $("#welcomeLabel").textContent=`${app.player.name}s Dex`;
     renderStats(); renderGrid(); if(app.view==="dashboard") renderDashboard(); else if(app.view==="fight") renderFight(); else if(app.view==="encounter") renderEncounter(); else if(app.view==="map") renderMap(); else if(app.view==="library") renderLibrary(); else if(app.view==="director") renderDirector();
@@ -1072,7 +1465,7 @@ function renderPlayerList(){
   wrap.innerHTML=app.players.map(p=>`<button class="player-option ${app.player?.id===p.id?"active":""}" data-player="${p.id}"><span class="player-avatar">${initials(p.name)}</span><span><strong>${escapeHtml(p.name)}</strong><small>${app.player?.id===p.id?"Aktuell ausgewählt":"Dex öffnen"}</small></span></button>`).join("")||`<div class="notice"><strong>Noch keine Spieler</strong><p>Importiere zuerst deine JSON-Spielstände über <code>admin-import.html</code>.</p></div>`;
 }
 
-function openDetail(id){ app.view="dex"; app.selectedId=Number(id); app.activeTab="info"; $("#directorView").classList.add("hidden"); $("#dashboardView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#detailView").classList.remove("hidden"); window.scrollTo({top:0,behavior:"instant"}); renderDetail(); }
+function openDetail(id){ app.view="dex"; app.selectedId=Number(id); app.activeTab="info"; $("#directorView").classList.add("hidden"); $("#dashboardView").classList.add("hidden"); $("#mainView").classList.add("hidden"); $("#mapView").classList.add("hidden"); $("#encounterView").classList.add("hidden"); $("#fightView").classList.add("hidden"); $("#battleView").classList.add("hidden"); $("#libraryView").classList.add("hidden"); $("#detailView").classList.remove("hidden"); window.scrollTo({top:0,behavior:"instant"}); renderDetail(); }
 function closeDetail(){ app.selectedId=null; $("#detailView").classList.add("hidden"); $("#mainView").classList.remove("hidden"); app.view="dex"; renderGrid(); }
 function selectedPokemon(){ return app.pokemon.find(p=>p.id===app.selectedId); }
 
@@ -1404,10 +1797,24 @@ function bindEvents(){
   $("#fightPokemonSelect").addEventListener("change",e=>{app.fightSelectedId=+e.target.value;ensureFightSelection(true);renderFight();});
   $("#fightLevelButtons").addEventListener("click",e=>{const b=e.target.closest("[data-fight-level]");if(!b||b.disabled)return;app.fightSelectedLevel=+b.dataset.fightLevel;renderFight();});
   $("#fightAddBtn").addEventListener("click",addFightPokemon);
-  $("#fightTeamList").addEventListener("click",e=>{const remove=e.target.closest("[data-fight-remove]");if(remove){app.fightTeam=app.fightTeam.filter(m=>m.uid!==remove.dataset.fightRemove);renderFight();return;}const step=e.target.closest("[data-fight-step]");if(step)stepFightMember(step.dataset.fightUid,+step.dataset.fightStep);});
+  $("#fightTeamList").addEventListener("click",e=>{const start=e.target.closest("[data-fight-start]");if(start){toggleFightStart(start.dataset.fightStart);return;}const remove=e.target.closest("[data-fight-remove]");if(remove){app.fightTeam=app.fightTeam.filter(m=>m.uid!==remove.dataset.fightRemove);renderFight();return;}const step=e.target.closest("[data-fight-step]");if(step)stepFightMember(step.dataset.fightUid,+step.dataset.fightStep);});
+  $("#fightStartLiveBtn").addEventListener("click",startLiveBattle);
   $("#fightClearTeamBtn").addEventListener("click",()=>{app.fightTeam=[];renderFight();toast("Team geleert");});
   $("#fightNewBattleBtn").addEventListener("click",startNextFight);
   $("#fightResetCompareBtn").addEventListener("click",()=>{app.fightBaseline={};renderFight();toast("Vergleich zurückgesetzt");});
+  $("#activeBattleBanner").addEventListener("click",showBattleDashboard);
+  $("#battleBackBtn").addEventListener("click",()=>{ if(app.player) showModule("fight"); else { app.view="dashboard"; showNoPlayer(); renderBattleBanner(); } });
+  $("#battleEndBtn").addEventListener("click",endLiveBattle);
+  $("#battleOwnSide").addEventListener("click",handleBattleAreaClick);
+  $("#battleOpponentSide").addEventListener("click",handleBattleAreaClick);
+  $("#battleCalcAttacker").addEventListener("change",e=>{app.battleCalc.attacker=e.target.value;app.battleCalc.attackCard=null;app.battleCalc.result=null;renderBattleCalculator();});
+  $("#battleCalcDefender").addEventListener("change",e=>{app.battleCalc.defender=e.target.value;app.battleCalc.defenseCard="";app.battleCalc.result=null;renderBattleCalculator();});
+  $("#battleCalcAttackCard").addEventListener("change",e=>{app.battleCalc.attackCard=e.target.value;app.battleCalc.result=null;renderBattleCalculator();});
+  $("#battleCalcDefenseCard").addEventListener("change",e=>{app.battleCalc.defenseCard=e.target.value;app.battleCalc.result=null;renderBattleCalculator();});
+  $("#battleCalculateBtn").addEventListener("click",calculateBattleCombat);
+  $("#battleCalcResult").addEventListener("input",e=>{if(e.target.id==="battleFinalDamageInput"&&app.battleCalc.result)app.battleCalc.result.finalDamage=Math.max(0,+e.target.value||0);});
+  $("#battleCalcResult").addEventListener("click",e=>{if(e.target.closest("#battleApplyResultBtn"))applyBattleCombatResult();});
+  $("#battleFighterSheet").addEventListener("click",handleBattleFighterSheetClick);
   $("#librarySearch").addEventListener("input",e=>{app.librarySearch=e.target.value;renderLibrary();});
   $("#librarySectionSwitch").addEventListener("click",e=>{const b=e.target.closest("[data-library-section]");if(!b)return;app.librarySection=b.dataset.librarySection;app.libraryType="Alle";app.libraryKind="all";app.librarySearch="";$("#librarySearch").value="";buildLibraryTypeStrip();renderLibrary();});
   $("#libraryKindFilter").addEventListener("click",e=>{const b=e.target.closest("[data-card-kind]");if(!b)return;app.libraryKind=b.dataset.cardKind;renderLibrary();});
