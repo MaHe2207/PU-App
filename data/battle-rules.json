@@ -1,0 +1,17 @@
+{
+  "source": "Kblatt.pdf",
+  "description": "Strukturierte Kampfzustände aus dem PU-Kampfblatt. Fehlende Endbedingungen werden nicht ergänzt.",
+  "accuracy": {
+    "-1": {"label": "Genauigkeit -1", "actions": ["attack"], "die": "D10", "failOnMin": 8, "effect": "Angriffswert 0; Text auf Angriffskarte ignorieren"},
+    "-2": {"label": "Genauigkeit -2", "actions": ["attack"], "die": "D10", "failOnMin": 6, "effect": "Angriffswert 0; Text auf Angriffskarte ignorieren"}
+  },
+  "statuses": {
+    "paralyzed": {"label": "Paralysiert", "actions": ["attack","maneuver"], "die": "D10", "failOnMin": 8, "failText": "Angriff/Manöver verfällt; Karten zurück auf die Hand", "endAfterActions": 6},
+    "confused": {"label": "Verwirrt", "actions": ["attack"], "die": "D10", "failOnMin": 8, "hpLossOnFail": 1, "failText": "Angriff verfällt; -1 KP; Karten zurück auf die Hand", "endOnMin": 8, "endAfterActions": 6},
+    "poisoned": {"label": "Vergiftet", "trigger": "turnStart", "hpLoss": 1, "effect": "-1 KP je Zug"},
+    "burned": {"label": "Verbrannt", "trigger": "turnStart", "hpLoss": 1, "attackHalf": true, "effect": "-1 KP je Zug; Angriff halbiert"},
+    "sleeping": {"label": "Schlafend", "actions": ["attack","maneuver"], "failAlways": true, "die": "D10", "endOnMin": 8, "endAfterActions": 4, "failText": "Angriff/Manöver verfällt; Karten zurück auf die Hand"},
+    "frozen": {"label": "Eingefroren", "actions": ["attack","maneuver"], "failAlways": true, "failText": "Angriff/Manöver verfällt; Karten zurück auf die Hand", "end": "manual"}
+  },
+  "initiative": {"label": "Initiative", "effect": "Bewegungspunkte erhöhen/reduzieren, Minimum 2", "minimumMovement": 2}
+}
