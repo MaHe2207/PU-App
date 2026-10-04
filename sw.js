@@ -1,4 +1,4 @@
-const CACHE="pu-dex-v12-battle-table-20261003";
+const CACHE="pu-dex-v12-2-cardset-cap-20261004";
 const CORE=[
   "./",
   "./index.html",

@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>PU Dex</title>
-  <link rel="manifest" href="manifest.webmanifest?v=12.0">
+  <link rel="manifest" href="manifest.webmanifest?v=12.2">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=12.0">
+  <link rel="stylesheet" href="styles.css?v=12.2">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -492,8 +492,11 @@
           <div><p class="eyebrow">Kampfrechner</p><h2>Angriff auflösen</h2></div>
           <span class="data-pill">Karten + Typen</span>
         </div>
+        <div class="battle-turn-bar">
+          <div><span>Aktuell am Zug</span><strong id="battleCalcAttackerLabel">—</strong><small id="battleTurnLabel">—</small></div>
+          <button class="secondary-btn battle-next-turn-btn" id="battleNextTurnBtn" type="button">Weiter →</button>
+        </div>
         <div class="battle-calc-grid">
-          <label><span>Angreifer</span><select id="battleCalcAttacker"></select></label>
           <label><span>Verteidiger</span><select id="battleCalcDefender"></select></label>
           <label><span>Angriffskarte</span><select id="battleCalcAttackCard"></select></label>
           <label><span>Verteidigungskarte</span><select id="battleCalcDefenseCard"></select></label>
@@ -670,6 +673,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script type="module" src="app.js?v=12.0"></script>
+  <script type="module" src="app.js?v=12.2"></script>
 </body>
 </html>

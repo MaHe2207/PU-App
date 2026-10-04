@@ -404,3 +404,18 @@ main{padding:0 16px 110px}
 @media (max-width:980px){.battle-table-grid{grid-template-columns:1fr}.battle-calc-grid{grid-template-columns:1fr 1fr}.battle-field-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.battle-top{align-items:flex-start;flex-direction:column}.battle-top-actions{width:100%}.battle-top-actions button{flex:1}.active-battle-banner{top:70px}}
 @media (max-width:620px){.battle-view{width:min(100% - 16px,1500px)}.battle-side{padding:10px;border-radius:18px}.battle-field-grid{grid-template-columns:1fr}.battle-bench-list{grid-template-columns:1fr}.battle-calc-grid{grid-template-columns:1fr}.battle-fighter-head{align-items:flex-start}.battle-manage-btn{font-size:.62rem}.battle-empty-slot{min-height:120px}.battle-top{padding-top:12px}.active-battle-banner{width:calc(100% - 16px);border-radius:14px}.active-battle-open{display:none}}
 @media (min-width:1100px) and (orientation:landscape){.battle-view{padding-bottom:40px}.app-nav{max-width:700px;left:50%;transform:translateX(-50%)}.battle-side{padding:18px}.battle-fighter{padding:14px}.battle-fighter-head img{width:72px;height:72px}.battle-fighter-head h3{font-size:1.2rem}.battle-step-row button{padding:10px}.battle-calculator{position:relative}}
+
+/* v12.1 – Zugreihenfolge & Kampfrechner */
+.fight-turn-order{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.fight-turn-order small{font-weight:700;color:var(--muted,#707887)}
+.fight-turn-order button{width:34px;height:34px;border-radius:10px;border:1px solid #d9dee7;background:#fff;font-weight:900;font-size:1rem}
+.fight-turn-order b{min-width:26px;text-align:center;font-size:1.05rem}
+.fight-launch-info small{display:block;margin-top:6px;color:#6f7784;line-height:1.35}
+.battle-fighter.current-turn{box-shadow:0 0 0 3px rgba(239,68,68,.18),0 12px 28px rgba(23,35,52,.08);border-color:#ef4444}
+.battle-turn-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:14px 0 16px;padding:14px 16px;border:1px solid #e0e5ec;border-radius:18px;background:#fff}
+.battle-turn-bar>div{display:grid;gap:2px;min-width:0}
+.battle-turn-bar span{font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:#7a8290;font-weight:800}
+.battle-turn-bar strong{font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.battle-turn-bar small{color:#717986}
+.battle-next-turn-btn{white-space:nowrap;min-width:120px}
+@media (max-width:700px){.battle-turn-bar{align-items:stretch;flex-direction:column}.battle-next-turn-btn{width:100%}}
