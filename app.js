@@ -79,8 +79,7 @@ function normalizeProfile(raw={}){
       if(validGoalIds.has(id) && !goalStatuses[id]) goalStatuses[id]="active";
     }
   }
-  const selected=Object.keys(goalStatuses).slice(0,4);
-  for(const id of Object.keys(goalStatuses)) if(!selected.includes(id)) delete goalStatuses[id];
+  const selected=Object.keys(goalStatuses);
   return {
     trainerLevel: Math.max(0,Math.min(13,Number.isFinite(+raw.trainerLevel)?Math.round(+raw.trainerLevel):0)),
     activeGoals:selected,
@@ -103,7 +102,7 @@ function currentTrainerEntry(){
 
 function goalById(id){ return (app.goals||[]).find(g=>g.id===id)||null; }
 function goalStatus(id,profile=app.profile){ return profile?.goalStatuses?.[id] || ((profile?.activeGoals||[]).includes(id)?"active":"inactive"); }
-function selectedGoalIds(profile=app.profile){ return Object.entries(profile?.goalStatuses||{}).filter(([,status])=>status==="active"||status==="completed").map(([id])=>id).slice(0,4); }
+function selectedGoalIds(profile=app.profile){ return Object.entries(profile?.goalStatuses||{}).filter(([,status])=>status==="active"||status==="completed").map(([id])=>id); }
 function goalOwnedCount(goal){ return goal ? app.pokemon.filter(p=>p.type===goal.type && stateFor(p).owned).length : 0; }
 function goalProgress(goal){
   const count=goalOwnedCount(goal), target=Math.max(1,+goal.target||1);
@@ -638,7 +637,7 @@ function loadFightState(id){
 }
 function saveFightState(){
   if(!app.player) return;
-  localStorage.setItem(fightKey(app.player.id),JSON.stringify({version:12.4,team:app.fightTeam,baseline:app.fightBaseline}));
+  localStorage.setItem(fightKey(app.player.id),JSON.stringify({version:12.5,team:app.fightTeam,baseline:app.fightBaseline}));
 }
 function fightChoices(){
   if(app.fightSource==="favorite") return app.pokemon.filter(p=>stateFor(p).owned && stateFor(p).favorite);
@@ -897,7 +896,7 @@ async function startLiveBattle(){
     return {side,slot:sideData.activeSlots.indexOf(m.uid)};
   }).filter(x=>x.slot>=0);
   const payload={
-    version:12.4,status:"running",fieldSize,sourcePlayerId:app.player.id,sourcePlayerName:app.player.name,
+    version:12.5,status:"running",fieldSize,sourcePlayerId:app.player.id,sourcePlayerName:app.player.name,
     createdAt:serverTimestamp(),updatedAt:serverTimestamp(),lastEvent:{text:`Kampf gestartet · ${fieldSize} gegen ${fieldSize}`,time:Date.now()},
     turn:{order:ordered,index:0},
     sides:{own:ownSide,opponent:opponentSide}
@@ -1298,7 +1297,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=12.4").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=12.5").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
@@ -1413,7 +1412,7 @@ function renderDashboard(){
 
   const goals=activeGoals();
   const completed=goals.filter(g=>goalStatus(g.id)==="completed").length;
-  $("#dashboardGoalsActive").textContent=`${goals.length} / 4 vergeben`;
+  $("#dashboardGoalsActive").textContent=`${goals.length} vergeben`;
   $("#dashboardGoalsDone").textContent=`${completed} erfüllt`;
   $("#dashboardManageGoalsBtn").classList.toggle("hidden",!(app.isAdmin&&app.editMode));
   const goalList=$("#dashboardGoalsList");
@@ -1422,7 +1421,6 @@ function renderDashboard(){
       const pr=goalProgress(g), status=goalStatus(g.id), done=status==="completed";
       return `<article class="dashboard-goal ${done?"done":""}" style="${typeVars(g.type)}"><div class="dashboard-goal-head"><span class="goal-type-dot"></span><div><strong>${escapeHtml(g.label)}</strong><small>${escapeHtml(g.type)} · ${pr.count}/${pr.target} gefangen${pr.done&&!done?" · Bedingung erreicht":""}</small></div><em>${done?"✓ Erfüllt":"Aktiv"}</em></div><div class="dashboard-goal-track"><span style="width:${pr.pct}%"></span></div></article>`;
     }).join("");
-    if(goals.length<4) goalList.insertAdjacentHTML("beforeend",Array.from({length:4-goals.length},()=>`<div class="dashboard-goal-slot">Noch kein Ziel vergeben</div>`).join(""));
   } else {
     goalList.innerHTML=`<div class="dashboard-empty">Für diesen Spieler sind noch keine Ziele vergeben.</div>`;
   }
@@ -1460,7 +1458,7 @@ function renderGoalEditList(){
   const selected=new Set(selectedGoalIds(app.profile));
   const q=($("#goalSearch")?.value||"").trim().toLocaleLowerCase("de");
   const list=(app.goals||[]).filter(g=>!q || `${g.label} ${g.type}`.toLocaleLowerCase("de").includes(q));
-  $("#goalSelectionCount").textContent=`${selected.size} / 4 vergeben`;
+  $("#goalSelectionCount").textContent=`${selected.size} vergeben`;
   const groups=[...new Set(list.map(g=>g.type))];
   wrap.innerHTML=groups.map(type=>{
     const items=list.filter(g=>g.type===type);
@@ -1478,12 +1476,9 @@ function setGoalStatus(id,status){
   if(!app.isAdmin||!app.editMode) return;
   if(!["inactive","active","completed"].includes(status)) return;
   const statuses={...(app.profile.goalStatuses||{})};
-  const wasSelected=statuses[id]==="active"||statuses[id]==="completed"||(!statuses[id]&&(app.profile.activeGoals||[]).includes(id));
-  const selectedCount=selectedGoalIds(app.profile).length;
-  if(status!=="inactive" && !wasSelected && selectedCount>=4){ toast("Maximal vier Ziele pro Spieler"); return; }
   if(status==="inactive") delete statuses[id]; else statuses[id]=status;
   app.profile.goalStatuses=statuses;
-  app.profile.activeGoals=Object.keys(statuses).filter(x=>statuses[x]==="active"||statuses[x]==="completed").slice(0,4);
+  app.profile.activeGoals=Object.keys(statuses).filter(x=>statuses[x]==="active"||statuses[x]==="completed");
   cacheProfile(); app.dirty=true; renderDashboard(); renderGoalEditList(); scheduleSave();
 }
 
@@ -1540,11 +1535,9 @@ function renderDirector(){
   $("#directorGoalCount").textContent=totalGoals;
   $("#directorLocationCount").textContent=located;
 
-  const missingGoals=all.filter(r=>selectedGoalIds(r.profile).length<4).length;
   const missingLocation=all.length-located;
   const attention=$("#directorAttention");
   const notices=[];
-  if(missingGoals) notices.push(`<span>◎ ${missingGoals} ${missingGoals===1?"Spieler hat":"Spieler haben"} weniger als 4 vergebene Ziele</span>`);
   if(missingLocation) notices.push(`<span>⌖ ${missingLocation} ${missingLocation===1?"Spieler ohne":"Spieler ohne"} Kartenposition</span>`);
   attention.classList.toggle("hidden",!notices.length);
   attention.innerHTML=notices.length?`<strong>Hinweise</strong><div>${notices.join("")}</div>`:"";
