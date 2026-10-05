@@ -33,7 +33,8 @@ const app = {
   librarySearch: "", libraryKind: "all", libraryType: "Alle", librarySection: "attacks", selectedCardName: null,
   directorSearch: "", directorSort: "name",
   battleRules: null, activeBattle: null, battleUnsub: null, battleSelectedFighter: null,
-  battleCalc: {attacker:null,defender:null,attackCard:null,defenseCard:"",result:null}
+  battleCalc: {attacker:null,defender:null,attackCard:null,defenseCard:"",result:null},
+  sessionPool: null, sessionSetupPlayerIds: [], sessionSetupMax: 20, sessionCleanupChoices: null
 };
 
 const $ = s => document.querySelector(s);
@@ -45,6 +46,11 @@ const playerKey = id => `pu-dex-cache-${id}`;
 const profileKey = id => `pu-profile-cache-${id}`;
 const fightKey = id => `pu-fight-v4-${id}`;
 const LAST_PLAYER_KEY = "pu-last-player";
+const SESSION_POOL_KEY = "pu-session-pool-v13";
+const SESSION_DEFAULT_SIZE = 20;
+const SESSION_MAX_SIZE = 165;
+const sessionPrevalenceCache = new Map();
+const sessionMoveCache = new Map();
 let deferredInstallPrompt = null;
 const escapeHtml = value => String(value ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function typeVars(type){ const [a,b]=TYPE_COLORS[type]||["#8793a0","#f1f3f5"]; return `--type:${a};--type-soft:${b};`; }
@@ -637,7 +643,7 @@ function loadFightState(id){
 }
 function saveFightState(){
   if(!app.player) return;
-  localStorage.setItem(fightKey(app.player.id),JSON.stringify({version:12.5,team:app.fightTeam,baseline:app.fightBaseline}));
+  localStorage.setItem(fightKey(app.player.id),JSON.stringify({version:13,team:app.fightTeam,baseline:app.fightBaseline}));
 }
 function fightChoices(){
   if(app.fightSource==="favorite") return app.pokemon.filter(p=>stateFor(p).owned && stateFor(p).favorite);
@@ -715,6 +721,324 @@ function renderDiffList(target,counts,emptyText){
   const rows=sortedCardEntries(counts);
   target.innerHTML=rows.length?rows.map(([name,count])=>`<button class="diff-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span>${escapeHtml(name)}</span><strong>×${count}</strong></button>`).join(""):`<div class="diff-empty">${emptyText}</div>`;
 }
+function emptySessionPoolState(){
+  return {version:13,active:false,playerIds:[],maxSize:SESSION_DEFAULT_SIZE,pool:{},current:{},ending:false,returnCounts:{},readyForNext:false,startedAt:null};
+}
+function normalizeCountMap(raw){
+  const out={};
+  if(!raw||typeof raw!=="object") return out;
+  for(const [name,value] of Object.entries(raw)){
+    const n=Math.max(0,Math.round(+value||0));
+    if(n>0) out[name]=n;
+  }
+  return out;
+}
+function loadSessionPoolState(){
+  const base=emptySessionPoolState();
+  try{
+    const raw=JSON.parse(localStorage.getItem(SESSION_POOL_KEY)||"null");
+    if(raw&&typeof raw==="object"){
+      base.active=!!raw.active;
+      base.playerIds=Array.isArray(raw.playerIds)?raw.playerIds.filter(Boolean).slice(0,2):[];
+      base.maxSize=Math.max(0,Math.min(SESSION_MAX_SIZE,Number.isFinite(+raw.maxSize)?Math.round(+raw.maxSize):SESSION_DEFAULT_SIZE));
+      base.pool=normalizeCountMap(raw.pool);
+      base.current=normalizeCountMap(raw.current);
+      base.ending=!!raw.ending;
+      base.returnCounts=normalizeCountMap(raw.returnCounts);
+      base.readyForNext=!!raw.readyForNext;
+      base.startedAt=raw.startedAt||null;
+    }
+  }catch(err){ console.warn("Session-Pool konnte nicht geladen werden",err); }
+  app.sessionPool=base;
+  app.sessionSetupPlayerIds=base.playerIds.slice();
+  app.sessionSetupMax=base.maxSize;
+}
+function saveSessionPoolState(){
+  if(!app.sessionPool) app.sessionPool=emptySessionPoolState();
+  localStorage.setItem(SESSION_POOL_KEY,JSON.stringify(app.sessionPool));
+}
+function sessionAvailablePlayers(){
+  const seen=new Set(), out=[];
+  if(app.player){
+    out.push({id:app.player.id,name:app.player.name,state:app.state,profile:app.profile}); seen.add(app.player.id);
+  }
+  if(app.isAdmin){
+    for(const p of app.adminPlayerData){
+      if(seen.has(p.id)) continue;
+      out.push({id:p.id,name:p.name,state:p.state,profile:p.profile}); seen.add(p.id);
+    }
+  }
+  return out.sort((a,b)=>a.name.localeCompare(b.name,"de"));
+}
+function sessionPlayerData(id){
+  if(app.player?.id===id) return {id:app.player.id,name:app.player.name,state:app.state,profile:app.profile};
+  const p=app.adminPlayerData.find(x=>x.id===id);
+  return p?{id:p.id,name:p.name,state:p.state,profile:p.profile}:null;
+}
+function sessionSelectedPlayers(){
+  const ids=app.sessionPool?.active?app.sessionPool.playerIds:app.sessionSetupPlayerIds;
+  return (ids||[]).map(sessionPlayerData).filter(Boolean);
+}
+function sessionMovesAtLevel(name,level){
+  const lv=Math.max(1,Math.min(10,+level||1));
+  const key=`${name}|${lv}`;
+  if(sessionMoveCache.has(key)) return sessionMoveCache.get(key);
+  const p=app.pokemon.find(x=>x.name===name);
+  const moves=p?attacksFor(p).filter(m=>(+m.level||1)<=lv).map(m=>m.name):[];
+  sessionMoveCache.set(key,moves);
+  return moves;
+}
+function sessionAddMoveOccurrence(counts,name,level,weight=1){
+  for(const move of sessionMovesAtLevel(name,level)) counts[move]=(counts[move]||0)+weight;
+}
+function sessionPrevalence(ts,kind){
+  ts=String(Math.max(0,Math.min(13,+ts||0)));
+  const key=`${kind}|${ts}`;
+  if(sessionPrevalenceCache.has(key)) return sessionPrevalenceCache.get(key);
+  const data=app.encounterData||{}; const counts={}; let total=0;
+  const fields=data.fieldCodes||[];
+  if(kind==="wild"){
+    const levels=data.wildLevels?.[ts]||[];
+    for(const field of fields){
+      for(const level of levels){
+        for(let roll=1;roll<=20;roll++){
+          const hit=data.wildLookup?.[`${field}${String(level).padStart(2,"0")}${pad2(roll)}`];
+          if(!hit?.name) continue;
+          total++; sessionAddMoveOccurrence(counts,hit.name,parseInt(level,10),1);
+        }
+      }
+    }
+  } else {
+    const levels=data.trainerLevels?.[ts]||[];
+    for(const field of fields){
+      const types=data.trainerTypesByField?.[field]||[];
+      for(const type of types){
+        for(const level of levels){
+          for(let roll=1;roll<=20;roll++){
+            const hit=data.trainerLookup?.[`${type}${String(level).padStart(2,"0")}${pad2(roll)}`];
+            if(!hit?.name) continue;
+            total++; sessionAddMoveOccurrence(counts,hit.name,parseInt(level,10),1);
+          }
+        }
+      }
+    }
+  }
+  const moves={};
+  if(total>0) for(const [name,n] of Object.entries(counts)) moves[name]=n/total;
+  const result={total,moves}; sessionPrevalenceCache.set(key,result); return result;
+}
+function sessionEncounterExpectedCounts(ts){
+  const data=app.encounterData||{}, options=data.opponents?.[String(ts)]||[];
+  const meanTrainer=(data.trainerCounts||[]).length?(data.trainerCounts.reduce((a,b)=>a+(+b||0),0)/data.trainerCounts.length):1;
+  let wild=0,trainer=0;
+  for(const label of options){
+    if(/trainer/i.test(label||"")) trainer+=meanTrainer;
+    else wild+=/\b2\b/.test(label||"")?2:1;
+  }
+  const divisor=Math.max(1,options.length);
+  return {wild:wild/divisor,trainer:trainer/divisor};
+}
+function sessionSourceWeights(players){
+  const favorite=60;
+  let wildExpected=0,trainerExpected=0;
+  for(const p of players){
+    const e=sessionEncounterExpectedCounts(p.profile?.trainerLevel||0); wildExpected+=e.wild; trainerExpected+=e.trainer;
+  }
+  if(players.length){ wildExpected/=players.length; trainerExpected/=players.length; }
+  const total=wildExpected+trainerExpected;
+  if(total<=0) return {favorite,wild:25,trainer:15};
+  return {favorite,wild:40*wildExpected/total,trainer:40*trainerExpected/total};
+}
+function calculateSessionScores(){
+  const players=sessionSelectedPlayers();
+  if(!players.length) return {rows:[],byName:new Map(),weights:{favorite:60,wild:25,trainer:15},favoriteCount:0};
+  const favCounts={}; let favoriteCount=0;
+  for(const pl of players){
+    for(const p of app.pokemon){
+      const st=pl.state?.[p.name]; if(!st?.owned||!st?.favorite) continue;
+      favoriteCount++;
+      for(const move of attacksFor(p)){ if((+move.level||1)<= (+st.level||p.minLevel)) favCounts[move.name]=(favCounts[move.name]||0)+1; }
+    }
+  }
+  const wildMaps=[], trainerMaps=[];
+  for(const pl of players){
+    const ts=pl.profile?.trainerLevel||0;
+    wildMaps.push(sessionPrevalence(ts,"wild").moves);
+    trainerMaps.push(sessionPrevalence(ts,"trainer").moves);
+  }
+  const weights=sessionSourceWeights(players);
+  const allNames=new Set(app.attackCards.map(c=>c.name));
+  for(const list of Object.values(app.attacks||{})) for(const m of list||[]) allNames.add(m.name);
+  const rows=[];
+  for(const name of allNames){
+    const favPrev=favoriteCount?(favCounts[name]||0)/favoriteCount:0;
+    const wildPrev=wildMaps.length?wildMaps.reduce((sum,m)=>sum+(m[name]||0),0)/wildMaps.length:0;
+    const trainerPrev=trainerMaps.length?trainerMaps.reduce((sum,m)=>sum+(m[name]||0),0)/trainerMaps.length:0;
+    const favPart=favPrev*weights.favorite, wildPart=wildPrev*weights.wild, trainerPart=trainerPrev*weights.trainer;
+    rows.push({name,raw:favPart+wildPart+trainerPart,favPart,wildPart,trainerPart,favPrev,wildPrev,trainerPrev});
+  }
+  rows.sort((a,b)=>b.raw-a.raw||a.name.localeCompare(b.name,"de"));
+  const maxRaw=rows[0]?.raw||0;
+  rows.forEach((r,i)=>{r.rank=i+1;r.score=maxRaw>0?Math.round(r.raw/maxRaw*100):0;});
+  return {rows,byName:new Map(rows.map(r=>[r.name,r])),weights,favoriteCount};
+}
+function sessionScoreRow(name){ return calculateSessionScores().byName.get(name)||{name,rank:999,score:0,favPart:0,wildPart:0,trainerPart:0}; }
+function mergeCountMaps(...maps){
+  const out={}; for(const map of maps) for(const [name,n] of Object.entries(map||{})){const value=+n||0;if(value>0)out[name]=(out[name]||0)+value;} return out;
+}
+function sessionPoolUsedSlots(){ return Object.keys(app.sessionPool?.pool||{}).filter(k=>(app.sessionPool.pool[k]||0)>0).length; }
+function sessionIdealPoolNames(candidateCounts){
+  const max=Math.max(0,app.sessionPool?.maxSize||0); if(max===0) return new Set();
+  const score=calculateSessionScores().byName;
+  const names=Object.keys(candidateCounts||{}).filter(n=>(candidateCounts[n]||0)>0);
+  names.sort((a,b)=>{
+    const sa=score.get(a), sb=score.get(b); return (sb?.score||0)-(sa?.score||0)||(sa?.rank||999)-(sb?.rank||999)||a.localeCompare(b,"de");
+  });
+  return new Set(names.slice(0,max));
+}
+function sessionFightPlan(){
+  const needed=cardsForFightTeam(), fromPool={}, fromArchive={};
+  const pool=app.sessionPool?.pool||{};
+  for(const [name,count] of Object.entries(needed)){
+    const available=pool[name]||0, reused=Math.min(count,available), missing=Math.max(0,count-reused);
+    if(reused>0) fromPool[name]=reused;
+    if(missing>0) fromArchive[name]=missing;
+  }
+  return {needed,fromPool,fromArchive};
+}
+function sessionFormatWeights(w){ return `Favoriten ${Math.round(w.favorite)} · Wild ${Math.round(w.wild)} · Trainer ${Math.round(w.trainer)}`; }
+function renderSessionPoolPanel(){
+  const root=$("#sessionPoolContent"); if(!root) return;
+  if(!app.sessionPool) loadSessionPoolState();
+  const s=app.sessionPool;
+  if(!s.active){
+    const players=sessionAvailablePlayers();
+    if(!app.sessionSetupPlayerIds.length && app.player) app.sessionSetupPlayerIds=[app.player.id];
+    app.sessionSetupPlayerIds=app.sessionSetupPlayerIds.filter(id=>players.some(p=>p.id===id)).slice(0,2);
+    root.innerHTML=`<p class="session-intro">Wähle 1–2 Spieler für die heutige Session. Favoriten, deren Level und Trainerstufen kommen automatisch aus den Spielerdaten. Der Standort wird bewusst nicht verwendet.</p>
+      <div class="session-player-grid">${players.map(p=>{const selected=app.sessionSetupPlayerIds.includes(p.id);const fav=app.pokemon.filter(mon=>p.state?.[mon.name]?.owned&&p.state?.[mon.name]?.favorite).length;return `<button class="session-player-chip ${selected?"active":""}" data-session-player="${p.id}" type="button"><span>${selected?"✓":"○"}</span><strong>${escapeHtml(p.name)}</strong><small>TS ${p.profile?.trainerLevel||0} · ${fav} Favoriten</small></button>`;}).join("")||`<div class="diff-empty">Keine Spieler verfügbar.</div>`}</div>
+      <div class="session-size-row"><div><strong>Maximale Poolgröße</strong><small>Gezählt werden Attacken/Kartenstapel, nicht einzelne Karten.</small></div><div class="session-size-control"><button data-session-size-step="-1" type="button">−</button><input id="sessionPoolSizeInput" type="number" min="0" max="${SESSION_MAX_SIZE}" value="${app.sessionSetupMax}"><button data-session-size-step="1" type="button">＋</button></div></div>
+      <button class="primary-btn session-start-btn" data-session-start type="button" ${app.sessionSetupPlayerIds.length?"":"disabled"}>Session starten</button>`;
+    return;
+  }
+  const players=sessionSelectedPlayers(), scoreData=calculateSessionScores();
+  if(s.ending){
+    const entries=sortedCardEntries(s.returnCounts||{});
+    root.innerHTML=`<div class="session-ending"><div class="session-ending-head"><span>↩</span><div><strong>Session beenden</strong><small>Diese Karten liegen noch außerhalb des Hauptarchivs.</small></div></div>
+      <div class="session-return-list">${entries.length?entries.map(([name,count])=>`<div><span>${escapeHtml(name)}</span><strong>×${count}</strong></div>`).join(""):`<div class="diff-empty">Keine Karten mehr draußen.</div>`}</div>
+      <div class="session-actions"><button class="secondary-btn" data-session-cancel-end type="button">Weiter spielen</button><button class="primary-btn" data-session-finish-end type="button">Alles einsortiert · Session abschließen</button></div></div>`;
+    return;
+  }
+  const poolEntries=Object.entries(s.pool||{}).filter(([,n])=>n>0).sort((a,b)=>{
+    const ra=scoreData.byName.get(a[0]),rb=scoreData.byName.get(b[0]);return (ra?.rank||999)-(rb?.rank||999)||a[0].localeCompare(b[0],"de");
+  });
+  const ranking=scoreData.rows;
+  root.innerHTML=`<div class="session-summary-grid"><article><small>Spieler</small><strong>${players.length}</strong><span>${players.map(p=>escapeHtml(p.name)).join(" · ")}</span></article><article><small>Session-Pool</small><strong>${poolEntries.length} / ${s.maxSize}</strong><span>${Object.keys(s.current||{}).length} Attacken im aktuellen Kampf</span></article><article><small>Gewichtung heute</small><strong>${Math.round(scoreData.weights.favorite)} / ${Math.round(scoreData.weights.wild)} / ${Math.round(scoreData.weights.trainer)}</strong><span>${sessionFormatWeights(scoreData.weights)}</span></article></div>
+    <div class="session-toolbar"><button class="secondary-btn" data-session-refresh type="button">Prognose aktualisieren</button><button class="danger-btn" data-session-end type="button">Session beenden</button></div>
+    <div class="session-section"><div class="session-section-head"><div><strong>Aktueller Session-Pool</strong><small>Ein Platz pro Attacke, unabhängig von der Kartensatzgröße.</small></div><span>${poolEntries.length}/${s.maxSize}</span></div>
+      <div class="session-pool-list">${poolEntries.length?poolEntries.map(([name,count])=>{const r=scoreData.byName.get(name);return `<div class="session-pool-row"><button class="card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span><b>${escapeHtml(name)}</b><small>Relevanz ${r?.score||0} · Rang ${r?.rank||"–"}</small></span><strong>×${count}</strong></button><button class="session-archive-btn" data-session-pool-remove="${escapeHtml(name)}" type="button">Archiv</button></div>`;}).join(""):`<div class="diff-empty">Noch keine Karten im Session-Pool.</div>`}</div></div>
+    <details class="session-ranking"><summary>Heutige Prognose · komplette Rangliste</summary><div class="session-ranking-list">${ranking.map(r=>`<button class="session-rank-row card-open-row" data-card-open="${escapeHtml(r.name)}" type="button"><b>${r.rank}</b><span><strong>${escapeHtml(r.name)}</strong><small>F ${r.favPart.toFixed(1)} · W ${r.wildPart.toFixed(1)} · T ${r.trainerPart.toFixed(1)}</small></span><em>${r.score}</em></button>`).join("")}</div></details>`;
+}
+function renderSessionCardFlow(){
+  const panel=$("#sessionCardFlowPanel"), root=$("#sessionCardFlowContent"), compare=$("#fightComparePanel");
+  if(!panel||!root) return;
+  const active=!!app.sessionPool?.active && !app.sessionPool?.ending;
+  panel.classList.toggle("hidden",!active); if(compare) compare.classList.toggle("hidden",active);
+  if(!active) return;
+  const s=app.sessionPool, scoreData=calculateSessionScores();
+  if(Object.keys(s.current||{}).length){
+    if(app.sessionCleanupChoices){
+      const candidates=mergeCountMaps(s.pool,s.current), ideal=sessionIdealPoolNames(candidates);
+      const names=Object.keys(candidates).sort((a,b)=>(scoreData.byName.get(a)?.rank||999)-(scoreData.byName.get(b)?.rank||999)||a.localeCompare(b,"de"));
+      const chosenCount=Object.values(app.sessionCleanupChoices).filter(v=>v==="pool").length;
+      root.innerHTML=`<p class="fight-help">Die Empfehlung wählt aus allen momentan draußen liegenden Attacken die ${s.maxSize} relevantesten aus. Du kannst jede Entscheidung ändern.</p>
+        <div class="cleanup-head"><span>Pool-Auswahl <strong>${chosenCount}/${s.maxSize}</strong></span><button class="secondary-btn" data-session-recommend type="button">Empfehlung übernehmen</button></div>
+        <div class="session-cleanup-list">${names.map(name=>{const r=scoreData.byName.get(name),choice=app.sessionCleanupChoices[name]||"archive",wasCurrent=!!s.current[name],wasPool=!!s.pool[name];return `<article class="session-cleanup-row ${choice}"><div><strong>${escapeHtml(name)}</strong><small>Relevanz ${r?.score||0} · Rang ${r?.rank||"–"} · ×${candidates[name]}${wasCurrent?" · aktueller Kampf":""}${wasPool?" · bereits Pool":""}${ideal.has(name)?" · empfohlen":""}</small></div><div class="cleanup-choice"><button class="${choice==="pool"?"active":""}" data-session-cleanup-name="${escapeHtml(name)}" data-session-cleanup-choice="pool" type="button">Pool</button><button class="${choice==="archive"?"active":""}" data-session-cleanup-name="${escapeHtml(name)}" data-session-cleanup-choice="archive" type="button">Archiv</button></div></article>`;}).join("")}</div>
+        <button class="primary-btn" data-session-cleanup-apply type="button">Aufräumen abschließen</button>`;
+    } else {
+      const entries=sortedCardEntries(s.current);
+      root.innerHTML=`<div class="session-current-note"><strong>✓ Karten für diesen Kampf sind als geholt markiert.</strong><span>${entries.length} Attacken · ${totalCopies(s.current)} physische Karten</span></div>
+        <div class="session-current-list">${entries.map(([name,count])=>`<button class="current-card-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span><b>${escapeHtml(name)}</b><small>im aktuellen Kampf</small></span><strong>×${count}</strong></button>`).join("")}</div>
+        <button class="primary-btn" data-session-cleanup-open type="button">Karten aufräumen</button>`;
+    }
+    return;
+  }
+  const plan=sessionFightPlan();
+  const needEntries=sortedCardEntries(plan.needed), reuseEntries=sortedCardEntries(plan.fromPool), archiveEntries=sortedCardEntries(plan.fromArchive);
+  if(!needEntries.length){
+    root.innerHTML=`<div class="diff-empty">Stelle zuerst den nächsten Kampf zusammen. Dann zeigt die App, welche Karten bereits im Session-Pool liegen und welche aus dem Hauptarchiv geholt werden müssen.</div>${s.readyForNext?`<button class="secondary-btn session-next-btn" data-session-next-fight type="button">Nächsten Kampf vorbereiten</button>`:""}`;
+    return;
+  }
+  root.innerHTML=`<p class="fight-help">Die Kartenliste berücksichtigt alle Team- und Reserve-Pokémon. Pro Attacke bleiben die benötigten Kartensets wie bisher auf maximal 4 gedeckelt.</p>
+    <div class="session-fetch-grid"><article><header><span>✓</span><div><strong>Aus Session-Pool</strong><small>${totalCopies(plan.fromPool)} Karten</small></div></header><div>${reuseEntries.length?reuseEntries.map(([name,count])=>`<button class="diff-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span>${escapeHtml(name)}</span><strong>×${count}</strong></button>`).join(""):`<div class="diff-empty">Nichts im Pool vorhanden</div>`}</div></article><article><header><span>＋</span><div><strong>Aus Hauptarchiv holen</strong><small>${totalCopies(plan.fromArchive)} Karten</small></div></header><div>${archiveEntries.length?archiveEntries.map(([name,count])=>`<button class="diff-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span>${escapeHtml(name)}</span><strong>×${count}</strong></button>`).join(""):`<div class="diff-empty">Alles bereits draußen</div>`}</div></article></div>
+    <button class="primary-btn" data-session-cards-pulled type="button">Karten geholt</button>`;
+}
+function startSessionPool(){
+  const ids=app.sessionSetupPlayerIds.filter(id=>sessionPlayerData(id)).slice(0,2);
+  if(!ids.length){ toast("Wähle mindestens einen Spieler"); return; }
+  const max=Math.max(0,Math.min(SESSION_MAX_SIZE,Math.round(+app.sessionSetupMax||0)));
+  app.sessionPool={version:13,active:true,playerIds:ids,maxSize:max,pool:{},current:{},ending:false,returnCounts:{},readyForNext:false,startedAt:Date.now()};
+  app.sessionCleanupChoices=null; saveSessionPoolState(); renderFight(); toast("Session-Pool gestartet");
+}
+function markSessionCardsPulled(){
+  if(!app.sessionPool?.active) return;
+  if(Object.keys(app.sessionPool.current||{}).length){ toast("Für den aktuellen Kampf sind bereits Karten als geholt markiert"); return; }
+  const plan=sessionFightPlan(); if(!Object.keys(plan.needed).length){ toast("Stelle zuerst einen Kampf zusammen"); return; }
+  const pool={...app.sessionPool.pool};
+  for(const [name,need] of Object.entries(plan.needed)){
+    const take=Math.min(need,pool[name]||0); if(take>0){pool[name]-=take;if(pool[name]<=0)delete pool[name];}
+  }
+  app.sessionPool.pool=pool; app.sessionPool.current={...plan.needed}; app.sessionPool.readyForNext=false; app.sessionCleanupChoices=null;
+  saveSessionPoolState(); renderFight(); toast("Karten als geholt markiert");
+}
+function openSessionCleanup(){
+  if(!Object.keys(app.sessionPool?.current||{}).length){ toast("Keine aktuellen Karten zum Aufräumen"); return; }
+  const candidates=mergeCountMaps(app.sessionPool.pool,app.sessionPool.current), ideal=sessionIdealPoolNames(candidates), choices={};
+  for(const name of Object.keys(candidates)) choices[name]=ideal.has(name)?"pool":"archive";
+  app.sessionCleanupChoices=choices; renderSessionCardFlow();
+}
+function applySessionRecommendation(){
+  const candidates=mergeCountMaps(app.sessionPool.pool,app.sessionPool.current), ideal=sessionIdealPoolNames(candidates), choices={};
+  for(const name of Object.keys(candidates)) choices[name]=ideal.has(name)?"pool":"archive";
+  app.sessionCleanupChoices=choices; renderSessionCardFlow();
+}
+function setSessionCleanupChoice(name,choice){
+  if(!app.sessionCleanupChoices||!(name in app.sessionCleanupChoices)) return;
+  if(choice==="pool" && app.sessionCleanupChoices[name]!=="pool"){
+    const count=Object.values(app.sessionCleanupChoices).filter(v=>v==="pool").length;
+    if(count>=app.sessionPool.maxSize){ toast(`Session-Pool ist auf ${app.sessionPool.maxSize} Attacken begrenzt`); return; }
+  }
+  app.sessionCleanupChoices[name]=choice==="pool"?"pool":"archive"; renderSessionCardFlow();
+}
+function applySessionCleanup(){
+  if(!app.sessionCleanupChoices) return;
+  const candidates=mergeCountMaps(app.sessionPool.pool,app.sessionPool.current), next={};
+  for(const [name,count] of Object.entries(candidates)) if(app.sessionCleanupChoices[name]==="pool") next[name]=count;
+  app.sessionPool.pool=next; app.sessionPool.current={}; app.sessionPool.readyForNext=true; app.sessionCleanupChoices=null; saveSessionPoolState(); renderFight(); toast("Karten aufgeräumt");
+}
+function sessionNextFight(){
+  if(Object.keys(app.sessionPool?.current||{}).length){ toast("Räume zuerst die Karten des aktuellen Kampfes auf"); return; }
+  app.fightTeam=[]; app.fightBaseline={}; app.sessionPool.readyForNext=false; saveFightState(); saveSessionPoolState(); renderFight(); toast("Nächsten Kampf zusammenstellen");
+}
+function beginSessionEnd(){
+  if(!app.sessionPool?.active) return;
+  const outside=mergeCountMaps(app.sessionPool.pool,app.sessionPool.current);
+  if(Object.keys(app.sessionPool.current||{}).length && !confirm("Es sind noch Karten als aktueller Kampf markiert. Trotzdem Session beenden und alle draußen liegenden Karten in die Rücksortierliste übernehmen?")) return;
+  app.sessionPool.ending=true; app.sessionPool.returnCounts=outside; saveSessionPoolState(); renderFight();
+}
+function cancelSessionEnd(){ app.sessionPool.ending=false; app.sessionPool.returnCounts={}; saveSessionPoolState(); renderFight(); }
+function finishSessionEnd(){
+  const ids=app.sessionPool?.playerIds?.slice()||[]; const size=app.sessionPool?.maxSize??SESSION_DEFAULT_SIZE;
+  app.sessionPool=emptySessionPoolState(); app.sessionSetupPlayerIds=ids; app.sessionSetupMax=size; app.sessionCleanupChoices=null; saveSessionPoolState(); renderFight(); toast("Session abgeschlossen");
+}
+function removeSessionPoolCard(name){
+  if(!app.sessionPool?.pool?.[name]) return;
+  delete app.sessionPool.pool[name]; saveSessionPoolState(); renderFight(); toast(`${name} zurück ins Hauptarchiv`);
+}
+async function refreshSessionForecast(){
+  if(app.isAdmin) await loadAdminPlayers(); sessionPrevalenceCache.clear(); sessionMoveCache.clear(); renderFight(); toast("Session-Prognose aktualisiert");
+}
+
 function showModule(view){
   if(view==="director"){
     if(!app.isAdmin){ toast("Admin-Anmeldung erforderlich"); return; }
@@ -813,6 +1137,8 @@ function renderFight(){
     const detail=users>0?(users>4?`${users} Pokémon · gedeckelt auf ${usedSets} Sets × x${setSize}`:`${users} Pokémon × Satz x${setSize}`):`Kartensatz x${setSize}`;
     return `<button class="current-card-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span><b>${escapeHtml(name)}</b><small>${detail}</small></span><strong>×${count}</strong></button>`;
   }).join(""):`<div class="diff-empty">Noch keine Attackenkarten benötigt.</div>`;
+  renderSessionPoolPanel();
+  renderSessionCardFlow();
   saveFightState();
 }
 function addFightPokemon(){
@@ -896,7 +1222,7 @@ async function startLiveBattle(){
     return {side,slot:sideData.activeSlots.indexOf(m.uid)};
   }).filter(x=>x.slot>=0);
   const payload={
-    version:12.5,status:"running",fieldSize,sourcePlayerId:app.player.id,sourcePlayerName:app.player.name,
+    version:13,status:"running",fieldSize,sourcePlayerId:app.player.id,sourcePlayerName:app.player.name,
     createdAt:serverTimestamp(),updatedAt:serverTimestamp(),lastEvent:{text:`Kampf gestartet · ${fieldSize} gegen ${fieldSize}`,time:Date.now()},
     turn:{order:ordered,index:0},
     sides:{own:ownSide,opponent:opponentSide}
@@ -1278,6 +1604,7 @@ async function init(){
   catch(err){ console.warn("Kartendaten nicht geladen",err); app.mapData=null; }
   try { app.battleRules=await loadJson("data/battle-rules.json"); }
   catch(err){ console.warn("Kampfregeln nicht geladen",err); app.battleRules=null; }
+  loadSessionPoolState();
   if(app.mapData) await loadMapTrainerConfig();
 
   buildTypeStrip(); buildLibraryTypeStrip(); bindEvents(); setupMapCanvas(); subscribeActiveBattle();
@@ -1297,7 +1624,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=12.5").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
@@ -1972,6 +2299,33 @@ function bindEvents(){
   $("#fightClearTeamBtn").addEventListener("click",()=>{app.fightTeam=[];renderFight();toast("Team geleert");});
   $("#fightNewBattleBtn").addEventListener("click",startNextFight);
   $("#fightResetCompareBtn").addEventListener("click",()=>{app.fightBaseline={};renderFight();toast("Vergleich zurückgesetzt");});
+  $("#sessionPoolPanel").addEventListener("click",async e=>{
+    const player=e.target.closest("[data-session-player]");
+    if(player){
+      const id=player.dataset.sessionPlayer;
+      if(app.sessionSetupPlayerIds.includes(id)) app.sessionSetupPlayerIds=app.sessionSetupPlayerIds.filter(x=>x!==id);
+      else if(app.sessionSetupPlayerIds.length<2) app.sessionSetupPlayerIds=[...app.sessionSetupPlayerIds,id];
+      else { toast("Pro Session sind 1 oder 2 Spieler vorgesehen"); return; }
+      renderSessionPoolPanel(); return;
+    }
+    const step=e.target.closest("[data-session-size-step]");
+    if(step){ app.sessionSetupMax=Math.max(0,Math.min(SESSION_MAX_SIZE,app.sessionSetupMax+(+step.dataset.sessionSizeStep||0))); renderSessionPoolPanel(); return; }
+    if(e.target.closest("[data-session-start]")){ startSessionPool(); return; }
+    if(e.target.closest("[data-session-refresh]")){ await refreshSessionForecast(); return; }
+    if(e.target.closest("[data-session-end]")){ beginSessionEnd(); return; }
+    if(e.target.closest("[data-session-cancel-end]")){ cancelSessionEnd(); return; }
+    if(e.target.closest("[data-session-finish-end]")){ finishSessionEnd(); return; }
+    const remove=e.target.closest("[data-session-pool-remove]"); if(remove){ removeSessionPoolCard(remove.dataset.sessionPoolRemove); return; }
+  });
+  $("#sessionPoolPanel").addEventListener("input",e=>{if(e.target.id==="sessionPoolSizeInput")app.sessionSetupMax=Math.max(0,Math.min(SESSION_MAX_SIZE,Math.round(+e.target.value||0)));});
+  $("#sessionCardFlowPanel").addEventListener("click",e=>{
+    if(e.target.closest("[data-session-cards-pulled]")){ markSessionCardsPulled(); return; }
+    if(e.target.closest("[data-session-cleanup-open]")){ openSessionCleanup(); return; }
+    if(e.target.closest("[data-session-recommend]")){ applySessionRecommendation(); return; }
+    const choice=e.target.closest("[data-session-cleanup-choice]"); if(choice){ setSessionCleanupChoice(choice.dataset.sessionCleanupName,choice.dataset.sessionCleanupChoice); return; }
+    if(e.target.closest("[data-session-cleanup-apply]")){ applySessionCleanup(); return; }
+    if(e.target.closest("[data-session-next-fight]")){ sessionNextFight(); return; }
+  });
   $("#activeBattleBanner").addEventListener("click",showBattleDashboard);
   $("#battleBackBtn").addEventListener("click",()=>{ if(app.player) showModule("fight"); else { app.view="dashboard"; showNoPlayer(); renderBattleBanner(); } });
   $("#battleEndBtn").addEventListener("click",endLiveBattle);

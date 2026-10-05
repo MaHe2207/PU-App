@@ -1,4 +1,4 @@
-const CACHE="pu-dex-v12-6-collapsed-completed-goals-20261005";
+const CACHE="pu-dex-v13-session-pool-20261005";
 const CORE=[
   "./",
   "./index.html",

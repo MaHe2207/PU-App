@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>PU Dex</title>
-  <link rel="manifest" href="manifest.webmanifest?v=12.5">
+  <link rel="manifest" href="manifest.webmanifest?v=13">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=12.5">
+  <link rel="stylesheet" href="styles.css?v=13">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -371,6 +371,14 @@
         <div class="fight-orb" aria-hidden="true">⚔</div>
       </section>
 
+      <section class="fight-panel session-pool-panel" id="sessionPoolPanel">
+        <div class="fight-panel-head">
+          <div><p class="eyebrow">Session-Pool</p><h2>Kartenlogistik für heute</h2></div>
+          <span class="data-pill">v13</span>
+        </div>
+        <div id="sessionPoolContent"></div>
+      </section>
+
       <section class="fight-stats" aria-label="Kampfübersicht">
         <article><span>◉</span><div><strong id="fightTeamCount">0</strong><small>Pokémon</small></div></article>
         <article><span>▦</span><div><strong id="fightUniqueCount">0</strong><small>versch. Karten</small></div></article>
@@ -429,7 +437,15 @@
         <button class="primary-btn" id="fightStartLiveBtn" type="button" disabled>Kampf starten</button>
       </section>
 
-      <section class="fight-panel compare-panel">
+      <section class="fight-panel session-card-flow hidden" id="sessionCardFlowPanel">
+        <div class="fight-panel-head">
+          <div><p class="eyebrow">Session-Kartenfluss</p><h2>Holen · verwenden · aufräumen</h2></div>
+          <span class="data-pill" id="sessionCardFlowBadge">Session</span>
+        </div>
+        <div id="sessionCardFlowContent"></div>
+      </section>
+
+      <section class="fight-panel compare-panel" id="fightComparePanel">
         <div class="fight-panel-head compare-head">
           <div><p class="eyebrow">Attackenkarten</p><h2>Vergleich zum letzten Kampf</h2></div>
           <span class="data-pill">automatisch</span>
@@ -676,11 +692,11 @@
         <button class="setting-button" id="installAppBtn" type="button"><span>▣</span><div><strong>App installieren</strong><small id="installAppStatus">Installationsstatus wird geprüft…</small></div></button>
         <a class="setting-button admin-link" href="admin-import.html"><span>⇧</span><div><strong>Alte Spielstände importieren</strong><small>Für vorhandene JSON-Spielstände; neue Spieler kannst du direkt in der Spielerauswahl anlegen</small></div></a>
       </div>
-      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v12.5</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung bleibt lokal. Ein gestarteter Kampftisch wird als temporärer aktiver Kampf über Firebase auf allen Geräten synchronisiert.</p></div>
+      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v13</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung und Session-Pool bleiben lokal auf dem Gerät. Ein gestarteter Kampftisch wird als temporärer aktiver Kampf über Firebase auf allen Geräten synchronisiert.</p></div>
     </aside>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script type="module" src="app.js?v=12.5"></script>
+  <script type="module" src="app.js?v=13"></script>
 </body>
 </html>

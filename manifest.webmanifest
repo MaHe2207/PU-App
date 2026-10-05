@@ -12,7 +12,7 @@
   "orientation": "any",
   "background_color": "#f7f8fb",
   "theme_color": "#f7f8fb",
-  "description": "Begleit-App für PU – Dex, Weltkarte, Begegnungen, Kampfvorbereitung, synchronisierter Kampftisch, manuelle Zielstatus, Spielerverwaltung und Kartenbibliothek für Pokémon × Unmatched",
+  "description": "Begleit-App für PU – Dex, Weltkarte, Begegnungen, Kampfvorbereitung, synchronisierter Kampftisch, manuelle Zielstatus, Session-Pool, Spielerverwaltung und Kartenbibliothek für Pokémon × Unmatched",
   "lang": "de",
   "categories": [
     "games",
