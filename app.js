@@ -1411,18 +1411,39 @@ function renderDashboard(){
   $("#dashboardAdminPanel").classList.toggle("hidden",!(app.isAdmin&&app.editMode));
 
   const goals=activeGoals();
-  const completed=goals.filter(g=>goalStatus(g.id)==="completed").length;
+  const active=goals.filter(g=>goalStatus(g.id)==="active");
+  const completedGoals=goals.filter(g=>goalStatus(g.id)==="completed");
+  const completed=completedGoals.length;
   $("#dashboardGoalsActive").textContent=`${goals.length} vergeben`;
   $("#dashboardGoalsDone").textContent=`${completed} erfüllt`;
   $("#dashboardManageGoalsBtn").classList.toggle("hidden",!(app.isAdmin&&app.editMode));
+
+  const goalCard=(g,done=false)=>{
+    const pr=goalProgress(g);
+    return `<article class="dashboard-goal ${done?"done":""}" style="${typeVars(g.type)}"><div class="dashboard-goal-head"><span class="goal-type-dot"></span><div><strong>${escapeHtml(g.label)}</strong><small>${escapeHtml(g.type)} · ${pr.count}/${pr.target} gefangen${pr.done&&!done?" · Bedingung erreicht":""}</small></div><em>${done?"✓ Erfüllt":"Aktiv"}</em></div><div class="dashboard-goal-track"><span style="width:${pr.pct}%"></span></div></article>`;
+  };
+
   const goalList=$("#dashboardGoalsList");
-  if(goals.length){
-    goalList.innerHTML=goals.map(g=>{
-      const pr=goalProgress(g), status=goalStatus(g.id), done=status==="completed";
-      return `<article class="dashboard-goal ${done?"done":""}" style="${typeVars(g.type)}"><div class="dashboard-goal-head"><span class="goal-type-dot"></span><div><strong>${escapeHtml(g.label)}</strong><small>${escapeHtml(g.type)} · ${pr.count}/${pr.target} gefangen${pr.done&&!done?" · Bedingung erreicht":""}</small></div><em>${done?"✓ Erfüllt":"Aktiv"}</em></div><div class="dashboard-goal-track"><span style="width:${pr.pct}%"></span></div></article>`;
-    }).join("");
+  if(active.length){
+    goalList.innerHTML=active.map(g=>goalCard(g,false)).join("");
+  } else if(goals.length){
+    goalList.innerHTML=`<div class="dashboard-empty">Aktuell sind keine offenen Ziele aktiv.</div>`;
   } else {
     goalList.innerHTML=`<div class="dashboard-empty">Für diesen Spieler sind noch keine Ziele vergeben.</div>`;
+  }
+
+  const completedWrap=$("#dashboardCompletedGoals");
+  const completedList=$("#dashboardCompletedGoalsList");
+  const completedCount=$("#dashboardCompletedGoalsCount");
+  if(completedWrap && completedList && completedCount){
+    completedCount.textContent=completed;
+    completedWrap.classList.toggle("hidden",completed===0);
+    if(completed){
+      completedList.innerHTML=completedGoals.map(g=>goalCard(g,true)).join("");
+    } else {
+      completedList.innerHTML="";
+      completedWrap.open=false;
+    }
   }
 
   const favRow=$("#dashboardFavoriteRow");

@@ -72,11 +72,15 @@
 
       <section class="dashboard-section dashboard-goals-section" id="dashboardGoalsSection">
         <div class="dashboard-section-head">
-          <div><p class="eyebrow">Persönliche Ziele</p><h2>Deine vier Aufgaben</h2></div>
+          <div><p class="eyebrow">Persönliche Ziele</p><h2>Deine Aufgaben</h2></div>
           <button class="text-btn hidden" id="dashboardManageGoalsBtn" type="button">Verwalten</button>
         </div>
         <div class="dashboard-goals-meta"><span id="dashboardGoalsActive">0 vergeben</span><strong id="dashboardGoalsDone">0 erfüllt</strong></div>
         <div class="dashboard-goals" id="dashboardGoalsList"></div>
+        <details class="dashboard-completed-goals" id="dashboardCompletedGoals">
+          <summary><span>Erfüllte Ziele</span><strong id="dashboardCompletedGoalsCount">0</strong></summary>
+          <div class="dashboard-goals dashboard-completed-goals-list" id="dashboardCompletedGoalsList"></div>
+        </details>
       </section>
 
       <section class="dashboard-admin hidden" id="dashboardAdminPanel">
