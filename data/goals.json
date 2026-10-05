@@ -1,7 +1,7 @@
 {
   "version": 1,
   "source": "Aufgaben.pdf",
-  "maxActive": 4,
+  "maxActive": 3,
   "goals": [
     {
       "id": "normal-4",
