@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>PU Dex</title>
-  <link rel="manifest" href="manifest.webmanifest?v=13">
+  <link rel="manifest" href="manifest.webmanifest?v=13.1">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=13">
+  <link rel="stylesheet" href="styles.css?v=13.1">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -59,6 +59,11 @@
         <button class="dashboard-map-btn" id="dashboardMapBtn" type="button">⌖ Karte</button>
       </section>
 
+      <section class="dashboard-session-resume hidden" id="dashboardSessionResume">
+        <div><span id="dashboardSessionResumeIcon">▶</span><div><small>Spielablauf</small><strong id="dashboardSessionResumeTitle">Session fortsetzen</strong><p id="dashboardSessionResumeText"></p></div></div>
+        <button class="primary-btn" id="dashboardSessionResumeBtn" type="button">Fortsetzen</button>
+      </section>
+
       <section class="dashboard-kpis">
         <article><span>◉</span><div><strong id="dashboardOwned">0</strong><small>von 151 gefangen</small></div></article>
         <article><span>★</span><div><strong id="dashboardFavorites">0</strong><small>Favoriten</small></div></article>
@@ -84,7 +89,7 @@
       </section>
 
       <section class="dashboard-admin hidden" id="dashboardAdminPanel">
-        <div class="dashboard-section-head"><div><p class="eyebrow">Bearbeitungsmodus</p><h2>Trainerprofil</h2></div><span>Firebase</span></div>
+        <div class="dashboard-section-head"><div><p class="eyebrow">Bearbeitungsmodus</p><h2>Trainerprofil</h2></div></div>
         <div class="dashboard-level-edit">
           <div><strong>Trainerstufe</strong><small>Stufe 0 bis 13</small></div>
           <strong id="dashboardTrainerLevelValue">0</strong>
@@ -243,7 +248,7 @@
             <div class="type-modifier-grid" id="typeModifierGrid"></div>
             <p class="character-rule-note">Der Wert wird auf den Kartenwert einer Attackenkarte dieses Typs angewendet. Immunität bedeutet, dass der Typ gegen dieses Pokémon keine Wirkung hat.</p>
           </section>
-          <div class="notice"><strong>KP-Regel</strong><p>Maximale KP = KP-Basis der Charakterkarte + aktuelles Level. Die Charakterwerte wurden aus deinen bereitgestellten Pokémon-Karten strukturiert; die PDF selbst wird in der App nicht benötigt.</p></div>
+          <div class="notice"><strong>KP-Regel</strong><p>Maximale KP = KP-Basis + aktuelles Level.</p></div>
         </div>
 
         <div class="tab-panel hidden" id="tab-attacken">
@@ -254,7 +259,6 @@
           </div>
           <div class="attack-headline">
             <div><p class="eyebrow">Unmatched-Karten</p><h3>Attacken nach Level</h3></div>
-            <span class="data-pill">Karten.xlsx</span>
           </div>
           <div class="attack-list" id="attackList"></div>
         </div>
@@ -264,7 +268,6 @@
             <div><p class="eyebrow">Entwicklung</p><h3>Entwicklungsreihe</h3></div>
           </div>
           <div class="evolution-content" id="evolutionContent"></div>
-          <div class="source-note">Levelbereiche stammen aus deinem PU-Dex. Die Entwicklungsbeziehungen entsprechen den Standard-Reihen der ersten Pokémon-Generation.</div>
         </div>
       </section>
     </main>
@@ -276,7 +279,7 @@
         <div class="hero-copy">
           <p class="eyebrow">Zufallsgenerator</p>
           <h1>Begegnung auswürfeln.</h1>
-          <p>Die gleiche Schrittfolge wie in deinem bisherigen Generator – jetzt ohne Excel-Upload.</p>
+          <p>Feld und Trainerstufe wählen und die Begegnung direkt auswürfeln.</p>
         </div>
         <div class="encounter-orb" aria-hidden="true">🎲</div>
       </section>
@@ -284,7 +287,6 @@
       <section class="encounter-panel">
         <div class="encounter-panel-head">
           <div><p class="eyebrow">Eingabe</p><h2>Feld & Trainerstufe</h2></div>
-          <span class="data-pill">Zufall (1).xlsx</span>
         </div>
 
         <label class="fight-field encounter-field">
@@ -298,7 +300,6 @@
         <div class="encounter-ts-grid" id="encounterTSButtons" aria-label="Trainerstufe auswählen"></div>
 
         <button class="primary-btn encounter-start-btn" id="encounterStartBtn" type="button">Begegnung starten</button>
-        <p class="encounter-note">Ablauf: 1.0 Gegner → bei wilden Pokémon W2.0 + W3.0; bei Trainern T2.0 → T3.0 → T4.0 → T5.0 → T6.0.</p>
       </section>
 
       <section class="encounter-result hidden" id="encounterResult">
@@ -318,10 +319,6 @@
           <button class="secondary-btn" id="encounterRerollBtn" type="button">Neu würfeln</button>
         </div>
 
-        <details class="encounter-steps">
-          <summary>Ausgewürfelte Schritte anzeigen</summary>
-          <div id="encounterStepList"></div>
-        </details>
       </section>
     </main>
 
@@ -358,7 +355,6 @@
           <button class="primary-btn map-encounter-btn hidden" id="mapToEncounterBtn" type="button">Begegnung auf diesem Feld</button>
         </article>
       </section>
-      <p class="map-source-note">Kartendaten aus <strong>260119 Landkarte.xlsx</strong>. Layer und Feldinformationen entsprechen deiner bisherigen Landkarte. Trainerpositionen werden im Admin-Bearbeitungsmodus über Firebase synchronisiert.</p>
     </main>
 
     <main id="fightView" class="fight-view hidden">
@@ -371,10 +367,15 @@
         <div class="fight-orb" aria-hidden="true">⚔</div>
       </section>
 
+      <section class="fight-next-step" id="fightNextStepPanel">
+        <div class="fight-next-step-number" id="fightNextStepNumber">1</div>
+        <div class="fight-next-step-copy"><small>NÄCHSTER SCHRITT</small><h2 id="fightNextStepTitle">Session starten</h2><p id="fightNextStepText">Lege zuerst fest, wer heute spielt.</p></div>
+        <div class="fight-next-step-actions"><button class="primary-btn" id="fightNextStepBtn" type="button">Weiter</button><button class="secondary-btn hidden" id="fightNextStepAltBtn" type="button"></button></div>
+      </section>
+
       <section class="fight-panel session-pool-panel" id="sessionPoolPanel">
         <div class="fight-panel-head">
           <div><p class="eyebrow">Session-Pool</p><h2>Kartenlogistik für heute</h2></div>
-          <span class="data-pill">v13</span>
         </div>
         <div id="sessionPoolContent"></div>
       </section>
@@ -385,7 +386,7 @@
         <article><span>≡</span><div><strong id="fightCopyCount">0</strong><small>Karten gesamt</small></div></article>
       </section>
 
-      <section class="fight-panel">
+      <section class="fight-panel" id="fightTeamSetupPanel">
         <div class="fight-panel-head">
           <div><p class="eyebrow">Team</p><h2>Pokémon hinzufügen</h2></div>
           <button class="text-btn" id="fightClearTeamBtn" type="button">Team leeren</button>
@@ -427,28 +428,26 @@
         <div class="fight-team" id="fightTeamList"></div>
       </section>
 
-      <section class="fight-panel live-launch-panel">
+      <section class="fight-panel session-card-flow hidden" id="sessionCardFlowPanel">
+        <div class="fight-panel-head">
+          <div><p class="eyebrow">Session-Kartenfluss</p><h2>Holen · verwenden · aufräumen</h2></div>
+        </div>
+        <div id="sessionCardFlowContent"></div>
+      </section>
+
+      <section class="fight-panel live-launch-panel" id="fightLaunchPanel">
         <div class="fight-panel-head">
           <div><p class="eyebrow">Synchronisierter Kampftisch</p><h2>Kampf auf allen Geräten starten</h2></div>
-          <span class="data-pill">Firebase</span>
         </div>
         <div class="fight-launch-info" id="fightLaunchInfo"><strong>0 vs 0 Pokémon</strong><span>Startfeld wählen</span></div>
         <p class="fight-help" id="fightLaunchHint">Wähle auf beiden Seiten gleich viele Start-Pokémon (1 oder 2).</p>
         <button class="primary-btn" id="fightStartLiveBtn" type="button" disabled>Kampf starten</button>
       </section>
 
-      <section class="fight-panel session-card-flow hidden" id="sessionCardFlowPanel">
-        <div class="fight-panel-head">
-          <div><p class="eyebrow">Session-Kartenfluss</p><h2>Holen · verwenden · aufräumen</h2></div>
-          <span class="data-pill" id="sessionCardFlowBadge">Session</span>
-        </div>
-        <div id="sessionCardFlowContent"></div>
-      </section>
 
       <section class="fight-panel compare-panel" id="fightComparePanel">
         <div class="fight-panel-head compare-head">
           <div><p class="eyebrow">Attackenkarten</p><h2>Vergleich zum letzten Kampf</h2></div>
-          <span class="data-pill">automatisch</span>
         </div>
         <p class="fight-help">„Neuer Kampf“ merkt sich den aktuellen Kartenstand und leert das Team. Beim Zusammenstellen des nächsten Kampfes siehst du sofort, was geholt, behalten oder zurückgelegt werden muss.</p>
 
@@ -473,7 +472,7 @@
         </div>
       </section>
 
-      <section class="fight-panel current-cards-panel">
+      <section class="fight-panel current-cards-panel" id="fightCurrentCardsPanel">
         <div class="fight-panel-head">
           <div><p class="eyebrow">Gesamtliste</p><h2>Aktuell benötigte Karten</h2></div>
           <span class="data-pill" id="fightCurrentBadge">0 Karten</span>
@@ -510,7 +509,6 @@
       <section class="battle-calculator">
         <div class="battle-calc-head">
           <div><p class="eyebrow">Kampfrechner</p><h2>Angriff auflösen</h2></div>
-          <span class="data-pill">Karten + Typen</span>
         </div>
         <div class="battle-turn-bar">
           <div><span>Aktuell am Zug</span><strong id="battleCalcAttackerLabel">—</strong><small id="battleTurnLabel">—</small></div>
@@ -567,7 +565,6 @@
       </section>
       <section class="library-grid" id="libraryGrid" aria-live="polite"></section>
       <p class="empty-state hidden" id="libraryEmpty">Keine Attackenkarten gefunden.</p>
-      <p class="library-source-note">Karteninformationen wurden einmalig aus deinen bereitgestellten Spielmaterialien strukturiert. Die App arbeitet mit den Daten und benötigt die PDFs selbst nicht.</p>
     </main>
 
     <main id="directorView" class="director-view hidden">
@@ -629,7 +626,7 @@
     <aside class="bottom-sheet hidden" id="trainerEditSheet" aria-label="Trainer verschieben">
       <div class="sheet-handle"></div>
       <div class="sheet-head"><div><p class="eyebrow">Bearbeitungsmodus</p><h2>Trainer verschieben</h2></div><button class="round-btn close-sheet" type="button">×</button></div>
-      <p class="map-layer-help">Wähle einen Trainer. Danach schließt sich dieses Fenster und du tippst auf der Karte das neue Zielfeld an. Die Position wird sofort für alle Spieler in Firebase gespeichert.</p>
+      <p class="map-layer-help">Wähle einen Trainer. Danach schließt sich dieses Fenster und du tippst auf der Karte das neue Zielfeld an. Die Position wird sofort für alle Spieler gespeichert.</p>
       <div class="trainer-edit-list" id="trainerEditList"></div>
     </aside>
 
@@ -646,7 +643,7 @@
       <div class="sheet-handle"></div>
       <div class="sheet-head"><div><p class="eyebrow">Spieler</p><h2>Dex auswählen</h2></div><button class="round-btn close-sheet" type="button">×</button></div>
       <section class="new-player-card">
-        <div><strong>Neuen Spieler anlegen</strong><small>Erstellt einen leeren Dex direkt in Firebase. Danach kannst du Standort, Trainerstufe und Ziele festlegen.</small></div>
+        <div><strong>Neuen Spieler anlegen</strong><small>Erstellt einen leeren Dex. Danach kannst du Standort, Trainerstufe und Ziele festlegen.</small></div>
         <div class="new-player-form"><input id="newPlayerName" type="text" maxlength="40" placeholder="Spielername" autocomplete="off"><button class="primary-btn" id="newPlayerBtn" type="button">Anlegen</button></div>
       </section>
       <div id="playerList" class="player-list"></div>
@@ -682,21 +679,20 @@
       </div>
       <div class="settings-list">
         <div class="setting-row hidden" id="adminControls">
-          <div><strong>Bearbeitungsmodus</strong><small>Änderungen werden automatisch mit Firebase synchronisiert.</small></div>
+          <div><strong>Bearbeitungsmodus</strong><small>Änderungen werden automatisch gespeichert.</small></div>
           <label class="switch"><input id="editModeToggle" type="checkbox"><span></span></label>
         </div>
         <button class="setting-button hidden" id="directorBtn" type="button"><span>♟</span><div><strong>Spielleiter-Zentrale</strong><small>Alle Spieler, Standorte und Fortschritte im Überblick</small></div></button>
         <button class="setting-button" id="shareBtn"><span>↗</span><div><strong>Spieler-Link kopieren</strong><small>Nur dieser Dex wird über den Link geöffnet</small></div></button>
-        <button class="setting-button" id="saveNowBtn"><span>☁</span><div><strong>Jetzt synchronisieren</strong><small id="syncStatus">Firebase bereit</small></div></button>
-        <button class="setting-button" id="exportBtn"><span>⇩</span><div><strong>Backup exportieren</strong><small>Aktuellen Spielstand als JSON speichern</small></div></button>
+        <button class="setting-button" id="saveNowBtn"><span>☁</span><div><strong>Jetzt synchronisieren</strong><small id="syncStatus">Synchronisiert</small></div></button>
+        <button class="setting-button" id="exportBtn"><span>⇩</span><div><strong>Backup exportieren</strong><small>Aktuellen Spielstand sichern</small></div></button>
         <button class="setting-button" id="installAppBtn" type="button"><span>▣</span><div><strong>App installieren</strong><small id="installAppStatus">Installationsstatus wird geprüft…</small></div></button>
         <a class="setting-button admin-link" href="admin-import.html"><span>⇧</span><div><strong>Alte Spielstände importieren</strong><small>Für vorhandene JSON-Spielstände; neue Spieler kannst du direkt in der Spielerauswahl anlegen</small></div></a>
       </div>
-      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v13</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung und Session-Pool bleiben lokal auf dem Gerät. Ein gestarteter Kampftisch wird als temporärer aktiver Kampf über Firebase auf allen Geräten synchronisiert.</p></div>
     </aside>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script type="module" src="app.js?v=13"></script>
+  <script type="module" src="app.js?v=13.1"></script>
 </body>
 </html>

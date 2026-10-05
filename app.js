@@ -289,7 +289,7 @@ function renderEncounter(){
     return `<article class="encounter-mon" style="${typeVars(type)}">
       <div class="encounter-mon-art"><img src="${p?.image||FALLBACK_IMAGE}" alt="${escapeHtml(item.name)}" loading="lazy"></div>
       <div class="encounter-mon-copy">
-        <small>${result.kind==="trainer"?"Trainer":"Wild"} · ${escapeHtml(item.code||"")}</small>
+        <small>${result.kind==="trainer"?"Trainer-Pokémon":"Wildes Pokémon"}</small>
         <strong>${escapeHtml(item.name)}</strong>
         <span>${escapeHtml(type)} · Level ${parseInt(item.level,10)||"—"}</span>
       </div>
@@ -298,7 +298,6 @@ function renderEncounter(){
   }).join("");
   $$("#encounterPokemonList img").forEach(setImgFallback);
 
-  $("#encounterStepList").innerHTML=result.steps.map((s,i)=>`<div class="encounter-step-row"><span>${i+1}</span><div><strong>${escapeHtml(s.step)}</strong><small>${escapeHtml(s.value)}</small></div></div>`).join("");
 }
 function transferEncounterToFight(){
   const result=app.encounterResult;
@@ -313,6 +312,7 @@ function transferEncounterToFight(){
   saveFightState();
   if(!added){ toast("Keine Pokémon konnten übernommen werden"); return; }
   showModule("fight");
+  focusFightGuide();
   toast(`${added} ${added===1?"Pokémon":"Pokémon"} als Gegner übernommen`);
 }
 
@@ -722,7 +722,7 @@ function renderDiffList(target,counts,emptyText){
   target.innerHTML=rows.length?rows.map(([name,count])=>`<button class="diff-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span>${escapeHtml(name)}</span><strong>×${count}</strong></button>`).join(""):`<div class="diff-empty">${emptyText}</div>`;
 }
 function emptySessionPoolState(){
-  return {version:13,active:false,playerIds:[],maxSize:SESSION_DEFAULT_SIZE,pool:{},current:{},ending:false,returnCounts:{},readyForNext:false,startedAt:null};
+  return {version:13.1,active:false,playerIds:[],maxSize:SESSION_DEFAULT_SIZE,pool:{},current:{},ending:false,returnCounts:{},readyForNext:false,currentBattleStarted:false,startedAt:null};
 }
 function normalizeCountMap(raw){
   const out={};
@@ -746,6 +746,7 @@ function loadSessionPoolState(){
       base.ending=!!raw.ending;
       base.returnCounts=normalizeCountMap(raw.returnCounts);
       base.readyForNext=!!raw.readyForNext;
+      base.currentBattleStarted=!!raw.currentBattleStarted;
       base.startedAt=raw.startedAt||null;
     }
   }catch(err){ console.warn("Session-Pool konnte nicht geladen werden",err); }
@@ -915,16 +916,16 @@ function renderSessionPoolPanel(){
     const players=sessionAvailablePlayers();
     if(!app.sessionSetupPlayerIds.length && app.player) app.sessionSetupPlayerIds=[app.player.id];
     app.sessionSetupPlayerIds=app.sessionSetupPlayerIds.filter(id=>players.some(p=>p.id===id)).slice(0,2);
-    root.innerHTML=`<p class="session-intro">Wähle 1–2 Spieler für die heutige Session. Favoriten, deren Level und Trainerstufen kommen automatisch aus den Spielerdaten. Der Standort wird bewusst nicht verwendet.</p>
-      <div class="session-player-grid">${players.map(p=>{const selected=app.sessionSetupPlayerIds.includes(p.id);const fav=app.pokemon.filter(mon=>p.state?.[mon.name]?.owned&&p.state?.[mon.name]?.favorite).length;return `<button class="session-player-chip ${selected?"active":""}" data-session-player="${p.id}" type="button"><span>${selected?"✓":"○"}</span><strong>${escapeHtml(p.name)}</strong><small>TS ${p.profile?.trainerLevel||0} · ${fav} Favoriten</small></button>`;}).join("")||`<div class="diff-empty">Keine Spieler verfügbar.</div>`}</div>
-      <div class="session-size-row"><div><strong>Maximale Poolgröße</strong><small>Gezählt werden Attacken/Kartenstapel, nicht einzelne Karten.</small></div><div class="session-size-control"><button data-session-size-step="-1" type="button">−</button><input id="sessionPoolSizeInput" type="number" min="0" max="${SESSION_MAX_SIZE}" value="${app.sessionSetupMax}"><button data-session-size-step="1" type="button">＋</button></div></div>
+    root.innerHTML=`<p class="session-intro">Wer spielt heute? Wähle 1–2 Spieler und die gewünschte Größe des Karten-Pools.</p>
+      <div class="session-player-grid">${players.map(p=>{const selected=app.sessionSetupPlayerIds.includes(p.id);const fav=app.pokemon.filter(mon=>p.state?.[mon.name]?.owned&&p.state?.[mon.name]?.favorite).length;return `<button class="session-player-chip ${selected?"active":""}" data-session-player="${p.id}" type="button"><span>${selected?"✓":"○"}</span><strong>${escapeHtml(p.name)}</strong><small>Trainerstufe ${p.profile?.trainerLevel||0} · ${fav} Favoriten</small></button>`;}).join("")||`<div class="diff-empty">Keine Spieler verfügbar.</div>`}</div>
+      <div class="session-size-row"><div><strong>Session-Pool</strong><small>Wie viele Attackenstapel dürfen auf dem Tisch liegen?</small></div><div class="session-size-control"><button data-session-size-step="-1" type="button">−</button><input id="sessionPoolSizeInput" type="number" min="0" max="${SESSION_MAX_SIZE}" value="${app.sessionSetupMax}"><button data-session-size-step="1" type="button">＋</button></div></div>
       <button class="primary-btn session-start-btn" data-session-start type="button" ${app.sessionSetupPlayerIds.length?"":"disabled"}>Session starten</button>`;
     return;
   }
   const players=sessionSelectedPlayers(), scoreData=calculateSessionScores();
   if(s.ending){
     const entries=sortedCardEntries(s.returnCounts||{});
-    root.innerHTML=`<div class="session-ending"><div class="session-ending-head"><span>↩</span><div><strong>Session beenden</strong><small>Diese Karten liegen noch außerhalb des Hauptarchivs.</small></div></div>
+    root.innerHTML=`<div class="session-ending"><div class="session-ending-head"><span>↩</span><div><strong>Session beenden</strong><small>Sortiere diese Karten zurück ins Hauptarchiv.</small></div></div>
       <div class="session-return-list">${entries.length?entries.map(([name,count])=>`<div><span>${escapeHtml(name)}</span><strong>×${count}</strong></div>`).join(""):`<div class="diff-empty">Keine Karten mehr draußen.</div>`}</div>
       <div class="session-actions"><button class="secondary-btn" data-session-cancel-end type="button">Weiter spielen</button><button class="primary-btn" data-session-finish-end type="button">Alles einsortiert · Session abschließen</button></div></div>`;
     return;
@@ -932,12 +933,10 @@ function renderSessionPoolPanel(){
   const poolEntries=Object.entries(s.pool||{}).filter(([,n])=>n>0).sort((a,b)=>{
     const ra=scoreData.byName.get(a[0]),rb=scoreData.byName.get(b[0]);return (ra?.rank||999)-(rb?.rank||999)||a[0].localeCompare(b[0],"de");
   });
-  const ranking=scoreData.rows;
-  root.innerHTML=`<div class="session-summary-grid"><article><small>Spieler</small><strong>${players.length}</strong><span>${players.map(p=>escapeHtml(p.name)).join(" · ")}</span></article><article><small>Session-Pool</small><strong>${poolEntries.length} / ${s.maxSize}</strong><span>${Object.keys(s.current||{}).length} Attacken im aktuellen Kampf</span></article><article><small>Gewichtung heute</small><strong>${Math.round(scoreData.weights.favorite)} / ${Math.round(scoreData.weights.wild)} / ${Math.round(scoreData.weights.trainer)}</strong><span>${sessionFormatWeights(scoreData.weights)}</span></article></div>
-    <div class="session-toolbar"><button class="secondary-btn" data-session-refresh type="button">Prognose aktualisieren</button><button class="danger-btn" data-session-end type="button">Session beenden</button></div>
-    <div class="session-section"><div class="session-section-head"><div><strong>Aktueller Session-Pool</strong><small>Ein Platz pro Attacke, unabhängig von der Kartensatzgröße.</small></div><span>${poolEntries.length}/${s.maxSize}</span></div>
-      <div class="session-pool-list">${poolEntries.length?poolEntries.map(([name,count])=>{const r=scoreData.byName.get(name);return `<div class="session-pool-row"><button class="card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span><b>${escapeHtml(name)}</b><small>Relevanz ${r?.score||0} · Rang ${r?.rank||"–"}</small></span><strong>×${count}</strong></button><button class="session-archive-btn" data-session-pool-remove="${escapeHtml(name)}" type="button">Archiv</button></div>`;}).join(""):`<div class="diff-empty">Noch keine Karten im Session-Pool.</div>`}</div></div>
-    <details class="session-ranking"><summary>Heutige Prognose · komplette Rangliste</summary><div class="session-ranking-list">${ranking.map(r=>`<button class="session-rank-row card-open-row" data-card-open="${escapeHtml(r.name)}" type="button"><b>${r.rank}</b><span><strong>${escapeHtml(r.name)}</strong><small>F ${r.favPart.toFixed(1)} · W ${r.wildPart.toFixed(1)} · T ${r.trainerPart.toFixed(1)}</small></span><em>${r.score}</em></button>`).join("")}</div></details>`;
+  root.innerHTML=`<div class="session-summary-grid simple"><article><small>Spieler</small><strong>${players.length}</strong><span>${players.map(p=>escapeHtml(p.name)).join(" · ")}</span></article><article><small>Session-Pool</small><strong>${poolEntries.length} / ${s.maxSize}</strong><span>${Object.keys(s.current||{}).length?"Karten im aktuellen Kampf":"bereit für den nächsten Kampf"}</span></article></div>
+    <div class="session-toolbar"><button class="danger-btn" data-session-end type="button">Session beenden</button></div>
+    <div class="session-section"><div class="session-section-head"><div><strong>Aktueller Session-Pool</strong><small>Kartenstapel, die auf dem Tisch bleiben.</small></div><span>${poolEntries.length}/${s.maxSize}</span></div>
+      <div class="session-pool-list">${poolEntries.length?poolEntries.map(([name,count])=>`<div class="session-pool-row"><button class="card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span><b>${escapeHtml(name)}</b></span><strong>×${count}</strong></button><button class="session-archive-btn" data-session-pool-remove="${escapeHtml(name)}" type="button">Archiv</button></div>`).join(""):`<div class="diff-empty">Noch keine Karten im Session-Pool.</div>`}</div></div>`;
 }
 function renderSessionCardFlow(){
   const panel=$("#sessionCardFlowPanel"), root=$("#sessionCardFlowContent"), compare=$("#fightComparePanel");
@@ -951,34 +950,38 @@ function renderSessionCardFlow(){
       const candidates=mergeCountMaps(s.pool,s.current), ideal=sessionIdealPoolNames(candidates);
       const names=Object.keys(candidates).sort((a,b)=>(scoreData.byName.get(a)?.rank||999)-(scoreData.byName.get(b)?.rank||999)||a.localeCompare(b,"de"));
       const chosenCount=Object.values(app.sessionCleanupChoices).filter(v=>v==="pool").length;
-      root.innerHTML=`<p class="fight-help">Die Empfehlung wählt aus allen momentan draußen liegenden Attacken die ${s.maxSize} relevantesten aus. Du kannst jede Entscheidung ändern.</p>
-        <div class="cleanup-head"><span>Pool-Auswahl <strong>${chosenCount}/${s.maxSize}</strong></span><button class="secondary-btn" data-session-recommend type="button">Empfehlung übernehmen</button></div>
-        <div class="session-cleanup-list">${names.map(name=>{const r=scoreData.byName.get(name),choice=app.sessionCleanupChoices[name]||"archive",wasCurrent=!!s.current[name],wasPool=!!s.pool[name];return `<article class="session-cleanup-row ${choice}"><div><strong>${escapeHtml(name)}</strong><small>Relevanz ${r?.score||0} · Rang ${r?.rank||"–"} · ×${candidates[name]}${wasCurrent?" · aktueller Kampf":""}${wasPool?" · bereits Pool":""}${ideal.has(name)?" · empfohlen":""}</small></div><div class="cleanup-choice"><button class="${choice==="pool"?"active":""}" data-session-cleanup-name="${escapeHtml(name)}" data-session-cleanup-choice="pool" type="button">Pool</button><button class="${choice==="archive"?"active":""}" data-session-cleanup-name="${escapeHtml(name)}" data-session-cleanup-choice="archive" type="button">Archiv</button></div></article>`;}).join("")}</div>
+      root.innerHTML=`<div class="cleanup-head"><span>Im Pool lassen <strong>${chosenCount}/${s.maxSize}</strong></span><button class="secondary-btn" data-session-recommend type="button">Empfehlung zurücksetzen</button></div>
+        <div class="session-cleanup-list">${names.map(name=>{const choice=app.sessionCleanupChoices[name]||"archive",recommended=ideal.has(name),wasCurrent=!!s.current[name],wasPool=!!s.pool[name];return `<article class="session-cleanup-row ${choice}"><div><strong>${escapeHtml(name)}</strong><small>×${candidates[name]} · ${recommended?"Empfehlung: im Pool lassen":"Empfehlung: zurück ins Archiv"}${wasCurrent?" · aus diesem Kampf":""}${wasPool?" · war bereits im Pool":""}</small></div><div class="cleanup-choice"><button class="${choice==="pool"?"active":""}" data-session-cleanup-name="${escapeHtml(name)}" data-session-cleanup-choice="pool" type="button">Pool</button><button class="${choice==="archive"?"active":""}" data-session-cleanup-name="${escapeHtml(name)}" data-session-cleanup-choice="archive" type="button">Archiv</button></div></article>`;}).join("")}</div>
         <button class="primary-btn" data-session-cleanup-apply type="button">Aufräumen abschließen</button>`;
     } else {
       const entries=sortedCardEntries(s.current);
-      root.innerHTML=`<div class="session-current-note"><strong>✓ Karten für diesen Kampf sind als geholt markiert.</strong><span>${entries.length} Attacken · ${totalCopies(s.current)} physische Karten</span></div>
-        <div class="session-current-list">${entries.map(([name,count])=>`<button class="current-card-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span><b>${escapeHtml(name)}</b><small>im aktuellen Kampf</small></span><strong>×${count}</strong></button>`).join("")}</div>
-        <button class="primary-btn" data-session-cleanup-open type="button">Karten aufräumen</button>`;
+      if(app.activeBattle){
+        root.innerHTML=`<div class="session-current-note"><strong>⚔ Kampf läuft.</strong><span>Die Karten bleiben bis zum Kampfende beim aktuellen Kampf.</span></div><button class="primary-btn" data-session-open-battle type="button">Kampftisch öffnen</button>`;
+      } else if(s.currentBattleStarted){
+        root.innerHTML=`<div class="session-current-note"><strong>✓ Kampf beendet.</strong><span>Jetzt entscheidest du, welche Karten draußen bleiben.</span></div><button class="primary-btn" data-session-cleanup-open type="button">Karten aufräumen</button>`;
+      } else {
+        root.innerHTML=`<div class="session-current-note"><strong>✓ Karten sind bereit.</strong><span>${entries.length} Attackenstapel liegen für diesen Kampf bereit.</span></div><button class="primary-btn" data-session-go-launch type="button">Weiter zum Kampfstart</button>`;
+      }
     }
     return;
   }
   const plan=sessionFightPlan();
   const needEntries=sortedCardEntries(plan.needed), reuseEntries=sortedCardEntries(plan.fromPool), archiveEntries=sortedCardEntries(plan.fromArchive);
   if(!needEntries.length){
-    root.innerHTML=`<div class="diff-empty">Stelle zuerst den nächsten Kampf zusammen. Dann zeigt die App, welche Karten bereits im Session-Pool liegen und welche aus dem Hauptarchiv geholt werden müssen.</div>${s.readyForNext?`<button class="secondary-btn session-next-btn" data-session-next-fight type="button">Nächsten Kampf vorbereiten</button>`:""}`;
+    root.innerHTML=s.readyForNext
+      ? `<div class="diff-empty">Dieser Kampf ist abgeschlossen.</div><div class="session-actions"><button class="primary-btn session-next-btn" data-session-next-fight type="button">Nächsten Kampf vorbereiten</button><button class="secondary-btn" data-session-end-shortcut type="button">Session beenden</button></div>`
+      : `<div class="diff-empty">Stelle zuerst den nächsten Kampf zusammen.</div>`;
     return;
   }
-  root.innerHTML=`<p class="fight-help">Die Kartenliste berücksichtigt alle Team- und Reserve-Pokémon. Pro Attacke bleiben die benötigten Kartensets wie bisher auf maximal 4 gedeckelt.</p>
-    <div class="session-fetch-grid"><article><header><span>✓</span><div><strong>Aus Session-Pool</strong><small>${totalCopies(plan.fromPool)} Karten</small></div></header><div>${reuseEntries.length?reuseEntries.map(([name,count])=>`<button class="diff-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span>${escapeHtml(name)}</span><strong>×${count}</strong></button>`).join(""):`<div class="diff-empty">Nichts im Pool vorhanden</div>`}</div></article><article><header><span>＋</span><div><strong>Aus Hauptarchiv holen</strong><small>${totalCopies(plan.fromArchive)} Karten</small></div></header><div>${archiveEntries.length?archiveEntries.map(([name,count])=>`<button class="diff-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span>${escapeHtml(name)}</span><strong>×${count}</strong></button>`).join(""):`<div class="diff-empty">Alles bereits draußen</div>`}</div></article></div>
-    <button class="primary-btn" data-session-cards-pulled type="button">Karten geholt</button>`;
+  root.innerHTML=`<div class="session-fetch-grid"><article><header><span>✓</span><div><strong>Bereits draußen</strong><small>${totalCopies(plan.fromPool)} Karten</small></div></header><div>${reuseEntries.length?reuseEntries.map(([name,count])=>`<button class="diff-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span>${escapeHtml(name)}</span><strong>×${count}</strong></button>`).join(""):`<div class="diff-empty">Keine</div>`}</div></article><article><header><span>＋</span><div><strong>Aus dem Archiv holen</strong><small>${totalCopies(plan.fromArchive)} Karten</small></div></header><div>${archiveEntries.length?archiveEntries.map(([name,count])=>`<button class="diff-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span>${escapeHtml(name)}</span><strong>×${count}</strong></button>`).join(""):`<div class="diff-empty">Nichts mehr holen</div>`}</div></article></div>
+    <button class="primary-btn" data-session-cards-pulled type="button">Alles geholt</button>`;
 }
 function startSessionPool(){
   const ids=app.sessionSetupPlayerIds.filter(id=>sessionPlayerData(id)).slice(0,2);
   if(!ids.length){ toast("Wähle mindestens einen Spieler"); return; }
   const max=Math.max(0,Math.min(SESSION_MAX_SIZE,Math.round(+app.sessionSetupMax||0)));
-  app.sessionPool={version:13,active:true,playerIds:ids,maxSize:max,pool:{},current:{},ending:false,returnCounts:{},readyForNext:false,startedAt:Date.now()};
-  app.sessionCleanupChoices=null; saveSessionPoolState(); renderFight(); toast("Session-Pool gestartet");
+  app.sessionPool={version:13.1,active:true,playerIds:ids,maxSize:max,pool:{},current:{},ending:false,returnCounts:{},readyForNext:false,currentBattleStarted:false,startedAt:Date.now()};
+  app.sessionCleanupChoices=null; saveSessionPoolState(); renderFight(); focusFightGuide(); toast("Session gestartet");
 }
 function markSessionCardsPulled(){
   if(!app.sessionPool?.active) return;
@@ -988,8 +991,8 @@ function markSessionCardsPulled(){
   for(const [name,need] of Object.entries(plan.needed)){
     const take=Math.min(need,pool[name]||0); if(take>0){pool[name]-=take;if(pool[name]<=0)delete pool[name];}
   }
-  app.sessionPool.pool=pool; app.sessionPool.current={...plan.needed}; app.sessionPool.readyForNext=false; app.sessionCleanupChoices=null;
-  saveSessionPoolState(); renderFight(); toast("Karten als geholt markiert");
+  app.sessionPool.pool=pool; app.sessionPool.current={...plan.needed}; app.sessionPool.readyForNext=false; app.sessionPool.currentBattleStarted=false; app.sessionCleanupChoices=null;
+  saveSessionPoolState(); renderFight(); focusFightGuide(); toast("Karten bereit");
 }
 function openSessionCleanup(){
   if(!Object.keys(app.sessionPool?.current||{}).length){ toast("Keine aktuellen Karten zum Aufräumen"); return; }
@@ -1014,11 +1017,11 @@ function applySessionCleanup(){
   if(!app.sessionCleanupChoices) return;
   const candidates=mergeCountMaps(app.sessionPool.pool,app.sessionPool.current), next={};
   for(const [name,count] of Object.entries(candidates)) if(app.sessionCleanupChoices[name]==="pool") next[name]=count;
-  app.sessionPool.pool=next; app.sessionPool.current={}; app.sessionPool.readyForNext=true; app.sessionCleanupChoices=null; saveSessionPoolState(); renderFight(); toast("Karten aufgeräumt");
+  app.sessionPool.pool=next; app.sessionPool.current={}; app.sessionPool.readyForNext=true; app.sessionPool.currentBattleStarted=false; app.sessionCleanupChoices=null; saveSessionPoolState(); renderFight(); focusFightGuide(); toast("Karten aufgeräumt");
 }
 function sessionNextFight(){
   if(Object.keys(app.sessionPool?.current||{}).length){ toast("Räume zuerst die Karten des aktuellen Kampfes auf"); return; }
-  app.fightTeam=[]; app.fightBaseline={}; app.sessionPool.readyForNext=false; saveFightState(); saveSessionPoolState(); renderFight(); toast("Nächsten Kampf zusammenstellen");
+  app.fightTeam=[]; app.fightBaseline={}; app.sessionPool.readyForNext=false; app.sessionPool.currentBattleStarted=false; saveFightState(); saveSessionPoolState(); renderFight(); focusFightGuide(); toast("Nächsten Kampf zusammenstellen");
 }
 function beginSessionEnd(){
   if(!app.sessionPool?.active) return;
@@ -1036,7 +1039,61 @@ function removeSessionPoolCard(name){
   delete app.sessionPool.pool[name]; saveSessionPoolState(); renderFight(); toast(`${name} zurück ins Hauptarchiv`);
 }
 async function refreshSessionForecast(){
-  if(app.isAdmin) await loadAdminPlayers(); sessionPrevalenceCache.clear(); sessionMoveCache.clear(); renderFight(); toast("Session-Prognose aktualisiert");
+  if(app.isAdmin) await loadAdminPlayers(); sessionPrevalenceCache.clear(); sessionMoveCache.clear(); renderFight();
+}
+
+function fightLaunchStateData(){
+  const own=app.fightTeam.filter(m=>m.role!=="opponent"), opp=app.fightTeam.filter(m=>m.role==="opponent");
+  const ownStart=own.filter(m=>m.startActive).length, oppStart=opp.filter(m=>m.startActive).length;
+  const baseReady=own.length>=1&&opp.length>=1&&own.length<=6&&opp.length<=6&&ownStart>=1&&ownStart<=2&&ownStart===oppStart;
+  const sessionActive=!!app.sessionPool?.active&&!app.sessionPool?.ending;
+  const cardsReady=!sessionActive||Object.keys(app.sessionPool?.current||{}).length>0;
+  const notAlreadyStarted=!sessionActive||!app.sessionPool?.currentBattleStarted;
+  return {own,opp,ownStart,oppStart,baseReady,cardsReady,ready:baseReady&&cardsReady&&notAlreadyStarted};
+}
+function guidedFightStep(){
+  const s=app.sessionPool;
+  if(app.activeBattle) return {step:"5",title:"Kampf läuft",text:"Öffne den Kampftisch und führe den Kampf fort.",label:"Kampftisch öffnen",action:"open-battle"};
+  if(!s?.active) return {step:"1",title:"Session starten",text:"Lege fest, wer heute spielt und wie groß der Session-Pool sein darf.",label:"Session einrichten",action:"session"};
+  if(s.ending) return {step:"7",title:"Session abschließen",text:"Sortiere die angezeigten Karten zurück und bestätige anschließend den Abschluss.",label:"Rücksortierliste öffnen",action:"session"};
+  if(app.sessionCleanupChoices) return {step:"6",title:"Karten aufräumen",text:"Entscheide jetzt nur noch: im Session-Pool lassen oder zurück ins Archiv.",label:"Aufräumen fortsetzen",action:"cards"};
+  if(Object.keys(s.current||{}).length){
+    if(s.currentBattleStarted) return {step:"6",title:"Karten aufräumen",text:"Der Kampf ist beendet. Entscheide, welche Karten für später draußen bleiben.",label:"Karten aufräumen",action:"cleanup"};
+    const launch=fightLaunchStateData();
+    if(!launch.baseReady) return {step:"4",title:"Start-Pokémon festlegen",text:"Wähle auf beiden Seiten 1 oder 2 Start-Pokémon und prüfe die Zugreihenfolge.",label:"Startfeld festlegen",action:"launch"};
+    return {step:"4",title:"Kampf starten",text:"Karten und Startaufstellung sind bereit.",label:"Kampf starten",action:"start-battle"};
+  }
+  if(s.readyForNext) return {step:"✓",title:"Kampf abgeschlossen",text:"Bereite den nächsten Kampf vor oder beende die Session.",label:"Nächsten Kampf",action:"next-fight",altLabel:"Session beenden",altAction:"end-session"};
+  const own=app.fightTeam.filter(m=>m.role!=="opponent").length, opp=app.fightTeam.filter(m=>m.role==="opponent").length;
+  if(!own||!opp) return {step:"2",title:"Kampf zusammenstellen",text:"Füge die Pokémon beider Seiten hinzu.",label:"Team bearbeiten",action:"team",altLabel:"Begegnung auswürfeln",altAction:"encounter"};
+  return {step:"3",title:"Karten holen",text:"Die App zeigt dir nur, was bereits draußen liegt und was du noch aus dem Archiv holen musst.",label:"Kartenliste öffnen",action:"cards"};
+}
+function renderFightNextStep(){
+  const panel=$("#fightNextStepPanel"); if(!panel) return;
+  const g=guidedFightStep();
+  $("#fightNextStepNumber").textContent=g.step; $("#fightNextStepTitle").textContent=g.title; $("#fightNextStepText").textContent=g.text;
+  const btn=$("#fightNextStepBtn"); btn.textContent=g.label; btn.dataset.guideAction=g.action;
+  const alt=$("#fightNextStepAltBtn"); alt.classList.toggle("hidden",!g.altAction); alt.textContent=g.altLabel||""; alt.dataset.guideAction=g.altAction||"";
+}
+function focusFightGuide(){ requestAnimationFrame(()=>$("#fightNextStepPanel")?.scrollIntoView({behavior:"smooth",block:"start"})); }
+function scrollFightSection(id){ requestAnimationFrame(()=>document.getElementById(id)?.scrollIntoView({behavior:"smooth",block:"start"})); }
+function handleGuidedFightAction(action){
+  if(action==="open-battle"){ showBattleDashboard(); return; }
+  if(action==="encounter"){ showModule("encounter"); return; }
+  if(action==="session"){ scrollFightSection("sessionPoolPanel"); return; }
+  if(action==="team"){ scrollFightSection("fightTeamSetupPanel"); return; }
+  if(action==="cards"){ scrollFightSection("sessionCardFlowPanel"); return; }
+  if(action==="launch"){ scrollFightSection("fightLaunchPanel"); return; }
+  if(action==="start-battle"){ startLiveBattle(); return; }
+  if(action==="cleanup"){ openSessionCleanup(); scrollFightSection("sessionCardFlowPanel"); return; }
+  if(action==="next-fight"){ sessionNextFight(); return; }
+  if(action==="end-session"){ beginSessionEnd(); scrollFightSection("sessionPoolPanel"); return; }
+}
+function renderDashboardSessionResume(){
+  const box=$("#dashboardSessionResume"); if(!box) return;
+  const visible=!!app.activeBattle||!!app.sessionPool?.active; box.classList.toggle("hidden",!visible); if(!visible) return;
+  const g=guidedFightStep(); $("#dashboardSessionResumeIcon").textContent=app.activeBattle?"⚔":"▶"; $("#dashboardSessionResumeTitle").textContent=g.title; $("#dashboardSessionResumeText").textContent=g.text;
+  const btn=$("#dashboardSessionResumeBtn"); btn.textContent=g.label; btn.dataset.guideAction=g.action;
 }
 
 function showModule(view){
@@ -1131,14 +1188,11 @@ function renderFight(){
   for(const [sel,counts] of summaries){ const n=totalCopies(counts); $(sel).textContent=`${n} ${n===1?"Karte":"Karten"}`; }
   renderDiffList($("#fightAddList"),diff.add,"Nichts Neues holen"); renderDiffList($("#fightKeepList"),diff.keep,"Keine Karten bleiben"); renderDiffList($("#fightRemoveList"),diff.remove,"Nichts zurücklegen");
   const currentEntries=sortedCardEntries(current); const currentTotal=totalCopies(current); $("#fightCurrentBadge").textContent=`${currentTotal} ${currentTotal===1?"Karte":"Karten"}`;
-  $("#fightCurrentList").innerHTML=currentEntries.length?currentEntries.map(([name,count])=>{
-    const users=fightCardUsers(name), setSize=cardSetSize(name);
-    const usedSets=Math.min(4,users);
-    const detail=users>0?(users>4?`${users} Pokémon · gedeckelt auf ${usedSets} Sets × x${setSize}`:`${users} Pokémon × Satz x${setSize}`):`Kartensatz x${setSize}`;
-    return `<button class="current-card-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span><b>${escapeHtml(name)}</b><small>${detail}</small></span><strong>×${count}</strong></button>`;
-  }).join(""):`<div class="diff-empty">Noch keine Attackenkarten benötigt.</div>`;
+  $("#fightCurrentList").innerHTML=currentEntries.length?currentEntries.map(([name,count])=>`<button class="current-card-row card-open-row" data-card-open="${escapeHtml(name)}" type="button"><span><b>${escapeHtml(name)}</b></span><strong>×${count}</strong></button>`).join(""):`<div class="diff-empty">Noch keine Attackenkarten benötigt.</div>`;
   renderSessionPoolPanel();
   renderSessionCardFlow();
+  $("#fightCurrentCardsPanel")?.classList.toggle("hidden",!!app.sessionPool?.active);
+  renderFightNextStep();
   saveFightState();
 }
 function addFightPokemon(){
@@ -1161,16 +1215,16 @@ function toggleFightStart(uid){
 }
 function renderFightLaunchState(){
   const el=$("#fightLaunchInfo"), btn=$("#fightStartLiveBtn"); if(!el||!btn) return;
-  const own=app.fightTeam.filter(m=>m.role!=="opponent"), opp=app.fightTeam.filter(m=>m.role==="opponent");
-  const ownStart=own.filter(m=>m.startActive).length, oppStart=opp.filter(m=>m.startActive).length;
-  const ready=own.length>=1&&opp.length>=1&&own.length<=6&&opp.length<=6&&ownStart>=1&&ownStart<=2&&ownStart===oppStart;
-  const activeText=app.activeBattle?" · aktuell läuft bereits ein synchronisierter Kampf":"";
+  const state=fightLaunchStateData();
   normalizeFightTurnOrder();
   const order=fightActiveMembers().sort((a,b)=>a.turnOrder-b.turnOrder).map(m=>`${m.turnOrder}. ${fightPokemon(m.id)?.name||"Pokémon"}`).join(" · ");
-  el.innerHTML=`<strong>${own.length} vs ${opp.length} Pokémon</strong><span>Startfeld: ${ownStart} vs ${oppStart}${activeText}</span>${order?`<small>Zugreihenfolge: ${escapeHtml(order)}</small>`:""}`;
-  btn.disabled=!ready;
-  btn.textContent=app.activeBattle?"Laufenden Kampf ersetzen":"Kampf starten";
-  $("#fightLaunchHint").textContent=ready?`Start mit ${ownStart} gegen ${oppStart}. Alle Team- und Reserve-Pokémon zählen zur Kartenliste. Pro Attacke werden jedoch höchstens 4 Kartensets eingeplant, weil maximal 4 Pokémon gleichzeitig kämpfen und Sets nach einem K. o. weiterverwendet werden. Reserve-Pokémon können nur nachrücken, wenn ein aktives Pokémon besiegt wurde.`:"Wähle auf beiden Seiten gleich viele Start-Pokémon (1 oder 2), lege ihre Reihenfolge fest und mindestens ein Pokémon pro Team.";
+  el.innerHTML=`<strong>${state.own.length} vs ${state.opp.length} Pokémon</strong><span>Startfeld: ${state.ownStart} vs ${state.oppStart}</span>${order?`<small>Zugreihenfolge: ${escapeHtml(order)}</small>`:""}`;
+  btn.disabled=!state.ready;
+  btn.textContent="Kampf starten";
+  if(!state.baseReady) $("#fightLaunchHint").textContent="Wähle auf beiden Seiten gleich viele Start-Pokémon (1 oder 2) und lege ihre Reihenfolge fest.";
+  else if(!state.cardsReady) $("#fightLaunchHint").textContent="Hole zuerst die Karten für diesen Kampf und bestätige „Alles geholt“.";
+  else if(app.sessionPool?.currentBattleStarted) $("#fightLaunchHint").textContent="Dieser Kampf wurde bereits gestartet. Nach dem Kampf geht es mit dem Aufräumen weiter.";
+  else $("#fightLaunchHint").textContent="Startaufstellung bereit.";
 }
 function stepFightMember(uid,delta){
   const m=app.fightTeam.find(x=>x.uid===uid); if(!m)return; const p=fightPokemon(m.id); if(!p)return;
@@ -1208,6 +1262,10 @@ function battleSideFromTeam(label,team,fieldSize){
 }
 async function startLiveBattle(){
   if(!app.player){ toast("Wähle zuerst einen Spieler"); return; }
+  if(app.sessionPool?.active&&!app.sessionPool?.ending){
+    if(!Object.keys(app.sessionPool.current||{}).length){ toast("Hole zuerst die Karten und bestätige „Alles geholt“"); return; }
+    if(app.sessionPool.currentBattleStarted){ toast("Dieser Kampf wurde bereits gestartet"); return; }
+  }
   const own=app.fightTeam.filter(m=>m.role!=="opponent"), opp=app.fightTeam.filter(m=>m.role==="opponent");
   if(!own.length||!opp.length){ toast("Beide Seiten brauchen mindestens ein Pokémon"); return; }
   if(own.length>6||opp.length>6){ toast("Maximal 6 Pokémon pro Seite"); return; }
@@ -1222,29 +1280,38 @@ async function startLiveBattle(){
     return {side,slot:sideData.activeSlots.indexOf(m.uid)};
   }).filter(x=>x.slot>=0);
   const payload={
-    version:13,status:"running",fieldSize,sourcePlayerId:app.player.id,sourcePlayerName:app.player.name,
+    version:13.1,status:"running",fieldSize,sourcePlayerId:app.player.id,sourcePlayerName:app.player.name,
     createdAt:serverTimestamp(),updatedAt:serverTimestamp(),lastEvent:{text:`Kampf gestartet · ${fieldSize} gegen ${fieldSize}`,time:Date.now()},
     turn:{order:ordered,index:0},
     sides:{own:ownSide,opponent:opponentSide}
   };
   try{
     await setDoc(battleDocRef(),payload);
-    toast("Kampf in Firebase gestartet"); showBattleDashboard();
-  }catch(err){ console.error(err); toast("Kampf konnte nicht gespeichert werden · Firestore-Regeln v12 prüfen"); }
+    if(app.sessionPool?.active&&Object.keys(app.sessionPool.current||{}).length){ app.sessionPool.currentBattleStarted=true; saveSessionPoolState(); }
+    toast("Kampf gestartet"); showBattleDashboard();
+  }catch(err){ console.error(err); toast("Kampf konnte nicht gestartet werden"); }
 }
 function subscribeActiveBattle(){
   try{
     if(app.battleUnsub) app.battleUnsub();
     app.battleUnsub=onSnapshot(battleDocRef(),snap=>{
+      const hadBattle=!!app.activeBattle;
       const data=snap.exists()?snap.data():null;
       app.activeBattle=data?.status==="running"?data:null;
+      const justEnded=hadBattle&&!app.activeBattle;
       if(!app.activeBattle && app.view==="battle"){
-        if(app.player) showModule("fight"); else { app.view="dashboard"; showNoPlayer(); }
+        if(app.player){
+          showModule("fight");
+          if(justEnded&&app.sessionPool?.active&&app.sessionPool.currentBattleStarted&&Object.keys(app.sessionPool.current||{}).length){
+            setTimeout(()=>{ openSessionCleanup(); scrollFightSection("sessionCardFlowPanel"); },80);
+          }
+        } else { app.view="dashboard"; showNoPlayer(); }
       }
       renderBattleBanner();
       if(app.view==="battle") renderBattleDashboard();
       if(app.battleSelectedFighter && !$("#battleFighterSheet")?.classList.contains("hidden")) renderBattleFighterSheet();
       if(app.view==="fight"&&app.player) renderFight();
+      if(app.view==="dashboard"&&app.player) renderDashboard();
     },err=>{ console.warn("Aktiver Kampf nicht lesbar",err); app.activeBattle=null; renderBattleBanner(); });
   }catch(err){ console.warn(err); }
 }
@@ -1391,7 +1458,7 @@ function renderBattleFighterSheet(){
   $("#battleFighterSheetBody").innerHTML=`<div class="battle-sheet-summary"><img src="${p.image||FALLBACK_IMAGE}" alt="${escapeHtml(p.name)}"><div><strong>${escapeHtml(p.name)} · Lv ${f.level}</strong><span>${f.currentHp}/${f.maxHp} KP · ${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span></div></div>
     <h3>Zustände</h3><div class="battle-status-toggle-grid">${BATTLE_STATUS_KEYS.map(k=>{const st=f.statuses?.[k]||{};return `<button class="${st.active?"active":""}" data-battle-status-toggle="${k}" type="button"><span>${BATTLE_STATUS_ICONS[k]||"•"}</span><strong>${battleStatusLabel(k)}</strong><small>${st.active&&st.actions?`${st.actions} Aktionen`:st.active?"aktiv":"inaktiv"}</small></button>`;}).join("")}</div>
     <h3>Statuswerte</h3><div class="battle-stat-edit">${["attack","defense","accuracy","initiative"].map(k=>`<div><span>${BATTLE_STAT_LABELS[k]}</span><div class="battle-counter"><button data-battle-stat-step="${k}" data-battle-delta="-1" type="button">−</button><strong>${stats[k]>=0?"+":""}${stats[k]||0}</strong><button data-battle-stat-step="${k}" data-battle-delta="1" type="button">+</button></div></div>`).join("")}</div>
-    <p class="battle-sheet-note">Genauigkeit -1/-2 sowie Zustandswürfe folgen den Angaben aus Kblatt.pdf. Eingefroren hat dort keine Endbedingung und wird deshalb nur manuell entfernt.</p>`;
+    <p class="battle-sheet-note">Genauigkeit und Zustände werden mit den vorgesehenen Würfen geprüft. Eingefroren wird manuell entfernt.</p>`;
   $("#battleFighterSheetBody").querySelectorAll("img").forEach(setImgFallback);
 }
 async function toggleBattleStatus(key){
@@ -1624,7 +1691,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13.1").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
@@ -1796,6 +1863,7 @@ function renderDashboard(){
   $("#dashboardMapBtn").textContent=field?"⌖ Karte":"⌖ Standort setzen";
   $("#dashboardLocationOpenBtn").disabled=!field&&!canSetLocation;
   $("#dashboardMapBtn").disabled=!field&&!canSetLocation;
+  renderDashboardSessionResume();
 }
 function dashboardPokemonCard(p){
   const st=stateFor(p);
@@ -1996,7 +2064,7 @@ function renderCharacterValues(p,s){
   if(!c){
     $("#valueMaxHp").textContent="—"; $("#valueHpFormula").textContent="Keine Kartendaten";
     $("#valueBaseHp").textContent="—"; $("#valueMovement").textContent="—"; $("#valueCombatRange").textContent="—"; $("#valueCombatRangeHelp").textContent="—";
-    if(grid) grid.innerHTML=`<div class="notice notice-muted"><p>Für dieses Pokémon fehlen strukturierte Charakterkartendaten.</p></div>`;
+    if(grid) grid.innerHTML=`<div class="notice notice-muted"><p>Für dieses Pokémon sind keine Charakterwerte hinterlegt.</p></div>`;
     return;
   }
   const maxHp=(+c.baseHp||0)+(+s.level||0);
@@ -2133,15 +2201,15 @@ function renderCardDetail(name){
   $("#cardDetailEyebrow").textContent=c.detailsAvailable===false?"Attacke · Datensatz fehlt":`${c.type} · ${CARD_KIND_LABELS[c.cardType]||"Karte"}`;
   const learners=cardLearners(name);
   if(c.detailsAvailable===false){
-    $("#cardDetailBody").innerHTML=`<div class="notice notice-muted"><strong>Keine Karteninformationen im PDF-Bestand</strong><p>${escapeHtml(c.note||"Für diese Attacke wurde keine passende Karte in den bereitgestellten Attacken-PDFs gefunden.")}</p></div>${renderLearnersHtml(learners)}`;
+    $("#cardDetailBody").innerHTML=`<div class="notice notice-muted"><strong>Keine Karteninformationen verfügbar</strong><p>${escapeHtml(c.note||"Für diese Attacke sind keine Kartendetails hinterlegt.")}</p></div>${renderLearnersHtml(learners)}`;
     return;
   }
   const effects=(c.effects||[]).length?(c.effects||[]).map(e=>`<article class="card-effect"><small>${TIMING_LABELS[e.timing]||e.timing}</small><p>${escapeHtml(e.text)}</p></article>`).join(""):`<article class="card-effect empty"><small>EFFEKT</small><p>Keine zusätzlichen Karteneffekte.</p></article>`;
   $("#cardDetailBody").innerHTML=`<section class="card-facts" style="${cardTypeVars(c.type)}"><div class="card-kind-hero kind-${c.cardType}"><span>${CARD_KIND_ICONS[c.cardType]||"•"}</span><strong>${CARD_KIND_LABELS[c.cardType]||c.cardType}</strong></div><div class="card-fact-grid">${c.cardType!=="scheme"?`<article><small>Wert</small><strong>${c.value}</strong></article>`:""}<article><small>BOOST</small><strong>${c.boost}</strong></article><article><small>Kartensatz</small><strong>x${c.setSize}</strong></article></div><p class="set-explain">Ein Pokémon mit dieser Attacke benötigt den vollständigen Satz aus <strong>${c.setSize} ${c.setSize===1?"Karte":"Karten"}</strong>.</p></section><section class="card-effect-list">${effects}</section>${renderLearnersHtml(learners)}`;
 }
 function renderLearnersHtml(learners){
-  if(!learners.length) return `<section class="card-learners"><div class="card-section-head"><p class="eyebrow">Zuordnung</p><h3>Lernbar von</h3></div><div class="notice notice-muted"><p>In Karten.xlsx ist diese Attacke keinem Pokémon zugeordnet.</p></div></section>`;
-  return `<section class="card-learners"><div class="card-section-head"><p class="eyebrow">Karten.xlsx</p><h3>Lernbar von <span>${learners.length}</span></h3></div><div class="card-learner-list">${learners.map(({pokemon,level})=>`<button type="button" data-card-pokemon="${pokemon.id}" style="${typeVars(pokemon.type)}"><img src="${pokemon.image}" alt="" loading="lazy"><span><strong>${escapeHtml(pokemon.name)}</strong><small>#${pad(pokemon.id)} · ab Level ${level}</small></span><b>Lv ${level}</b></button>`).join("")}</div></section>`;
+  if(!learners.length) return `<section class="card-learners"><div class="card-section-head"><p class="eyebrow">Zuordnung</p><h3>Lernbar von</h3></div><div class="notice notice-muted"><p>Diese Attacke ist keinem Pokémon zugeordnet.</p></div></section>`;
+  return `<section class="card-learners"><div class="card-section-head"><p class="eyebrow">Attacke</p><h3>Lernbar von <span>${learners.length}</span></h3></div><div class="card-learner-list">${learners.map(({pokemon,level})=>`<button type="button" data-card-pokemon="${pokemon.id}" style="${typeVars(pokemon.type)}"><img src="${pokemon.image}" alt="" loading="lazy"><span><strong>${escapeHtml(pokemon.name)}</strong><small>#${pad(pokemon.id)} · ab Level ${level}</small></span><b>Lv ${level}</b></button>`).join("")}</div></section>`;
 }
 function openCardDetail(name){
   const c=attackCard(name); if(!c){ toast("Für diese Attacke fehlen Kartendetails"); return; }
@@ -2182,7 +2250,7 @@ async function saveToFirebase(){
   if(!app.isAdmin||!app.player||!app.dirty||app.saving) return;
   app.saving=true; setSyncLabel("Speichert…");
   try { await setDoc(doc(db,"players",app.player.id),{name:app.player.name,version:1,pokemon:app.state,profile:app.profile,updatedAt:serverTimestamp()},{merge:true}); app.publishedState=clone(app.state); app.publishedProfile=clone(app.profile); const rec=app.adminPlayerData.find(r=>r.id===app.player.id); if(rec){rec.state=clone(app.state);rec.profile=clone(app.profile);rec.name=app.player.name;} app.dirty=false; setSyncLabel("Gespeichert ✓"); }
-  catch(err){ console.error(err); setSyncLabel("Speichern fehlgeschlagen"); toast("Firebase-Speichern fehlgeschlagen"); }
+  catch(err){ console.error(err); setSyncLabel("Speichern fehlgeschlagen"); toast("Speichern fehlgeschlagen"); }
   finally { app.saving=false; }
 }
 function setSyncLabel(t){ const el=$("#syncStatus"); if(el) el.textContent=t; }
@@ -2322,10 +2390,15 @@ function bindEvents(){
     if(e.target.closest("[data-session-cards-pulled]")){ markSessionCardsPulled(); return; }
     if(e.target.closest("[data-session-cleanup-open]")){ openSessionCleanup(); return; }
     if(e.target.closest("[data-session-recommend]")){ applySessionRecommendation(); return; }
+    if(e.target.closest("[data-session-open-battle]")){ showBattleDashboard(); return; }
+    if(e.target.closest("[data-session-go-launch]")){ scrollFightSection("fightLaunchPanel"); return; }
+    if(e.target.closest("[data-session-end-shortcut]")){ beginSessionEnd(); scrollFightSection("sessionPoolPanel"); return; }
     const choice=e.target.closest("[data-session-cleanup-choice]"); if(choice){ setSessionCleanupChoice(choice.dataset.sessionCleanupName,choice.dataset.sessionCleanupChoice); return; }
     if(e.target.closest("[data-session-cleanup-apply]")){ applySessionCleanup(); return; }
     if(e.target.closest("[data-session-next-fight]")){ sessionNextFight(); return; }
   });
+  $("#fightNextStepPanel").addEventListener("click",e=>{const b=e.target.closest("[data-guide-action]");if(b)handleGuidedFightAction(b.dataset.guideAction);});
+  $("#dashboardSessionResumeBtn").addEventListener("click",e=>{const action=e.currentTarget.dataset.guideAction;if(action==="open-battle"){showBattleDashboard();return;}if(action==="encounter"){showModule("encounter");return;}showModule("fight");setTimeout(()=>handleGuidedFightAction(action),60);});
   $("#activeBattleBanner").addEventListener("click",showBattleDashboard);
   $("#battleBackBtn").addEventListener("click",()=>{ if(app.player) showModule("fight"); else { app.view="dashboard"; showNoPlayer(); renderBattleBanner(); } });
   $("#battleEndBtn").addEventListener("click",endLiveBattle);

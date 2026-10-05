@@ -1,4 +1,4 @@
-const CACHE="pu-dex-v13-session-pool-20261005";
+const CACHE="pu-dex-v13-1-guided-flow-20261005";
 const CORE=[
   "./",
   "./index.html",
