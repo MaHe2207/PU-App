@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>PU Dex</title>
-  <link rel="manifest" href="manifest.webmanifest?v=12.2">
+  <link rel="manifest" href="manifest.webmanifest?v=12.3">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=12.2">
+  <link rel="stylesheet" href="styles.css?v=12.3">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -72,7 +72,7 @@
 
       <section class="dashboard-section dashboard-goals-section" id="dashboardGoalsSection">
         <div class="dashboard-section-head">
-          <div><p class="eyebrow">Persönliche Ziele</p><h2>Deine drei Aufgaben</h2></div>
+          <div><p class="eyebrow">Persönliche Ziele</p><h2>Deine vier Aufgaben</h2></div>
           <button class="text-btn hidden" id="dashboardManageGoalsBtn" type="button">Verwalten</button>
         </div>
         <div class="dashboard-goals-meta"><span id="dashboardGoalsActive">0 / 3 aktiv</span><strong id="dashboardGoalsDone">0 erfüllt</strong></div>
@@ -616,7 +616,7 @@
     <aside class="bottom-sheet goal-edit-sheet hidden" id="goalEditSheet" aria-label="Ziele verwalten">
       <div class="sheet-handle"></div>
       <div class="sheet-head"><div><p class="eyebrow">Bearbeitungsmodus</p><h2>Ziele verwalten</h2></div><button class="round-btn close-sheet" type="button">×</button></div>
-      <p class="goal-edit-help">Aktiviere bis zu drei ausgeloste Ziele für diesen Spieler. Ob ein Ziel erfüllt ist, berechnet die App automatisch aus dem aktuellen Pokédex.</p>
+      <p class="goal-edit-help">Aktiviere bis zu vier ausgeloste Ziele für diesen Spieler. Ob ein Ziel erfüllt ist, berechnet die App automatisch aus dem aktuellen Pokédex.</p>
       <div class="goal-edit-summary"><strong id="goalSelectionCount">0 / 3 aktiv</strong><span>Änderungen werden automatisch gespeichert.</span></div>
       <label class="goal-search"><span>⌕</span><input id="goalSearch" type="search" placeholder="Ziel oder Typ suchen…" autocomplete="off"></label>
       <div class="goal-edit-list" id="goalEditList"></div>
@@ -673,6 +673,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script type="module" src="app.js?v=12.2"></script>
+  <script type="module" src="app.js?v=12.3"></script>
 </body>
 </html>

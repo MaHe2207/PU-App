@@ -67,7 +67,7 @@ function normalizeState(raw={}){
 function stateFor(p){ return app.state[p.name]||{owned:false,favorite:false,level:p.minLevel,ep:0}; }
 function normalizeProfile(raw={}){
   const validGoalIds=new Set((app.goals||[]).map(g=>g.id));
-  const activeGoals=Array.isArray(raw.activeGoals)?raw.activeGoals.filter(id=>validGoalIds.has(id)).slice(0,3):[];
+  const activeGoals=Array.isArray(raw.activeGoals)?raw.activeGoals.filter(id=>validGoalIds.has(id)).slice(0,4):[];
   return {
     trainerLevel: Math.max(0,Math.min(13,Number.isFinite(+raw.trainerLevel)?Math.round(+raw.trainerLevel):0)),
     activeGoals
@@ -588,7 +588,7 @@ function loadFightState(id){
 }
 function saveFightState(){
   if(!app.player) return;
-  localStorage.setItem(fightKey(app.player.id),JSON.stringify({version:12.2,team:app.fightTeam,baseline:app.fightBaseline}));
+  localStorage.setItem(fightKey(app.player.id),JSON.stringify({version:12.3,team:app.fightTeam,baseline:app.fightBaseline}));
 }
 function fightChoices(){
   if(app.fightSource==="favorite") return app.pokemon.filter(p=>stateFor(p).owned && stateFor(p).favorite);
@@ -847,7 +847,7 @@ async function startLiveBattle(){
     return {side,slot:sideData.activeSlots.indexOf(m.uid)};
   }).filter(x=>x.slot>=0);
   const payload={
-    version:12.2,status:"running",fieldSize,sourcePlayerId:app.player.id,sourcePlayerName:app.player.name,
+    version:12.3,status:"running",fieldSize,sourcePlayerId:app.player.id,sourcePlayerName:app.player.name,
     createdAt:serverTimestamp(),updatedAt:serverTimestamp(),lastEvent:{text:`Kampf gestartet · ${fieldSize} gegen ${fieldSize}`,time:Date.now()},
     turn:{order:ordered,index:0},
     sides:{own:ownSide,opponent:opponentSide}
@@ -1371,7 +1371,7 @@ function renderDashboard(){
       const pr=goalProgress(g);
       return `<article class="dashboard-goal ${pr.done?"done":""}" style="${typeVars(g.type)}"><div class="dashboard-goal-head"><span class="goal-type-dot"></span><div><strong>${escapeHtml(g.label)}</strong><small>${escapeHtml(g.type)} · ${pr.count}/${pr.target} gefangen</small></div><em>${pr.done?"✓ Erfüllt":"Offen"}</em></div><div class="dashboard-goal-track"><span style="width:${pr.pct}%"></span></div></article>`;
     }).join("");
-    if(goals.length<3) goalList.insertAdjacentHTML("beforeend",Array.from({length:3-goals.length},()=>`<div class="dashboard-goal-slot">Noch kein Ziel aktiviert</div>`).join(""));
+    if(goals.length<4) goalList.insertAdjacentHTML("beforeend",Array.from({length:4-goals.length},()=>`<div class="dashboard-goal-slot">Noch kein Ziel aktiviert</div>`).join(""));
   } else {
     goalList.innerHTML=`<div class="dashboard-empty">Für diesen Spieler sind noch keine Ziele aktiviert.</div>`;
   }
@@ -1424,7 +1424,7 @@ function toggleGoal(id){
   if(!app.isAdmin||!app.editMode) return;
   const current=[...(app.profile.activeGoals||[])]; const ix=current.indexOf(id);
   if(ix>=0) current.splice(ix,1);
-  else { if(current.length>=3){ toast("Maximal drei Ziele pro Spieler"); return; } current.push(id); }
+  else { if(current.length>=4){ toast("Maximal vier Ziele pro Spieler"); return; } current.push(id); }
   app.profile.activeGoals=current; cacheProfile(); app.dirty=true; renderDashboard(); renderGoalEditList(); scheduleSave();
 }
 
@@ -1478,11 +1478,11 @@ function renderDirector(){
   $("#directorGoalCount").textContent=totalGoals;
   $("#directorLocationCount").textContent=located;
 
-  const missingGoals=all.filter(r=>(r.profile?.activeGoals||[]).length<3).length;
+  const missingGoals=all.filter(r=>(r.profile?.activeGoals||[]).length<4).length;
   const missingLocation=all.length-located;
   const attention=$("#directorAttention");
   const notices=[];
-  if(missingGoals) notices.push(`<span>◎ ${missingGoals} ${missingGoals===1?"Spieler hat":"Spieler haben"} weniger als 3 aktive Ziele</span>`);
+  if(missingGoals) notices.push(`<span>◎ ${missingGoals} ${missingGoals===1?"Spieler hat":"Spieler haben"} weniger als 4 aktive Ziele</span>`);
   if(missingLocation) notices.push(`<span>⌖ ${missingLocation} ${missingLocation===1?"Spieler ohne":"Spieler ohne"} Kartenposition</span>`);
   attention.classList.toggle("hidden",!notices.length);
   attention.innerHTML=notices.length?`<strong>Hinweise</strong><div>${notices.join("")}</div>`:"";
