@@ -1,4 +1,4 @@
-const CACHE="pu-dex-v12-2-cardset-cap-20261004";
+const CACHE="pu-dex-v12-4-goals-players-location-20261005";
 const CORE=[
   "./",
   "./index.html",

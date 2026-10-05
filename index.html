@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>PU Dex</title>
-  <link rel="manifest" href="manifest.webmanifest?v=12.3">
+  <link rel="manifest" href="manifest.webmanifest?v=12.4">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=12.3">
+  <link rel="stylesheet" href="styles.css?v=12.4">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -75,7 +75,7 @@
           <div><p class="eyebrow">Persönliche Ziele</p><h2>Deine vier Aufgaben</h2></div>
           <button class="text-btn hidden" id="dashboardManageGoalsBtn" type="button">Verwalten</button>
         </div>
-        <div class="dashboard-goals-meta"><span id="dashboardGoalsActive">0 / 3 aktiv</span><strong id="dashboardGoalsDone">0 erfüllt</strong></div>
+        <div class="dashboard-goals-meta"><span id="dashboardGoalsActive">0 / 4 vergeben</span><strong id="dashboardGoalsDone">0 erfüllt</strong></div>
         <div class="dashboard-goals" id="dashboardGoalsList"></div>
       </section>
 
@@ -616,8 +616,8 @@
     <aside class="bottom-sheet goal-edit-sheet hidden" id="goalEditSheet" aria-label="Ziele verwalten">
       <div class="sheet-handle"></div>
       <div class="sheet-head"><div><p class="eyebrow">Bearbeitungsmodus</p><h2>Ziele verwalten</h2></div><button class="round-btn close-sheet" type="button">×</button></div>
-      <p class="goal-edit-help">Aktiviere bis zu vier ausgeloste Ziele für diesen Spieler. Ob ein Ziel erfüllt ist, berechnet die App automatisch aus dem aktuellen Pokédex.</p>
-      <div class="goal-edit-summary"><strong id="goalSelectionCount">0 / 3 aktiv</strong><span>Änderungen werden automatisch gespeichert.</span></div>
+      <p class="goal-edit-help">Lege für jedes Ziel manuell fest: Inaktiv, Aktiv oder Erfüllt. Maximal vier Ziele können gleichzeitig Aktiv oder Erfüllt sein. Nur deine Spielleiter-Einstellung zählt als „Erfüllt“; der Dex-Fortschritt wird nur als Hinweis angezeigt.</p>
+      <div class="goal-edit-summary"><strong id="goalSelectionCount">0 / 4 vergeben</strong><span>Änderungen werden automatisch gespeichert.</span></div>
       <label class="goal-search"><span>⌕</span><input id="goalSearch" type="search" placeholder="Ziel oder Typ suchen…" autocomplete="off"></label>
       <div class="goal-edit-list" id="goalEditList"></div>
     </aside>
@@ -625,6 +625,10 @@
     <aside class="bottom-sheet hidden" id="playerSheet" aria-label="Spieler auswählen">
       <div class="sheet-handle"></div>
       <div class="sheet-head"><div><p class="eyebrow">Spieler</p><h2>Dex auswählen</h2></div><button class="round-btn close-sheet" type="button">×</button></div>
+      <section class="new-player-card">
+        <div><strong>Neuen Spieler anlegen</strong><small>Erstellt einen leeren Dex direkt in Firebase. Danach kannst du Standort, Trainerstufe und Ziele festlegen.</small></div>
+        <div class="new-player-form"><input id="newPlayerName" type="text" maxlength="40" placeholder="Spielername" autocomplete="off"><button class="primary-btn" id="newPlayerBtn" type="button">Anlegen</button></div>
+      </section>
       <div id="playerList" class="player-list"></div>
     </aside>
 
@@ -666,13 +670,13 @@
         <button class="setting-button" id="saveNowBtn"><span>☁</span><div><strong>Jetzt synchronisieren</strong><small id="syncStatus">Firebase bereit</small></div></button>
         <button class="setting-button" id="exportBtn"><span>⇩</span><div><strong>Backup exportieren</strong><small>Aktuellen Spielstand als JSON speichern</small></div></button>
         <button class="setting-button" id="installAppBtn" type="button"><span>▣</span><div><strong>App installieren</strong><small id="installAppStatus">Installationsstatus wird geprüft…</small></div></button>
-        <a class="setting-button admin-link" href="admin-import.html"><span>＋</span><div><strong>Spielstände importieren</strong><small>Nur für den ersten Import oder neue Spieler</small></div></a>
+        <a class="setting-button admin-link" href="admin-import.html"><span>⇧</span><div><strong>Alte Spielstände importieren</strong><small>Für vorhandene JSON-Spielstände; neue Spieler kannst du direkt in der Spielerauswahl anlegen</small></div></a>
       </div>
-      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v12.0</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung bleibt lokal. Ein gestarteter Kampftisch wird als temporärer aktiver Kampf über Firebase auf allen Geräten synchronisiert.</p></div>
+      <div class="settings-note"><strong>Firebase-Synchronisierung · PU v12.4</strong><p>Spieler öffnen ihren persönlichen Link nur zum Lesen. Dex-Änderungen sind ausschließlich nach deiner Admin-Anmeldung möglich. Kampfvorbereitung bleibt lokal. Ein gestarteter Kampftisch wird als temporärer aktiver Kampf über Firebase auf allen Geräten synchronisiert.</p></div>
     </aside>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script type="module" src="app.js?v=12.3"></script>
+  <script type="module" src="app.js?v=12.4"></script>
 </body>
 </html>

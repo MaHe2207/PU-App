@@ -419,3 +419,15 @@ main{padding:0 16px 110px}
 .battle-turn-bar small{color:#717986}
 .battle-next-turn-btn{white-space:nowrap;min-width:120px}
 @media (max-width:700px){.battle-turn-bar{align-items:stretch;flex-direction:column}.battle-next-turn-btn{width:100%}}
+
+/* v12.4 – manuelle Zielstatus & neue Spieler */
+.goal-edit-row{grid-template-columns:28px minmax(0,1fr);align-items:center}
+.goal-status-buttons{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:2px}
+.goal-status-buttons button{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 5px;font:inherit;font-size:8px;font-weight:850;color:#68737f}
+.goal-status-buttons button.active{background:#172433;color:#fff;border-color:#172433}
+.goal-edit-row.goal-status-active{border-color:var(--type);background:var(--type-soft)}
+.goal-edit-row.goal-status-completed{border-color:#2f9a5d;background:linear-gradient(135deg,var(--type-soft),#edf9f1)}
+.goal-edit-row.goal-status-completed .goal-check{background:#2f9a5d;color:#fff;border-color:#2f9a5d}
+.new-player-card{display:grid;gap:9px;background:#f5f7f9;border:1px solid var(--line);border-radius:16px;padding:11px;margin-bottom:12px}
+.new-player-card strong{display:block;font-size:10px}.new-player-card small{display:block;color:var(--muted);font-size:8px;line-height:1.45;margin-top:3px}
+.new-player-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px}.new-player-form input{min-width:0;border:1px solid var(--line);background:#fff;border-radius:12px;padding:9px 10px;font:inherit;font-size:10px;outline:0}.new-player-form .primary-btn{padding:9px 12px;font-size:9px}
