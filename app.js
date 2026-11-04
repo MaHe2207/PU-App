@@ -33,6 +33,7 @@ const app = {
   librarySearch: "", libraryKind: "all", libraryType: "Alle", librarySection: "attacks", selectedCardName: null,
   directorSearch: "", directorSort: "name",
   battleRules: null, activeBattle: null, battleUnsub: null, battleSelectedFighter: null,
+  appConfig: {complexBattleMode:false}, appConfigUnsub: null,
   battleCalc: {attacker:null,defender:null,attackCard:null,defenseCard:"",result:null},
   sessionPool: null, sessionSetupPlayerIds: [], sessionSetupMax: 20, sessionCleanupChoices: null
 };
@@ -328,6 +329,7 @@ function trainerLayer(){ return app.mapData?.layers?.Trainer || null; }
 function trainerEntries(){ return trainerLayer()?.entries || []; }
 function trainerById(id){ return trainerEntries().find(t=>t.symbolId===id) || null; }
 const MAP_CONFIG_DOC = "pu_map_config";
+const APP_CONFIG_DOC = "pu_app_config";
 const MAP_CONFIG_CACHE = "pu-map-trainer-locations-v2";
 function mergeTrainerDirectory(directory=[]){
   const rows=trainerEntries();
@@ -389,6 +391,35 @@ async function saveMapTrainerConfig(){
     return false;
   }
 }
+function isComplexBattleMode(){ return !!app.appConfig?.complexBattleMode; }
+function subscribeAppConfig(){
+  try{
+    if(app.appConfigUnsub) app.appConfigUnsub();
+    app.appConfigUnsub=onSnapshot(doc(db,"players",APP_CONFIG_DOC),snap=>{
+      const data=snap.exists()?snap.data():{};
+      app.appConfig={complexBattleMode:!!data.complexBattleMode};
+      const toggle=$("#complexBattleToggle"); if(toggle) toggle.checked=isComplexBattleMode();
+      if(app.view==="battle") renderBattleDashboard();
+      if(app.view==="fight") renderFight();
+    },err=>console.warn("App-Einstellungen konnten nicht geladen werden",err));
+  }catch(err){ console.warn("App-Einstellungen konnten nicht abonniert werden",err); }
+}
+async function setComplexBattleMode(enabled){
+  if(!app.isAdmin){ toast("Admin-Anmeldung erforderlich"); return; }
+  const value=!!enabled;
+  try{
+    await setDoc(doc(db,"players",APP_CONFIG_DOC),{kind:"app-config",complexBattleMode:value,updatedAt:serverTimestamp()},{merge:true});
+    app.appConfig.complexBattleMode=value;
+    if(app.view==="battle") renderBattleDashboard();
+    if(app.view==="fight") renderFight();
+    toast(value?"Komplexer Kampfmodus aktiviert":"Einfaches Kampfdashboard aktiviert");
+  }catch(err){
+    console.error(err);
+    const toggle=$("#complexBattleToggle"); if(toggle) toggle.checked=isComplexBattleMode();
+    toast("Kampfmodus konnte nicht gespeichert werden");
+  }
+}
+
 function mapEncounterCode(field){
   const code=String(field?.id||"").slice(0,3);
   return app.encounterData?.fieldCodes?.includes(code) ? code : null;
@@ -956,7 +987,7 @@ function renderSessionCardFlow(){
     } else {
       const entries=sortedCardEntries(s.current);
       if(app.activeBattle){
-        root.innerHTML=`<div class="session-current-note"><strong>⚔ Kampf läuft.</strong><span>Die Karten bleiben bis zum Kampfende beim aktuellen Kampf.</span></div><button class="primary-btn" data-session-open-battle type="button">Kampftisch öffnen</button>`;
+        root.innerHTML=`<div class="session-current-note"><strong>⚔ Kampf läuft.</strong><span>Die Karten bleiben bis zum Kampfende beim aktuellen Kampf.</span></div><button class="primary-btn" data-session-open-battle type="button">${isComplexBattleMode()?"Kampftisch öffnen":"Kampfdashboard öffnen"}</button>`;
       } else if(s.currentBattleStarted){
         root.innerHTML=`<div class="session-current-note"><strong>✓ Kampf beendet.</strong><span>Jetzt entscheidest du, welche Karten draußen bleiben.</span></div><button class="primary-btn" data-session-cleanup-open type="button">Karten aufräumen</button>`;
       } else {
@@ -1053,14 +1084,14 @@ function fightLaunchStateData(){
 }
 function guidedFightStep(){
   const s=app.sessionPool;
-  if(app.activeBattle) return {step:"5",title:"Kampf läuft",text:"Öffne den Kampftisch und führe den Kampf fort.",label:"Kampftisch öffnen",action:"open-battle"};
+  if(app.activeBattle) return {step:"5",title:"Kampf läuft",text:isComplexBattleMode()?"Öffne den Kampftisch und führe den Kampf fort.":"Öffne das Kampfdashboard und verwalte KP, Zustände und Werte.",label:isComplexBattleMode()?"Kampftisch öffnen":"Kampfdashboard öffnen",action:"open-battle"};
   if(!s?.active) return {step:"1",title:"Session starten",text:"Lege fest, wer heute spielt und wie groß der Session-Pool sein darf.",label:"Session einrichten",action:"session"};
   if(s.ending) return {step:"7",title:"Session abschließen",text:"Sortiere die angezeigten Karten zurück und bestätige anschließend den Abschluss.",label:"Rücksortierliste öffnen",action:"session"};
   if(app.sessionCleanupChoices) return {step:"6",title:"Karten aufräumen",text:"Entscheide jetzt nur noch: im Session-Pool lassen oder zurück ins Archiv.",label:"Aufräumen fortsetzen",action:"cards"};
   if(Object.keys(s.current||{}).length){
     if(s.currentBattleStarted) return {step:"6",title:"Karten aufräumen",text:"Der Kampf ist beendet. Entscheide, welche Karten für später draußen bleiben.",label:"Karten aufräumen",action:"cleanup"};
     const launch=fightLaunchStateData();
-    if(!launch.baseReady) return {step:"4",title:"Start-Pokémon festlegen",text:"Wähle auf beiden Seiten 1 oder 2 Start-Pokémon und prüfe die Zugreihenfolge.",label:"Startfeld festlegen",action:"launch"};
+    if(!launch.baseReady) return {step:"4",title:"Start-Pokémon festlegen",text:isComplexBattleMode()?"Wähle auf beiden Seiten 1 oder 2 Start-Pokémon und prüfe die Zugreihenfolge.":"Wähle auf beiden Seiten 1 oder 2 Start-Pokémon.",label:"Startfeld festlegen",action:"launch"};
     return {step:"4",title:"Kampf starten",text:"Karten und Startaufstellung sind bereit.",label:"Kampf starten",action:"start-battle"};
   }
   if(s.readyForNext) return {step:"✓",title:"Kampf abgeschlossen",text:"Bereite den nächsten Kampf vor oder beende die Session.",label:"Nächsten Kampf",action:"next-fight",altLabel:"Session beenden",altAction:"end-session"};
@@ -1177,7 +1208,8 @@ function renderFight(){
   $("#fightTeamHeading").textContent=app.fightTeam.length?`${ownTeam.length} eigenes · ${oppTeam.length} Gegner`:"Noch kein Pokémon";
   team.innerHTML=app.fightTeam.length?app.fightTeam.map((m,index)=>{
     const mon=fightPokemon(m.id); const type=mon?.type||"Normal"; const learnedMoves=mon?attacksFor(mon).filter(a=>a.level<=m.level):[]; const copies=learnedMoves.reduce((sum,a)=>sum+cardSetSize(a.name),0);
-    return `<article class="fight-member ${m.startActive?"fight-start-active":""}" style="${typeVars(type)}"><div class="fight-member-art"><img src="${mon?.image||FALLBACK_IMAGE}" alt="${escapeHtml(mon?.name||"Pokémon")}" loading="lazy"></div><div class="fight-member-copy"><small>${m.role==="opponent"?"Gegner":"Mein Team"} · #${pad(mon?.id||0)}</small><strong>${escapeHtml(mon?.name||"Pokémon")}</strong><span>Lvl ${m.level} · ${learnedMoves.length} Attacken · ${copies} Karten</span><button class="fight-start-toggle ${m.startActive?"active":""}" data-fight-start="${m.uid}" type="button">${m.startActive?"✓ Startfeld":"Startfeld"}</button>${m.startActive?`<div class="fight-turn-order"><small>Reihenfolge</small><button data-fight-order="-1" data-fight-uid="${m.uid}" type="button" aria-label="Früher">↑</button><b>${m.turnOrder||"–"}</b><button data-fight-order="1" data-fight-uid="${m.uid}" type="button" aria-label="Später">↓</button></div>`:""}</div><div class="fight-member-actions"><div class="mini-level"><button data-fight-step="-1" data-fight-uid="${m.uid}" type="button">−</button><b>${m.level}</b><button data-fight-step="1" data-fight-uid="${m.uid}" type="button">＋</button></div><button class="fight-remove" data-fight-remove="${m.uid}" type="button" aria-label="${escapeHtml(mon?.name||"Pokémon")} entfernen">×</button></div></article>`;
+    const orderControl=m.startActive&&isComplexBattleMode()?`<div class="fight-turn-order"><small>Reihenfolge</small><button data-fight-order="-1" data-fight-uid="${m.uid}" type="button" aria-label="Früher">↑</button><b>${m.turnOrder||"–"}</b><button data-fight-order="1" data-fight-uid="${m.uid}" type="button" aria-label="Später">↓</button></div>`:"";
+    return `<article class="fight-member ${m.startActive?"fight-start-active":""}" style="${typeVars(type)}"><div class="fight-member-art"><img src="${mon?.image||FALLBACK_IMAGE}" alt="${escapeHtml(mon?.name||"Pokémon")}" loading="lazy"></div><div class="fight-member-copy"><small>${m.role==="opponent"?"Gegner":"Mein Team"} · #${pad(mon?.id||0)}</small><strong>${escapeHtml(mon?.name||"Pokémon")}</strong><span>Lvl ${m.level} · ${learnedMoves.length} Attacken · ${copies} Karten</span><button class="fight-start-toggle ${m.startActive?"active":""}" data-fight-start="${m.uid}" type="button">${m.startActive?"✓ Startfeld":"Startfeld"}</button>${orderControl}</div><div class="fight-member-actions"><div class="mini-level"><button data-fight-step="-1" data-fight-uid="${m.uid}" type="button">−</button><b>${m.level}</b><button data-fight-step="1" data-fight-uid="${m.uid}" type="button">＋</button></div><button class="fight-remove" data-fight-remove="${m.uid}" type="button" aria-label="${escapeHtml(mon?.name||"Pokémon")} entfernen">×</button></div></article>`;
   }).join(""):`<div class="fight-empty"><span>⚔</span><strong>Team noch leer</strong><p>Füge oben Pokémon hinzu. Pro Seite sind bis zu 6 Pokémon möglich, davon starten 1 oder 2 gleichzeitig auf dem Feld.</p></div>`;
   $$("#fightTeamList img").forEach(setImgFallback);
   renderFightLaunchState();
@@ -1217,11 +1249,11 @@ function renderFightLaunchState(){
   const el=$("#fightLaunchInfo"), btn=$("#fightStartLiveBtn"); if(!el||!btn) return;
   const state=fightLaunchStateData();
   normalizeFightTurnOrder();
-  const order=fightActiveMembers().sort((a,b)=>a.turnOrder-b.turnOrder).map(m=>`${m.turnOrder}. ${fightPokemon(m.id)?.name||"Pokémon"}`).join(" · ");
+  const order=isComplexBattleMode()?fightActiveMembers().sort((a,b)=>a.turnOrder-b.turnOrder).map(m=>`${m.turnOrder}. ${fightPokemon(m.id)?.name||"Pokémon"}`).join(" · "):"";
   el.innerHTML=`<strong>${state.own.length} vs ${state.opp.length} Pokémon</strong><span>Startfeld: ${state.ownStart} vs ${state.oppStart}</span>${order?`<small>Zugreihenfolge: ${escapeHtml(order)}</small>`:""}`;
   btn.disabled=!state.ready;
   btn.textContent="Kampf starten";
-  if(!state.baseReady) $("#fightLaunchHint").textContent="Wähle auf beiden Seiten gleich viele Start-Pokémon (1 oder 2) und lege ihre Reihenfolge fest.";
+  if(!state.baseReady) $("#fightLaunchHint").textContent=isComplexBattleMode()?"Wähle auf beiden Seiten gleich viele Start-Pokémon (1 oder 2) und lege ihre Reihenfolge fest.":"Wähle auf beiden Seiten gleich viele Start-Pokémon (1 oder 2).";
   else if(!state.cardsReady) $("#fightLaunchHint").textContent="Hole zuerst die Karten für diesen Kampf und bestätige „Alles geholt“.";
   else if(app.sessionPool?.currentBattleStarted) $("#fightLaunchHint").textContent="Dieser Kampf wurde bereits gestartet. Nach dem Kampf geht es mit dem Aufräumen weiter.";
   else $("#fightLaunchHint").textContent="Startaufstellung bereit.";
@@ -1280,7 +1312,7 @@ async function startLiveBattle(){
     return {side,slot:sideData.activeSlots.indexOf(m.uid)};
   }).filter(x=>x.slot>=0);
   const payload={
-    version:13.1,status:"running",fieldSize,sourcePlayerId:app.player.id,sourcePlayerName:app.player.name,
+    version:13.2,status:"running",fieldSize,sourcePlayerId:app.player.id,sourcePlayerName:app.player.name,
     createdAt:serverTimestamp(),updatedAt:serverTimestamp(),lastEvent:{text:`Kampf gestartet · ${fieldSize} gegen ${fieldSize}`,time:Date.now()},
     turn:{order:ordered,index:0},
     sides:{own:ownSide,opponent:opponentSide}
@@ -1390,15 +1422,15 @@ function renderBattleFighterCard(side,f,compact=false){
   const hasTurn=f.statuses?.poisoned?.active||f.statuses?.burned?.active;
   const hasAttack=BATTLE_STATUS_KEYS.some(k=>f.statuses?.[k]?.active&&(app.battleRules?.statuses?.[k]?.actions||[]).includes("attack")) || (+stats.accuracy<0);
   const hasMan=BATTLE_STATUS_KEYS.some(k=>f.statuses?.[k]?.active&&(app.battleRules?.statuses?.[k]?.actions||[]).includes("maneuver"));
-  const turn=battleCurrentTurn(), isCurrent=turn?.side===side&&turn?.uid===f.uid;
+  const turn=isComplexBattleMode()?battleCurrentTurn():null, isCurrent=turn?.side===side&&turn?.uid===f.uid;
+  const advancedDetails=isComplexBattleMode()?`<div class="battle-modifiers">${battleTypeModifiersHtml(f)}</div><div class="battle-deck-grid"><div><small>Nachziehstapel</small><div class="battle-counter"><button data-battle-counter="drawPile" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−</button><strong>${f.drawPile??30}</strong><button data-battle-counter="drawPile" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+</button></div></div><div><small>Zusatznachzüge</small><div class="battle-counter"><button data-battle-counter="extraDraws" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−</button><strong>${f.extraDraws??0}</strong><button data-battle-counter="extraDraws" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+</button></div></div></div>`:"";
   return `<article class="battle-fighter ${isCurrent?"current-turn":""}" style="${typeVars(type)}" data-battle-fighter="${f.uid}">
     <header class="battle-fighter-head"><img src="${p?.image||FALLBACK_IMAGE}" alt="${escapeHtml(p?.name||"Pokémon")}"><div><small>#${pad(p?.id||0)} · ${escapeHtml(type)}</small><h3>${escapeHtml(p?.name||"Pokémon")}</h3><span>Lv ${f.level} · ${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span></div><button data-battle-manage="${f.uid}" data-battle-side="${side}" class="battle-manage-btn" type="button">Status & Werte</button></header>
     <div class="battle-hp-row"><div><small>KP</small><strong>${f.currentHp} / ${f.maxHp}</strong></div><div class="battle-hp-track"><span style="width:${hpPct}%"></span></div></div>
     <div class="battle-step-row"><button data-battle-hp="-5" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−5</button><button data-battle-hp="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−1</button><button data-battle-hp="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+1</button><button data-battle-hp="5" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+5</button></div>
     <div class="battle-status-row">${status}</div>
     <div class="battle-stat-strip"><span>Angr ${stats.attack>=0?"+":""}${stats.attack||0}</span><span>Vert ${stats.defense>=0?"+":""}${stats.defense||0}</span><span>Gen ${stats.accuracy>=0?"+":""}${stats.accuracy||0}</span><span>Init ${stats.initiative>=0?"+":""}${stats.initiative||0}</span></div>
-    <div class="battle-modifiers">${battleTypeModifiersHtml(f)}</div>
-    <div class="battle-deck-grid"><div><small>Nachziehstapel</small><div class="battle-counter"><button data-battle-counter="drawPile" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−</button><strong>${f.drawPile??30}</strong><button data-battle-counter="drawPile" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+</button></div></div><div><small>Zusatznachzüge</small><div class="battle-counter"><button data-battle-counter="extraDraws" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−</button><strong>${f.extraDraws??0}</strong><button data-battle-counter="extraDraws" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+</button></div></div></div>
+    ${advancedDetails}
     <div class="battle-assistant-actions">${hasTurn?`<button data-battle-status-action="turnStart" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Zugbeginn</button>`:""}${hasAttack?`<button data-battle-status-action="attack" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Angriff prüfen</button>`:""}${hasMan?`<button data-battle-status-action="maneuver" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Manöver prüfen</button>`:""}</div>
   </article>`;
 }
@@ -1417,8 +1449,11 @@ function renderBattleDashboard(){
   if(!app.activeBattle){ view.innerHTML=""; return; }
   $("#battleTitle").textContent=`${app.activeBattle.sides?.own?.label||"Team A"} vs ${app.activeBattle.sides?.opponent?.label||"Team B"}`;
   $("#battleFieldSize").textContent=`${app.activeBattle.fieldSize||1} gegen ${app.activeBattle.fieldSize||1}`;
+  const modeLabel=$("#battleModeLabel"); if(modeLabel) modeLabel.textContent=isComplexBattleMode()?"Komplexer Modus":"Einfaches Dashboard";
+  const eyebrow=$("#battleModeEyebrow"); if(eyebrow) eyebrow.textContent=isComplexBattleMode()?"PU · Synchronisierter Kampftisch":"PU · Kampfdashboard";
   const evt=app.activeBattle.lastEvent?.text||"Kampf läuft"; $("#battleLastEvent").textContent=evt;
-  renderBattleSide("own"); renderBattleSide("opponent"); renderBattleCalculator();
+  const calc=$(".battle-calculator"); if(calc) calc.classList.toggle("hidden",!isComplexBattleMode());
+  renderBattleSide("own"); renderBattleSide("opponent"); if(isComplexBattleMode()) renderBattleCalculator();
   const ownLost=battleAllDefeated("own"), oppLost=battleAllDefeated("opponent");
   const result=$("#battleVictoryBanner"); result.classList.toggle("hidden",!ownLost&&!oppLost);
   if(ownLost||oppLost) result.innerHTML=`<strong>⚑ Kampf entschieden</strong><span>${ownLost&&oppLost?"Beide Teams sind besiegt.":ownLost?`${escapeHtml(app.activeBattle.sides?.opponent?.label||"Gegner")} hat gewonnen.`:`${escapeHtml(app.activeBattle.sides?.own?.label||"Spieler")} hat gewonnen.`}</span>`;
@@ -1674,7 +1709,7 @@ async function init(){
   loadSessionPoolState();
   if(app.mapData) await loadMapTrainerConfig();
 
-  buildTypeStrip(); buildLibraryTypeStrip(); bindEvents(); setupMapCanvas(); subscribeActiveBattle();
+  buildTypeStrip(); buildLibraryTypeStrip(); bindEvents(); setupMapCanvas(); subscribeAppConfig(); subscribeActiveBattle();
   onAuthStateChanged(auth, async user=>{
     app.user=user||null; app.isAdmin=!!user && user.uid===ADMIN_UID;
     updateAuthUI();
@@ -1691,14 +1726,14 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13.1").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13.2").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
   try {
     const snap=await getDocs(collection(db,"players"));
     app.adminPlayerData=snap.docs
-      .filter(d=>d.id!==MAP_CONFIG_DOC && d.data()?.kind!=="map-config")
+      .filter(d=>![MAP_CONFIG_DOC,APP_CONFIG_DOC].includes(d.id) && !["map-config","app-config"].includes(d.data()?.kind))
       .map(d=>{
         const data=d.data()||{};
         return {id:d.id,name:data.name||"Spieler",state:normalizeState(data.pokemon||{}),profile:normalizeProfile(data.profile||{})};
@@ -2257,6 +2292,8 @@ function setSyncLabel(t){ const el=$("#syncStatus"); if(el) el.textContent=t; }
 
 function updateAuthUI(){
   $("#adminControls").classList.toggle("hidden",!app.isAdmin);
+  $("#battleModeControls").classList.toggle("hidden",!app.isAdmin);
+  const battleToggle=$("#complexBattleToggle"); if(battleToggle) battleToggle.checked=isComplexBattleMode();
   $("#directorBtn").classList.toggle("hidden",!app.isAdmin);
   $("#loginBox").classList.toggle("hidden",!!app.user);
   $("#loggedInBox").classList.toggle("hidden",!app.user);
@@ -2431,6 +2468,7 @@ function bindEvents(){
   $("#newPlayerBtn").addEventListener("click",createPlayer);
   $("#newPlayerName").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();createPlayer();}});
   $("#editModeToggle").addEventListener("change",e=>{if(!app.isAdmin){e.target.checked=false;toast("Admin-Anmeldung erforderlich");return;}app.editMode=e.target.checked;if(!app.editMode)app.mapTrainerMoveId=null;render();toast(app.editMode?"Bearbeitungsmodus aktiv":"Ansichtsmodus aktiv");});
+  $("#complexBattleToggle").addEventListener("change",e=>{if(!app.isAdmin){e.target.checked=isComplexBattleMode();toast("Admin-Anmeldung erforderlich");return;}setComplexBattleMode(e.target.checked);});
   $("#exportBtn").addEventListener("click",exportState); $("#shareBtn").addEventListener("click",sharePlayer); $("#saveNowBtn").addEventListener("click",saveToFirebase); $("#installAppBtn").addEventListener("click",installPwa);
   $("#loginBtn").addEventListener("click",doLogin); $("#logoutBtn").addEventListener("click",doLogout); $("#adminPassword").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
   window.addEventListener("beforeunload",()=>{ if(app.dirty){ cacheState(); cacheProfile(); } });

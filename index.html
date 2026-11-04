@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>PU Dex</title>
-  <link rel="manifest" href="manifest.webmanifest?v=13.1">
+  <link rel="manifest" href="manifest.webmanifest?v=13.2">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=13.1">
+  <link rel="stylesheet" href="styles.css?v=13.2">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -437,7 +437,7 @@
 
       <section class="fight-panel live-launch-panel" id="fightLaunchPanel">
         <div class="fight-panel-head">
-          <div><p class="eyebrow">Synchronisierter Kampftisch</p><h2>Kampf auf allen Geräten starten</h2></div>
+          <div><p class="eyebrow">Synchronisierter Kampf</p><h2>Kampf auf allen Geräten starten</h2></div>
         </div>
         <div class="fight-launch-info" id="fightLaunchInfo"><strong>0 vs 0 Pokémon</strong><span>Startfeld wählen</span></div>
         <p class="fight-help" id="fightLaunchHint">Wähle auf beiden Seiten gleich viele Start-Pokémon (1 oder 2).</p>
@@ -486,9 +486,9 @@
     <main id="battleView" class="battle-view hidden">
       <section class="battle-top">
         <div>
-          <p class="eyebrow">PU · Synchronisierter Kampftisch</p>
+          <p class="eyebrow" id="battleModeEyebrow">PU · Synchronisierter Kampftisch</p>
           <h1 id="battleTitle">Laufender Kampf</h1>
-          <div class="battle-top-meta"><span id="battleFieldSize">1 gegen 1</span><span>max. 6 Pokémon je Team</span></div>
+          <div class="battle-top-meta"><span id="battleFieldSize">1 gegen 1</span><span id="battleModeLabel">Einfaches Dashboard</span></div>
         </div>
         <div class="battle-top-actions">
           <button class="secondary-btn" id="battleBackBtn" type="button">Zur Vorbereitung</button>
@@ -682,6 +682,10 @@
           <div><strong>Bearbeitungsmodus</strong><small>Änderungen werden automatisch gespeichert.</small></div>
           <label class="switch"><input id="editModeToggle" type="checkbox"><span></span></label>
         </div>
+        <div class="setting-row hidden" id="battleModeControls">
+          <div><strong>Komplexer Kampfmodus</strong><small>Kartenwahl, Kampfrechner und Zugreihenfolge im Kampftisch anzeigen.</small></div>
+          <label class="switch"><input id="complexBattleToggle" type="checkbox"><span></span></label>
+        </div>
         <button class="setting-button hidden" id="directorBtn" type="button"><span>♟</span><div><strong>Spielleiter-Zentrale</strong><small>Alle Spieler, Standorte und Fortschritte im Überblick</small></div></button>
         <button class="setting-button" id="shareBtn"><span>↗</span><div><strong>Spieler-Link kopieren</strong><small>Nur dieser Dex wird über den Link geöffnet</small></div></button>
         <button class="setting-button" id="saveNowBtn"><span>☁</span><div><strong>Jetzt synchronisieren</strong><small id="syncStatus">Synchronisiert</small></div></button>
@@ -693,6 +697,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script type="module" src="app.js?v=13.1"></script>
+  <script type="module" src="app.js?v=13.2"></script>
 </body>
 </html>

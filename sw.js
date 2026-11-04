@@ -1,4 +1,4 @@
-const CACHE="pu-dex-v13-1-guided-flow-20261005";
+const CACHE="pu-dex-v13-2-battle-mode-20261104";
 const CORE=[
   "./",
   "./index.html",
