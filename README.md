@@ -1,9 +1,5 @@
 # PU-Dex
 
-## v13.7 – Kampf-Dashboard im Handy-Querformat
-
-Der einfache Kampfmodus füllt im Querformat die gesamte verfügbare Bildschirmbreite. Bis zu vier aktive Pokémon werden als kompaktes 2×2-Raster gezeigt: mit Bild, KP-Steuerung, Zuständen, Werten, Typenprofil und Zusatznachzügen. Die obere App-Leiste und die Kampf-Ereignisleiste werden in dieser Ansicht ausgeblendet; Reserve-Pokémon bleiben darunter erreichbar. Hochformat und PC-Darstellung bleiben erhalten. Details: `README-v13.7.md`.
-
 ## v13.6 – Typen- und Werte-Symbole
 
 19 neue Symbole für 15 Pokémon-/Attackentypen und die vier Werte Angriff, Verteidigung, Genauigkeit, Initiative. Im einfachen Kampfdashboard werden Schwächen, Resistenzen und Immunitäten mit Typen-Icons und ihren Kartenwert-Modifikatoren angezeigt. Die Anzeige einer Zugreihenfolge bzw. „wer am Zug ist“ entfällt in diesem Modus. Details: `README-v13.6.md`.
