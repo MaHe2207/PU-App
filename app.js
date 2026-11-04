@@ -1312,7 +1312,7 @@ async function startLiveBattle(){
     return {side,slot:sideData.activeSlots.indexOf(m.uid)};
   }).filter(x=>x.slot>=0);
   const payload={
-    version:13.2,status:"running",fieldSize,sourcePlayerId:app.player.id,sourcePlayerName:app.player.name,
+    version:13.3,status:"running",fieldSize,sourcePlayerId:app.player.id,sourcePlayerName:app.player.name,
     createdAt:serverTimestamp(),updatedAt:serverTimestamp(),lastEvent:{text:`Kampf gestartet · ${fieldSize} gegen ${fieldSize}`,time:Date.now()},
     turn:{order:ordered,index:0},
     sides:{own:ownSide,opponent:opponentSide}
@@ -1403,6 +1403,43 @@ function battleStatusPills(f){
   const entries=BATTLE_STATUS_KEYS.filter(k=>f?.statuses?.[k]?.active);
   return entries.length?entries.map(k=>`<span class="battle-status-pill status-${k}">${BATTLE_STATUS_ICONS[k]||"•"} ${battleStatusLabel(k)}</span>`).join(""):`<span class="battle-status-pill muted">kein Zustand</span>`;
 }
+function simpleBattleStatusControls(side,f){
+  return `<div class="simple-battle-statuses">${BATTLE_STATUS_KEYS.map(k=>{const st=f.statuses?.[k]||{};return `<button class="${st.active?"active":""} status-${k}" data-simple-status-toggle="${k}" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button" title="${escapeHtml(battleStatusLabel(k))}"><span>${BATTLE_STATUS_ICONS[k]||"•"}</span><small>${escapeHtml(battleStatusLabel(k))}</small></button>`;}).join("")}</div>`;
+}
+function simpleBattleStatControls(side,f){
+  const stats=f.stats||{};
+  return `<div class="simple-battle-stats">${["attack","defense","accuracy","initiative"].map(k=>`<div><small>${BATTLE_STAT_LABELS[k]}</small><div class="simple-stat-counter"><button data-simple-stat-step="${k}" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−</button><strong>${stats[k]>=0?"+":""}${stats[k]||0}</strong><button data-simple-stat-step="${k}" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+</button></div></div>`).join("")}</div>`;
+}
+function renderSimpleBattleFighterCard(side,f,position){
+  const p=battleFighterPokemon(f), type=p?.type||"Normal", hpPct=Math.max(0,Math.min(100,Math.round((f.currentHp/f.maxHp)*100))), stats=f.stats||{};
+  const hasTurn=f.statuses?.poisoned?.active||f.statuses?.burned?.active;
+  const hasAttack=BATTLE_STATUS_KEYS.some(k=>f.statuses?.[k]?.active&&(app.battleRules?.statuses?.[k]?.actions||[]).includes("attack")) || (+stats.accuracy<0);
+  const hasMan=BATTLE_STATUS_KEYS.some(k=>f.statuses?.[k]?.active&&(app.battleRules?.statuses?.[k]?.actions||[]).includes("maneuver"));
+  return `<article class="simple-battle-fighter" style="${typeVars(type)}">
+    <div class="simple-battle-order">${position}</div>
+    <div class="simple-battle-identity"><img src="${p?.image||FALLBACK_IMAGE}" alt="${escapeHtml(p?.name||"Pokémon")}"><div><small>${side==="own"?escapeHtml(app.activeBattle?.sides?.own?.label||"Spieler"):escapeHtml(app.activeBattle?.sides?.opponent?.label||"Gegner")} · Lv ${f.level}</small><h3>${escapeHtml(p?.name||"Pokémon")}</h3><span>${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span></div></div>
+    <div class="simple-battle-hp"><div class="simple-battle-hp-top"><span>KP</span><strong>${f.currentHp} / ${f.maxHp}</strong></div><div class="battle-hp-track"><span style="width:${hpPct}%"></span></div><div class="simple-battle-hp-buttons"><button data-battle-hp="-5" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−5</button><button data-battle-hp="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−1</button><button data-battle-hp="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+1</button><button data-battle-hp="5" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+5</button></div></div>
+    <div class="simple-battle-controls"><div><label>Zustände</label>${simpleBattleStatusControls(side,f)}</div><div><label>Werte</label>${simpleBattleStatControls(side,f)}</div></div>
+    <div class="simple-battle-checks">${hasTurn?`<button data-battle-status-action="turnStart" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Zugbeginn</button>`:""}${hasAttack?`<button data-battle-status-action="attack" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Angriff prüfen</button>`:""}${hasMan?`<button data-battle-status-action="maneuver" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Manöver prüfen</button>`:""}</div>
+  </article>`;
+}
+function renderSimpleBattleReserve(){
+  const blocks=[];
+  for(const side of ["own","opponent"]){
+    const s=app.activeBattle?.sides?.[side]; if(!s) continue;
+    const slots=s.activeSlots||[], activeIds=new Set(slots.filter(Boolean)), roster=Object.values(s.roster||{});
+    const reserve=roster.filter(f=>f.currentHp>0&&!activeIds.has(f.uid)); const defeated=roster.filter(f=>f.currentHp<=0); const free=slots.some(x=>!x);
+    blocks.push(`<details class="simple-battle-roster" ${free&&reserve.length?"open":""}><summary><strong>${escapeHtml(s.label||"")}</strong><span>Reserve ${reserve.length} · Besiegt ${defeated.length}</span></summary><div class="simple-battle-roster-list">${reserve.length?reserve.map(f=>renderBattleFighterCard(side,f,true)).join(""):`<div class="battle-small-empty">Keine Reserve</div>`}${defeated.length?`<div class="simple-defeated-title">Besiegt</div>${defeated.map(f=>renderBattleFighterCard(side,f,true)).join("")}`:""}</div></details>`);
+  }
+  return blocks.join("");
+}
+function renderSimpleBattleBoard(){
+  const root=$("#battleSimpleBoard"); if(!root||!app.activeBattle) return;
+  const entries=[];
+  battleTurnOrder().forEach((ref,i)=>{const uid=battleActiveSlots(ref.side)[ref.slot]||null,f=uid?battleFighter(ref.side,uid):null;if(f)entries.push({side:ref.side,f,position:i+1});});
+  root.innerHTML=`<div class="simple-battle-heading"><div><p class="eyebrow">Aktive Pokémon</p><h2>Kampf-Reihenfolge</h2></div><span>${entries.length} aktiv</span></div><div class="simple-battle-list">${entries.map(x=>renderSimpleBattleFighterCard(x.side,x.f,x.position)).join("")}</div><div class="simple-battle-reserves">${renderSimpleBattleReserve()}</div>`;
+  root.querySelectorAll("img").forEach(setImgFallback);
+}
 function battleTypeModifiersHtml(f){
   const mods=pokemonCharacterCard(f?.pokemonId)?.typeModifiers||{};
   const rows=Object.entries(mods).sort((a,b)=>a[0].localeCompare(b[0],"de"));
@@ -1447,13 +1484,19 @@ function renderBattleSide(side){
 function renderBattleDashboard(){
   const view=$("#battleView"); if(!view) return;
   if(!app.activeBattle){ view.innerHTML=""; return; }
+  const complex=isComplexBattleMode();
+  view.classList.toggle("simple-battle-mode",!complex);
   $("#battleTitle").textContent=`${app.activeBattle.sides?.own?.label||"Team A"} vs ${app.activeBattle.sides?.opponent?.label||"Team B"}`;
   $("#battleFieldSize").textContent=`${app.activeBattle.fieldSize||1} gegen ${app.activeBattle.fieldSize||1}`;
-  const modeLabel=$("#battleModeLabel"); if(modeLabel) modeLabel.textContent=isComplexBattleMode()?"Komplexer Modus":"Einfaches Dashboard";
-  const eyebrow=$("#battleModeEyebrow"); if(eyebrow) eyebrow.textContent=isComplexBattleMode()?"PU · Synchronisierter Kampftisch":"PU · Kampfdashboard";
+  const modeLabel=$("#battleModeLabel"); if(modeLabel) modeLabel.textContent=complex?"Komplexer Modus":"Einfaches Dashboard";
+  const eyebrow=$("#battleModeEyebrow"); if(eyebrow) eyebrow.textContent=complex?"PU · Synchronisierter Kampftisch":"PU · Kampfdashboard";
   const evt=app.activeBattle.lastEvent?.text||"Kampf läuft"; $("#battleLastEvent").textContent=evt;
-  const calc=$(".battle-calculator"); if(calc) calc.classList.toggle("hidden",!isComplexBattleMode());
-  renderBattleSide("own"); renderBattleSide("opponent"); if(isComplexBattleMode()) renderBattleCalculator();
+  const calc=$(".battle-calculator"); if(calc) calc.classList.toggle("hidden",!complex);
+  const simple=$("#battleSimpleBoard"), complexBoard=$("#battleComplexBoard");
+  if(simple) simple.classList.toggle("hidden",complex);
+  if(complexBoard) complexBoard.classList.toggle("hidden",!complex);
+  if(complex){ renderBattleSide("own"); renderBattleSide("opponent"); renderBattleCalculator(); }
+  else renderSimpleBattleBoard();
   const ownLost=battleAllDefeated("own"), oppLost=battleAllDefeated("opponent");
   const result=$("#battleVictoryBanner"); result.classList.toggle("hidden",!ownLost&&!oppLost);
   if(ownLost||oppLost) result.innerHTML=`<strong>⚑ Kampf entschieden</strong><span>${ownLost&&oppLost?"Beide Teams sind besiegt.":ownLost?`${escapeHtml(app.activeBattle.sides?.opponent?.label||"Gegner")} hat gewonnen.`:`${escapeHtml(app.activeBattle.sides?.own?.label||"Spieler")} hat gewonnen.`}</span>`;
@@ -1496,13 +1539,13 @@ function renderBattleFighterSheet(){
     <p class="battle-sheet-note">Genauigkeit und Zustände werden mit den vorgesehenen Würfen geprüft. Eingefroren wird manuell entfernt.</p>`;
   $("#battleFighterSheetBody").querySelectorAll("img").forEach(setImgFallback);
 }
-async function toggleBattleStatus(key){
-  const sel=app.battleSelectedFighter, f=sel&&battleFighter(sel.side,sel.uid); if(!f||!BATTLE_STATUS_KEYS.includes(key)) return;
+async function toggleBattleStatus(key,side=null,uid=null){
+  const sel=side&&uid?{side,uid}:app.battleSelectedFighter, f=sel&&battleFighter(sel.side,sel.uid); if(!f||!BATTLE_STATUS_KEYS.includes(key)) return;
   const cur=f.statuses?.[key]||{active:false,actions:0}, next={active:!cur.active,actions:0};
   await battleUpdate({[`sides.${sel.side}.roster.${sel.uid}.statuses.${key}`]:next},`${battleFighterPokemon(f)?.name||"Pokémon"}: ${battleStatusLabel(key)} ${next.active?"aktiviert":"entfernt"}`);
 }
-async function stepBattleStat(key,delta){
-  const sel=app.battleSelectedFighter, f=sel&&battleFighter(sel.side,sel.uid); if(!f||!BATTLE_STAT_LABELS[key]) return;
+async function stepBattleStat(key,delta,side=null,uid=null){
+  const sel=side&&uid?{side,uid}:app.battleSelectedFighter, f=sel&&battleFighter(sel.side,sel.uid); if(!f||!BATTLE_STAT_LABELS[key]) return;
   let next=clampBattleStat(key,(+f.stats?.[key]||0)+delta);
   await battleUpdate({[`sides.${sel.side}.roster.${sel.uid}.stats.${key}`]:next},`${battleFighterPokemon(f)?.name||"Pokémon"}: ${BATTLE_STAT_LABELS[key]} ${next>=0?"+":""}${next}`);
 }
@@ -1538,6 +1581,8 @@ async function runBattleStatusAction(side,uid,action){
 }
 function handleBattleAreaClick(e){
   const hp=e.target.closest("[data-battle-hp]"); if(hp){setBattleHp(hp.dataset.battleSide,hp.dataset.battleUid,+hp.dataset.battleHp);return;}
+  const simpleStatus=e.target.closest("[data-simple-status-toggle]"); if(simpleStatus){toggleBattleStatus(simpleStatus.dataset.simpleStatusToggle,simpleStatus.dataset.battleSide,simpleStatus.dataset.battleUid);return;}
+  const simpleStat=e.target.closest("[data-simple-stat-step]"); if(simpleStat){stepBattleStat(simpleStat.dataset.simpleStatStep,+simpleStat.dataset.battleDelta,simpleStat.dataset.battleSide,simpleStat.dataset.battleUid);return;}
   const counter=e.target.closest("[data-battle-counter]"); if(counter){changeBattleCounter(counter.dataset.battleSide,counter.dataset.battleUid,counter.dataset.battleCounter,+counter.dataset.battleDelta);return;}
   const promote=e.target.closest("[data-battle-promote]"); if(promote){promoteBattleFighter(promote.dataset.battleSide,promote.dataset.battlePromote);return;}
   const manage=e.target.closest("[data-battle-manage]"); if(manage){openBattleFighterSheet(manage.dataset.battleSide,manage.dataset.battleManage);return;}
@@ -1726,7 +1771,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13.2").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13.3").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
@@ -2441,6 +2486,7 @@ function bindEvents(){
   $("#battleEndBtn").addEventListener("click",endLiveBattle);
   $("#battleOwnSide").addEventListener("click",handleBattleAreaClick);
   $("#battleOpponentSide").addEventListener("click",handleBattleAreaClick);
+  $("#battleSimpleBoard").addEventListener("click",handleBattleAreaClick);
   $("#battleNextTurnBtn").addEventListener("click",nextBattleTurn);
   $("#battleCalcDefender").addEventListener("change",e=>{app.battleCalc.defender=e.target.value;app.battleCalc.defenseCard="";app.battleCalc.result=null;renderBattleCalculator();});
   $("#battleCalcAttackCard").addEventListener("change",e=>{app.battleCalc.attackCard=e.target.value;app.battleCalc.result=null;renderBattleCalculator();});

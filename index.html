@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>PU Dex</title>
-  <link rel="manifest" href="manifest.webmanifest?v=13.2">
+  <link rel="manifest" href="manifest.webmanifest?v=13.3">
   <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="styles.css?v=13.2">
+  <link rel="stylesheet" href="styles.css?v=13.3">
 </head>
 <body>
   <div id="app" class="app-shell">
@@ -501,7 +501,9 @@
       </section>
       <section class="battle-victory hidden" id="battleVictoryBanner"></section>
 
-      <section class="battle-table-grid">
+      <section class="battle-simple-board hidden" id="battleSimpleBoard"></section>
+
+      <section class="battle-table-grid" id="battleComplexBoard">
         <div class="battle-side" id="battleOwnSide"></div>
         <div class="battle-side" id="battleOpponentSide"></div>
       </section>
@@ -697,6 +699,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
   </div>
-  <script type="module" src="app.js?v=13.2"></script>
+  <script type="module" src="app.js?v=13.3"></script>
 </body>
 </html>
