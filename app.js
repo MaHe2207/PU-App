@@ -11,7 +11,7 @@ const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 const FALLBACK_IMAGE = "assets/placeholder.svg";
-const APP_VERSION = "13.4";
+const APP_VERSION = "13.5";
 const LAYOUT_MODE_KEY = "pu-dex-layout-mode";
 
 const TYPE_COLORS = {
@@ -1164,6 +1164,7 @@ function showModule(view){
     if(app.player) $("#moduleNav").classList.remove("hidden");
     $("#brandLabel").textContent="Spielleitung";
     $$("#moduleNav [data-module]").forEach(b=>b.classList.remove("active"));
+    renderBattleBanner();
     renderDirector(); closeSheets(); window.scrollTo({top:0,behavior:"instant"}); return;
   }
   if(!app.player){ showNoPlayer(); return; }
@@ -1178,6 +1179,8 @@ function showModule(view){
   $("#fightView").classList.toggle("hidden",app.view!=="fight");
   $("#battleView").classList.add("hidden");
   $("#libraryView").classList.toggle("hidden",app.view!=="library");
+  $("#moduleNav").classList.remove("hidden");
+  renderBattleBanner();
   $("#brandLabel").textContent=app.view==="dashboard"?"PU":app.view==="fight"?"Kampf":app.view==="encounter"?"Begegnung":app.view==="map"?"Karte":app.view==="library"?"Bibliothek":"Dex";
   $$("#moduleNav [data-module]").forEach(b=>b.classList.toggle("active",b.dataset.module===app.view));
   if(app.view==="dashboard") renderDashboard();
@@ -1291,7 +1294,7 @@ function startNextFight(){
 
 const ACTIVE_BATTLE_DOC="active";
 const BATTLE_STATUS_KEYS=["paralyzed","confused","poisoned","burned","sleeping","frozen"];
-const BATTLE_STATUS_ICONS={paralyzed:"⚡",confused:"?",poisoned:"☠",burned:"🔥",sleeping:"Zz",frozen:"❄"};
+const BATTLE_STATUS_ICONS={paralyzed:"⚡",confused:"😵",poisoned:"🤢",burned:"🔥",sleeping:"💤",frozen:"🧊"};
 const BATTLE_STAT_LABELS={attack:"Angriff",defense:"Verteidigung",accuracy:"Genauigkeit",initiative:"Initiative"};
 const BATTLE_STAT_LIMITS={attack:[-1,2],defense:[-2,1],accuracy:[-2,2],initiative:[-2,2]};
 function clampBattleStat(key,value){ const [min,max]=BATTLE_STAT_LIMITS[key]||[-99,99]; return Math.max(min,Math.min(max,+value||0)); }
@@ -1373,7 +1376,7 @@ function activeBattleNames(side){
 }
 function renderBattleBanner(){
   const b=$("#activeBattleBanner"); if(!b) return;
-  b.classList.toggle("hidden",!app.activeBattle);
+  b.classList.toggle("hidden",!app.activeBattle||app.view==="battle");
   if(!app.activeBattle) return;
   const own=app.activeBattle.sides?.own?.label||"Team A", opp=app.activeBattle.sides?.opponent?.label||"Team B";
   $("#activeBattleBannerText").textContent=`${own}: ${activeBattleNames("own")} · ${opp}: ${activeBattleNames("opponent")}`;
@@ -1385,7 +1388,8 @@ function showBattleDashboard(){
   if(!app.activeBattle){ toast("Aktuell läuft kein Kampf"); return; }
   app.view="battle"; app.selectedId=null; hideAllMainViews(); $("#battleView").classList.remove("hidden");
   $("#brandLabel").textContent="Kampftisch"; $$("#moduleNav [data-module]").forEach(b=>b.classList.remove("active"));
-  if(app.player) $("#moduleNav").classList.remove("hidden"); else $("#moduleNav").classList.add("hidden");
+  $("#moduleNav").classList.add("hidden");
+  renderBattleBanner();
   closeSheets(); renderBattleDashboard(); window.scrollTo({top:0,behavior:"instant"});
 }
 function battleRoster(side){ return app.activeBattle?.sides?.[side]?.roster||{}; }
@@ -1440,7 +1444,7 @@ function renderSimpleBattleFighterCard(side,f,position){
     <div class="simple-battle-identity"><img src="${p?.image||FALLBACK_IMAGE}" alt="${escapeHtml(p?.name||"Pokémon")}"><div><small>${side==="own"?escapeHtml(app.activeBattle?.sides?.own?.label||"Spieler"):escapeHtml(app.activeBattle?.sides?.opponent?.label||"Gegner")} · Lv ${f.level}</small><h3>${escapeHtml(p?.name||"Pokémon")}</h3><span>${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span></div></div>
     <div class="simple-battle-hp"><div class="simple-battle-hp-top"><span>KP</span><strong>${f.currentHp} / ${f.maxHp}</strong></div><div class="battle-hp-track"><span style="width:${hpPct}%"></span></div><div class="simple-battle-hp-buttons"><button data-battle-hp="-5" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−5</button><button data-battle-hp="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−1</button><button data-battle-hp="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+1</button><button data-battle-hp="5" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+5</button></div></div>
     <div class="simple-battle-controls"><div><label>Zustände</label>${simpleBattleStatusControls(side,f)}</div><div><label>Werte</label>${simpleBattleStatControls(side,f)}</div></div>
-    <div class="simple-battle-checks">${hasTurn?`<button data-battle-status-action="turnStart" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Zugbeginn</button>`:""}${hasAttack?`<button data-battle-status-action="attack" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Angriff prüfen</button>`:""}${hasMan?`<button data-battle-status-action="maneuver" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Manöver prüfen</button>`:""}</div>
+    <div class="simple-battle-checks"><div class="simple-battle-extra"><small>Zusatznachzüge</small><div class="battle-counter simple-extra-counter"><button data-battle-counter="extraDraws" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button" aria-label="Zusatznachzüge verringern">−</button><strong>${f.extraDraws??0}</strong><button data-battle-counter="extraDraws" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button" aria-label="Zusatznachzüge erhöhen">+</button></div></div>${hasTurn?`<button data-battle-status-action="turnStart" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Zugbeginn</button>`:""}${hasAttack?`<button data-battle-status-action="attack" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Angriff prüfen</button>`:""}${hasMan?`<button data-battle-status-action="maneuver" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Manöver prüfen</button>`:""}</div>
   </article>`;
 }
 function renderSimpleBattleReserve(){
@@ -1554,7 +1558,7 @@ function renderBattleFighterSheet(){
   $("#battleFighterSheetName").textContent=p.name;
   const stats=f.stats||{};
   $("#battleFighterSheetBody").innerHTML=`<div class="battle-sheet-summary"><img src="${p.image||FALLBACK_IMAGE}" alt="${escapeHtml(p.name)}"><div><strong>${escapeHtml(p.name)} · Lv ${f.level}</strong><span>${f.currentHp}/${f.maxHp} KP · ${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span></div></div>
-    <h3>Zustände</h3><div class="battle-status-toggle-grid">${BATTLE_STATUS_KEYS.map(k=>{const st=f.statuses?.[k]||{};return `<button class="${st.active?"active":""}" data-battle-status-toggle="${k}" type="button"><span>${BATTLE_STATUS_ICONS[k]||"•"}</span><strong>${battleStatusLabel(k)}</strong><small>${st.active&&st.actions?`${st.actions} Aktionen`:st.active?"aktiv":"inaktiv"}</small></button>`;}).join("")}</div>
+    <h3>Zustände</h3><div class="battle-status-toggle-grid">${BATTLE_STATUS_KEYS.map(k=>{const st=f.statuses?.[k]||{};return `<button class="status-${k} ${st.active?"active":""}" data-battle-status-toggle="${k}" type="button"><span>${BATTLE_STATUS_ICONS[k]||"•"}</span><strong>${battleStatusLabel(k)}</strong><small>${st.active&&st.actions?`${st.actions} Aktionen`:st.active?"aktiv":"inaktiv"}</small></button>`;}).join("")}</div>
     <h3>Statuswerte</h3><div class="battle-stat-edit">${["attack","defense","accuracy","initiative"].map(k=>`<div><span>${BATTLE_STAT_LABELS[k]}</span><div class="battle-counter"><button data-battle-stat-step="${k}" data-battle-delta="-1" type="button">−</button><strong>${stats[k]>=0?"+":""}${stats[k]||0}</strong><button data-battle-stat-step="${k}" data-battle-delta="1" type="button">+</button></div></div>`).join("")}</div>
     <p class="battle-sheet-note">Genauigkeit und Zustände werden mit den vorgesehenen Würfen geprüft. Eingefroren wird manuell entfernt.</p>`;
   $("#battleFighterSheetBody").querySelectorAll("img").forEach(setImgFallback);
@@ -1793,7 +1797,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13.4").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13.5").catch(()=>{});
 }
 
 async function loadAdminPlayers(){

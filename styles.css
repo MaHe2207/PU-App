@@ -593,3 +593,26 @@ html[data-effective-layout="mobile"] .simple-battle-checks{grid-template-columns
 html[data-effective-layout="mobile"] .simple-battle-reserves,
 html[data-effective-layout="mobile"] .simple-battle-roster-list{grid-template-columns:1fr}
 @media(max-width:360px){html[data-effective-layout="mobile"] .dex-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* v13.5: Einheitlich farbige Zustandssymbole im einfachen und komplexen Kampf. */
+.simple-battle-statuses .status-paralyzed,.battle-status-toggle-grid .status-paralyzed,.battle-status-pill.status-paralyzed{--status-soft:#fff1c7;--status-ink:#946500}
+.simple-battle-statuses .status-confused,.battle-status-toggle-grid .status-confused,.battle-status-pill.status-confused{--status-soft:#f0e7ff;--status-ink:#6947a7}
+.simple-battle-statuses .status-poisoned,.battle-status-toggle-grid .status-poisoned,.battle-status-pill.status-poisoned{--status-soft:#f6e3fa;--status-ink:#913ba2}
+.simple-battle-statuses .status-burned,.battle-status-toggle-grid .status-burned,.battle-status-pill.status-burned{--status-soft:#ffe7dc;--status-ink:#aa4b23}
+.simple-battle-statuses .status-sleeping,.battle-status-toggle-grid .status-sleeping,.battle-status-pill.status-sleeping{--status-soft:#e5f1ff;--status-ink:#2d70aa}
+.simple-battle-statuses .status-frozen,.battle-status-toggle-grid .status-frozen,.battle-status-pill.status-frozen{--status-soft:#e1f7ff;--status-ink:#237d9d}
+.simple-battle-statuses button>span,.battle-status-toggle-grid button>span{display:grid;place-items:center;width:27px;height:26px;border-radius:8px;background:var(--status-soft,#edf2f6);font-size:1.1rem;line-height:1}
+.simple-battle-statuses button.active,.battle-status-toggle-grid button.active{border-color:var(--status-ink,#ff766f);background:var(--status-soft,#fff3f2);color:var(--status-ink,#9f3834);box-shadow:inset 0 0 0 1px var(--status-ink,#ff766f)}
+.battle-status-pill:not(.muted){background:var(--status-soft,#eef2f5);color:var(--status-ink,#4d5965)}
+
+/* Zusatznachzüge in der einfachen Kampfansicht, ohne eine weitere PC-Spalte. */
+.simple-battle-extra{display:grid;gap:3px;min-width:0;padding:5px;border:1px solid #dce4f1;border-radius:10px;background:#f1f5fc}
+.simple-battle-extra small{font-size:.56rem;font-weight:850;color:#52667e;text-align:center;white-space:nowrap}
+.simple-battle-extra .simple-extra-counter{grid-template-columns:24px minmax(0,1fr) 24px;gap:2px}
+.simple-battle-extra .simple-extra-counter button{width:24px;height:26px;border-radius:7px;padding:0}
+.simple-battle-extra .simple-extra-counter strong{font-size:.82rem}
+@media(max-width:720px){.simple-battle-extra{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:7px 9px}.simple-battle-extra .simple-extra-counter{width:112px}}
+html[data-effective-layout="mobile"] .simple-battle-extra{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:7px 9px}
+html[data-effective-layout="mobile"] .simple-battle-extra .simple-extra-counter{width:112px}
+html[data-effective-layout="desktop"] .simple-battle-extra{grid-column:auto;display:grid;padding:5px}
+html[data-effective-layout="desktop"] .simple-battle-extra .simple-extra-counter{width:auto}

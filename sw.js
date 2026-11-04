@@ -1,4 +1,4 @@
-const CACHE="pu-dex-v13-4-device-layout-20261104";
+const CACHE="pu-dex-v13-5-battle-focus-20261104";
 const CORE=[
   "./",
   "./index.html",

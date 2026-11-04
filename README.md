@@ -1,5 +1,9 @@
 # PU-Dex
 
+## v13.5 – freie Sicht im Kampf und farbige Zustände
+
+Auf dem Kampfbildschirm verschwinden die untere Navigation und der rote Sprung-zum-Kampf-Hinweis. In den anderen Menüs bleiben Navigation und Kampfsprung erhalten. Alle sechs Zustandssymbole sind nun farbig, und der einfache Modus zeigt die Zusatznachzüge mit Plus-/Minus-Buttons. Siehe `README-v13.5.md`.
+
 ## v13.4 – PC- und Handymodus
 
 Im Einstellungsmenü stehen **Automatisch**, **PC** und **Handy** zur Wahl. Die Darstellung gilt für alle Bereiche und wird pro Gerät gespeichert. Zusätzlich zeigt der Einstellungsbereich die installierte Versionsnummer. Details stehen in `README-v13.4.md`.
