@@ -11,6 +11,8 @@ const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 const FALLBACK_IMAGE = "assets/placeholder.svg";
+const APP_VERSION = "13.4";
+const LAYOUT_MODE_KEY = "pu-dex-layout-mode";
 
 const TYPE_COLORS = {
   "Pflanze":["#47a86a","#eaf7ee"], "Feuer":["#f0554b","#fff0ee"], "Wasser":["#4b95d9","#edf6ff"],
@@ -57,6 +59,24 @@ const escapeHtml = value => String(value ?? "").replace(/[&<>"]/g, c => ({"&":"&
 function typeVars(type){ const [a,b]=TYPE_COLORS[type]||["#8793a0","#f1f3f5"]; return `--type:${a};--type-soft:${b};`; }
 function setImgFallback(img){ img.addEventListener("error",()=>{ if(!img.src.endsWith("placeholder.svg")) img.src=FALLBACK_IMAGE; },{once:true}); }
 function toast(msg){ const el=$("#toast"); el.textContent=msg; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),2200); }
+function applyLayoutMode(requestedMode, save=false){
+  const mode=["auto","desktop","mobile"].includes(requestedMode)?requestedMode:"auto";
+  const effective=mode==="auto"?(window.innerWidth>=1100?"desktop":"responsive"):mode;
+  const root=document.documentElement;
+  const changed=root.dataset.effectiveLayout!==effective;
+  root.dataset.layoutMode=mode;
+  root.dataset.effectiveLayout=effective;
+  $$("#layoutModeOptions [data-layout-choice]").forEach(btn=>{
+    const active=btn.dataset.layoutChoice===mode;
+    btn.classList.toggle("active",active);
+    btn.setAttribute("aria-pressed",String(active));
+  });
+  if(save){
+    try { localStorage.setItem(LAYOUT_MODE_KEY,mode); }
+    catch(err) { console.warn("Darstellungsmodus konnte nicht gespeichert werden",err); }
+  }
+  if(changed && app.view==="map") requestAnimationFrame(()=>resizeMapCanvas(false));
+}
 
 async function loadJson(url){ const r=await fetch(url,{cache:"no-store"}); if(!r.ok) throw new Error(`${url}: ${r.status}`); return r.json(); }
 function normalizeState(raw={}){
@@ -1726,6 +1746,8 @@ async function applyBattleCombatResult(){
 
 
 async function init(){
+  applyLayoutMode(document.documentElement.dataset.layoutMode);
+  $("#appVersion").textContent=`v${APP_VERSION}`;
   try { app.pokemon=await loadJson("data/pokemon.json"); }
   catch(err){ document.body.innerHTML=`<main style="padding:24px"><h1>Dex konnte nicht geladen werden</h1><p>Bitte über GitHub Pages oder einen Webserver öffnen.</p><pre>${String(err)}</pre></main>`; return; }
 
@@ -1771,7 +1793,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13.3").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13.4").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
@@ -2514,6 +2536,15 @@ function bindEvents(){
   $("#newPlayerBtn").addEventListener("click",createPlayer);
   $("#newPlayerName").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();createPlayer();}});
   $("#editModeToggle").addEventListener("change",e=>{if(!app.isAdmin){e.target.checked=false;toast("Admin-Anmeldung erforderlich");return;}app.editMode=e.target.checked;if(!app.editMode)app.mapTrainerMoveId=null;render();toast(app.editMode?"Bearbeitungsmodus aktiv":"Ansichtsmodus aktiv");});
+  $("#layoutModeOptions").addEventListener("click",e=>{
+    const button=e.target.closest("[data-layout-choice]");
+    if(!button) return;
+    applyLayoutMode(button.dataset.layoutChoice,true);
+    toast(`Darstellung: ${button.textContent.trim()}`);
+  });
+  window.addEventListener("resize",()=>{
+    if(document.documentElement.dataset.layoutMode==="auto") applyLayoutMode("auto");
+  });
   $("#complexBattleToggle").addEventListener("change",e=>{if(!app.isAdmin){e.target.checked=isComplexBattleMode();toast("Admin-Anmeldung erforderlich");return;}setComplexBattleMode(e.target.checked);});
   $("#exportBtn").addEventListener("click",exportState); $("#shareBtn").addEventListener("click",sharePlayer); $("#saveNowBtn").addEventListener("click",saveToFirebase); $("#installAppBtn").addEventListener("click",installPwa);
   $("#loginBtn").addEventListener("click",doLogin); $("#logoutBtn").addEventListener("click",doLogout); $("#adminPassword").addEventListener("keydown",e=>{if(e.key==="Enter")doLogin();});
