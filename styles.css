@@ -616,3 +616,65 @@ html[data-effective-layout="mobile"] .simple-battle-extra{grid-column:1/-1;displ
 html[data-effective-layout="mobile"] .simple-battle-extra .simple-extra-counter{width:112px}
 html[data-effective-layout="desktop"] .simple-battle-extra{grid-column:auto;display:grid;padding:5px}
 html[data-effective-layout="desktop"] .simple-battle-extra .simple-extra-counter{width:auto}
+
+/* v13.6 – Nutzer-Symbole für Typen/Werte und Typenprofil im einfachen Kampf. */
+.type-symbol,.stat-symbol{display:inline-block;width:17px;height:17px;object-fit:contain;vertical-align:middle;flex:0 0 auto}
+.stat-symbol{width:16px;height:16px}
+.type-chip,.library-type-chip{display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.type-chip .type-symbol,.library-type-chip .type-symbol{width:19px;height:19px}
+.card-type,.type-icon-label,.identity-type,.library-type,.modifier-type{display:inline-flex;align-items:center;gap:4px;min-width:0}
+.card-type .type-symbol{width:15px;height:15px}
+.type-badge{gap:6px}.type-badge .type-symbol{width:21px;height:21px}
+.modifier-type .type-symbol{width:20px;height:20px}
+.attack-name strong{display:flex;align-items:center;gap:6px}
+.attack-name strong .type-symbol{width:17px;height:17px}
+.library-type .type-symbol{width:18px;height:18px}
+.pokemon-library-top small .type-symbol{width:17px;height:17px}
+.card-type-row{display:flex;align-items:center;gap:7px;margin-bottom:9px;font-size:.8rem;color:#40505d}
+.card-type-row .type-symbol{width:24px;height:24px}
+.dashboard-goal-head>.type-symbol{width:20px;height:20px}
+.dashboard-goal-head:has(>.type-symbol){grid-template-columns:20px minmax(0,1fr) auto}
+.dashboard-type-line .type-symbol{width:19px;height:19px}
+.dashboard-strong-row small .type-symbol{width:14px;height:14px;filter:none;vertical-align:middle;margin-right:3px}
+.battle-fighter-head small .type-symbol{width:17px;height:17px;filter:none;margin:0 3px;vertical-align:middle}
+.battle-sheet-summary .identity-type .type-symbol{width:17px;height:17px;filter:none}
+.battle-type-mod{display:inline-flex;align-items:center;gap:4px}
+.battle-type-mod .type-symbol{width:18px;height:18px}
+.battle-stat-strip span{display:inline-flex;align-items:center;gap:4px}
+.battle-stat-strip .stat-symbol{width:15px;height:15px}
+.battle-stat-edit .stat-label{display:inline-flex;align-items:center;gap:6px}
+.battle-stat-edit .stat-symbol{width:19px;height:19px}
+.simple-battle-stats .stat-label{display:flex;align-items:center;justify-content:center;gap:3px;min-height:18px}
+.simple-battle-stats .stat-label .stat-symbol{width:14px;height:14px}
+.simple-battle-stats .stat-label span{font-size:.52rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.simple-battle-identity .identity-type{font-weight:900;color:#576978;gap:4px;margin:2px 0}
+.simple-battle-identity .identity-type .type-symbol{width:17px;height:17px;filter:none}
+.simple-battle-controls>div{min-width:0}
+.simple-battle-type-profile{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:1px}
+.simple-type-group{min-width:0;background:#f7f9fb;border-radius:9px;padding:5px 7px;border-left:3px solid #d4dce3}
+.simple-type-group.weak{border-left-color:#d76b61}
+.simple-type-group.resist{border-left-color:#51a875}
+.simple-type-group.immune{border-left-color:#5a9dc8}
+.simple-type-group>strong{display:block;font-size:.57rem;color:#5d6b77;margin-bottom:3px}
+.simple-type-icons{display:flex;align-items:center;gap:3px;flex-wrap:wrap;min-height:21px}
+.simple-type-badge{display:inline-flex;align-items:center;gap:2px;min-height:21px;padding:1px 3px;border-radius:7px;border:1px solid #e0e6ed;background:#fff}
+.simple-type-badge .type-symbol{width:19px;height:19px}
+.simple-type-badge small{font-size:.58rem;font-weight:900;color:#4b5d6d}
+.simple-type-empty{font-size:.75rem;color:#94a0aa}
+
+/* Keine Zugnummern/Anzeige „wer am Zug ist“ im einfachen Modus. */
+.simple-battle-order{display:none}
+.simple-battle-fighter{grid-template-columns:minmax(170px,.85fr) minmax(160px,.75fr) minmax(500px,2fr) minmax(90px,.4fr)}
+@media(max-width:1099px){
+  .simple-battle-fighter{grid-template-columns:minmax(170px,.8fr) minmax(160px,.7fr) minmax(0,1fr)}
+  .simple-battle-checks{grid-column:1/-1}
+}
+@media(max-width:720px){
+  .simple-battle-fighter{grid-template-columns:minmax(0,1fr)}
+  .simple-battle-identity,.simple-battle-hp,.simple-battle-controls,.simple-battle-checks{grid-column:1}
+  .simple-type-group{padding:5px}
+}
+html[data-effective-layout="desktop"] .simple-battle-fighter{grid-template-columns:minmax(170px,.85fr) minmax(160px,.75fr) minmax(510px,2.1fr) minmax(90px,.4fr)}
+html[data-effective-layout="desktop"] .simple-battle-identity,html[data-effective-layout="desktop"] .simple-battle-hp,html[data-effective-layout="desktop"] .simple-battle-controls,html[data-effective-layout="desktop"] .simple-battle-checks{grid-column:auto}
+html[data-effective-layout="mobile"] .simple-battle-fighter{grid-template-columns:minmax(0,1fr)}
+html[data-effective-layout="mobile"] .simple-battle-identity,html[data-effective-layout="mobile"] .simple-battle-hp,html[data-effective-layout="mobile"] .simple-battle-controls,html[data-effective-layout="mobile"] .simple-battle-checks{grid-column:1}

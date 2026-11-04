@@ -11,7 +11,7 @@ const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 const FALLBACK_IMAGE = "assets/placeholder.svg";
-const APP_VERSION = "13.5";
+const APP_VERSION = "13.6";
 const LAYOUT_MODE_KEY = "pu-dex-layout-mode";
 
 const TYPE_COLORS = {
@@ -57,6 +57,16 @@ const sessionMoveCache = new Map();
 let deferredInstallPrompt = null;
 const escapeHtml = value => String(value ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function typeVars(type){ const [a,b]=TYPE_COLORS[type]||["#8793a0","#f1f3f5"]; return `--type:${a};--type-soft:${b};`; }
+const TYPE_ICON_FILES={Pflanze:"pflanze",Feuer:"feuer",Wasser:"wasser",Käfer:"kaefer",Flug:"flug",Normal:"normal",Gift:"gift",Elektro:"elektro",Boden:"boden",Kampf:"kampf",Psycho:"psycho",Gestein:"gestein",Stein:"gestein",Geist:"geist",Eis:"eis",Drache:"drache",Drachen:"drache"};
+const STAT_ICON_FILES={attack:"angriff",defense:"verteidigung",accuracy:"genauigkeit",initiative:"initiative"};
+function typeIconHtml(type,extraClass=""){
+  const file=TYPE_ICON_FILES[type];
+  return file?`<img class="type-symbol ${extraClass}" src="assets/ui-icons/${file}.png" alt="" aria-hidden="true" loading="lazy">`:"";
+}
+function statIconHtml(stat,extraClass=""){
+  const file=STAT_ICON_FILES[stat];
+  return file?`<img class="stat-symbol ${extraClass}" src="assets/ui-icons/${file}.png" alt="" aria-hidden="true" loading="lazy">`:"";
+}
 function setImgFallback(img){ img.addEventListener("error",()=>{ if(!img.src.endsWith("placeholder.svg")) img.src=FALLBACK_IMAGE; },{once:true}); }
 function toast(msg){ const el=$("#toast"); el.textContent=msg; el.classList.add("show"); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove("show"),2200); }
 function applyLayoutMode(requestedMode, save=false){
@@ -1432,18 +1442,29 @@ function simpleBattleStatusControls(side,f){
 }
 function simpleBattleStatControls(side,f){
   const stats=f.stats||{};
-  return `<div class="simple-battle-stats">${["attack","defense","accuracy","initiative"].map(k=>`<div><small>${BATTLE_STAT_LABELS[k]}</small><div class="simple-stat-counter"><button data-simple-stat-step="${k}" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−</button><strong>${stats[k]>=0?"+":""}${stats[k]||0}</strong><button data-simple-stat-step="${k}" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+</button></div></div>`).join("")}</div>`;
+  return `<div class="simple-battle-stats">${["attack","defense","accuracy","initiative"].map(k=>`<div><small class="stat-label">${statIconHtml(k)}<span>${BATTLE_STAT_LABELS[k]}</span></small><div class="simple-stat-counter"><button data-simple-stat-step="${k}" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−</button><strong>${stats[k]>=0?"+":""}${stats[k]||0}</strong><button data-simple-stat-step="${k}" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+</button></div></div>`).join("")}</div>`;
 }
-function renderSimpleBattleFighterCard(side,f,position){
+function simpleBattleTypeProfile(f){
+  const modifiers=pokemonCharacterCard(f.pokemonId)?.typeModifiers||{};
+  const groups=[
+    {label:"Schwächen",kind:"weak",accept:v=>v!=="immune"&&+v>0},
+    {label:"Resistenzen",kind:"resist",accept:v=>v!=="immune"&&+v<0},
+    {label:"Immunitäten",kind:"immune",accept:v=>v==="immune"}
+  ];
+  return `<div class="simple-battle-type-profile" aria-label="Typenmodifikatoren">${groups.map(g=>{
+    const types=Object.entries(modifiers).filter(([,v])=>g.accept(v)).sort((a,b)=>a[0].localeCompare(b[0],"de"));
+    return `<div class="simple-type-group ${g.kind}"><strong>${g.label}</strong><div class="simple-type-icons">${types.length?types.map(([type,v])=>`<span class="simple-type-badge" title="${escapeHtml(type)}: ${v==="immune"?"immun":(v>0?`+${v}`:v)}">${typeIconHtml(type)}<small>${v==="immune"?"×":(v>0?`+${v}`:v)}</small></span>`).join(""):`<span class="simple-type-empty">–</span>`}</div></div>`;
+  }).join("")}</div>`;
+}
+function renderSimpleBattleFighterCard(side,f){
   const p=battleFighterPokemon(f), type=p?.type||"Normal", hpPct=Math.max(0,Math.min(100,Math.round((f.currentHp/f.maxHp)*100))), stats=f.stats||{};
   const hasTurn=f.statuses?.poisoned?.active||f.statuses?.burned?.active;
   const hasAttack=BATTLE_STATUS_KEYS.some(k=>f.statuses?.[k]?.active&&(app.battleRules?.statuses?.[k]?.actions||[]).includes("attack")) || (+stats.accuracy<0);
   const hasMan=BATTLE_STATUS_KEYS.some(k=>f.statuses?.[k]?.active&&(app.battleRules?.statuses?.[k]?.actions||[]).includes("maneuver"));
   return `<article class="simple-battle-fighter" style="${typeVars(type)}">
-    <div class="simple-battle-order">${position}</div>
-    <div class="simple-battle-identity"><img src="${p?.image||FALLBACK_IMAGE}" alt="${escapeHtml(p?.name||"Pokémon")}"><div><small>${side==="own"?escapeHtml(app.activeBattle?.sides?.own?.label||"Spieler"):escapeHtml(app.activeBattle?.sides?.opponent?.label||"Gegner")} · Lv ${f.level}</small><h3>${escapeHtml(p?.name||"Pokémon")}</h3><span>${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span></div></div>
+    <div class="simple-battle-identity"><img src="${p?.image||FALLBACK_IMAGE}" alt="${escapeHtml(p?.name||"Pokémon")}"><div><small>${side==="own"?escapeHtml(app.activeBattle?.sides?.own?.label||"Spieler"):escapeHtml(app.activeBattle?.sides?.opponent?.label||"Gegner")} · Lv ${f.level}</small><h3>${escapeHtml(p?.name||"Pokémon")}</h3><span class="identity-type">${typeIconHtml(type)}${escapeHtml(type)}</span><span>${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span></div></div>
     <div class="simple-battle-hp"><div class="simple-battle-hp-top"><span>KP</span><strong>${f.currentHp} / ${f.maxHp}</strong></div><div class="battle-hp-track"><span style="width:${hpPct}%"></span></div><div class="simple-battle-hp-buttons"><button data-battle-hp="-5" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−5</button><button data-battle-hp="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−1</button><button data-battle-hp="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+1</button><button data-battle-hp="5" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+5</button></div></div>
-    <div class="simple-battle-controls"><div><label>Zustände</label>${simpleBattleStatusControls(side,f)}</div><div><label>Werte</label>${simpleBattleStatControls(side,f)}</div></div>
+    <div class="simple-battle-controls"><div><label>Zustände</label>${simpleBattleStatusControls(side,f)}</div><div><label>Werte</label>${simpleBattleStatControls(side,f)}</div>${simpleBattleTypeProfile(f)}</div>
     <div class="simple-battle-checks"><div class="simple-battle-extra"><small>Zusatznachzüge</small><div class="battle-counter simple-extra-counter"><button data-battle-counter="extraDraws" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button" aria-label="Zusatznachzüge verringern">−</button><strong>${f.extraDraws??0}</strong><button data-battle-counter="extraDraws" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button" aria-label="Zusatznachzüge erhöhen">+</button></div></div>${hasTurn?`<button data-battle-status-action="turnStart" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Zugbeginn</button>`:""}${hasAttack?`<button data-battle-status-action="attack" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Angriff prüfen</button>`:""}${hasMan?`<button data-battle-status-action="maneuver" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Manöver prüfen</button>`:""}</div>
   </article>`;
 }
@@ -1460,14 +1481,14 @@ function renderSimpleBattleReserve(){
 function renderSimpleBattleBoard(){
   const root=$("#battleSimpleBoard"); if(!root||!app.activeBattle) return;
   const entries=[];
-  battleTurnOrder().forEach((ref,i)=>{const uid=battleActiveSlots(ref.side)[ref.slot]||null,f=uid?battleFighter(ref.side,uid):null;if(f)entries.push({side:ref.side,f,position:i+1});});
-  root.innerHTML=`<div class="simple-battle-heading"><div><p class="eyebrow">Aktive Pokémon</p><h2>Kampf-Reihenfolge</h2></div><span>${entries.length} aktiv</span></div><div class="simple-battle-list">${entries.map(x=>renderSimpleBattleFighterCard(x.side,x.f,x.position)).join("")}</div><div class="simple-battle-reserves">${renderSimpleBattleReserve()}</div>`;
+  battleTurnOrder().forEach(ref=>{const uid=battleActiveSlots(ref.side)[ref.slot]||null,f=uid?battleFighter(ref.side,uid):null;if(f)entries.push({side:ref.side,f});});
+  root.innerHTML=`<div class="simple-battle-heading"><div><p class="eyebrow">Kampfdashboard</p><h2>Aktive Pokémon</h2></div><span>${entries.length} aktiv</span></div><div class="simple-battle-list">${entries.map(x=>renderSimpleBattleFighterCard(x.side,x.f)).join("")}</div><div class="simple-battle-reserves">${renderSimpleBattleReserve()}</div>`;
   root.querySelectorAll("img").forEach(setImgFallback);
 }
 function battleTypeModifiersHtml(f){
   const mods=pokemonCharacterCard(f?.pokemonId)?.typeModifiers||{};
   const rows=Object.entries(mods).sort((a,b)=>a[0].localeCompare(b[0],"de"));
-  return rows.length?rows.map(([type,val])=>`<span class="battle-type-mod ${val==="immune"?"immune":(+val>0?"weak":"resist")}">${escapeHtml(type)} ${val==="immune"?"×":(+val>0?`+${val}`:val)}</span>`).join(""):`<span class="battle-type-mod neutral">keine Modifikatoren</span>`;
+  return rows.length?rows.map(([type,val])=>`<span class="battle-type-mod ${val==="immune"?"immune":(+val>0?"weak":"resist")}">${typeIconHtml(type)}${escapeHtml(type)} ${val==="immune"?"×":(+val>0?`+${val}`:val)}</span>`).join(""):`<span class="battle-type-mod neutral">keine Modifikatoren</span>`;
 }
 function battleAllDefeated(side,overrideUid=null,overrideHp=null){
   const roster=battleRoster(side); const vals=Object.values(roster);
@@ -1486,11 +1507,11 @@ function renderBattleFighterCard(side,f,compact=false){
   const turn=isComplexBattleMode()?battleCurrentTurn():null, isCurrent=turn?.side===side&&turn?.uid===f.uid;
   const advancedDetails=isComplexBattleMode()?`<div class="battle-modifiers">${battleTypeModifiersHtml(f)}</div><div class="battle-deck-grid"><div><small>Nachziehstapel</small><div class="battle-counter"><button data-battle-counter="drawPile" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−</button><strong>${f.drawPile??30}</strong><button data-battle-counter="drawPile" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+</button></div></div><div><small>Zusatznachzüge</small><div class="battle-counter"><button data-battle-counter="extraDraws" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−</button><strong>${f.extraDraws??0}</strong><button data-battle-counter="extraDraws" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+</button></div></div></div>`:"";
   return `<article class="battle-fighter ${isCurrent?"current-turn":""}" style="${typeVars(type)}" data-battle-fighter="${f.uid}">
-    <header class="battle-fighter-head"><img src="${p?.image||FALLBACK_IMAGE}" alt="${escapeHtml(p?.name||"Pokémon")}"><div><small>#${pad(p?.id||0)} · ${escapeHtml(type)}</small><h3>${escapeHtml(p?.name||"Pokémon")}</h3><span>Lv ${f.level} · ${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span></div><button data-battle-manage="${f.uid}" data-battle-side="${side}" class="battle-manage-btn" type="button">Status & Werte</button></header>
+    <header class="battle-fighter-head"><img src="${p?.image||FALLBACK_IMAGE}" alt="${escapeHtml(p?.name||"Pokémon")}"><div><small>#${pad(p?.id||0)} · ${typeIconHtml(type)}${escapeHtml(type)}</small><h3>${escapeHtml(p?.name||"Pokémon")}</h3><span>Lv ${f.level} · ${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span></div><button data-battle-manage="${f.uid}" data-battle-side="${side}" class="battle-manage-btn" type="button">Status & Werte</button></header>
     <div class="battle-hp-row"><div><small>KP</small><strong>${f.currentHp} / ${f.maxHp}</strong></div><div class="battle-hp-track"><span style="width:${hpPct}%"></span></div></div>
     <div class="battle-step-row"><button data-battle-hp="-5" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−5</button><button data-battle-hp="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−1</button><button data-battle-hp="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+1</button><button data-battle-hp="5" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+5</button></div>
     <div class="battle-status-row">${status}</div>
-    <div class="battle-stat-strip"><span>Angr ${stats.attack>=0?"+":""}${stats.attack||0}</span><span>Vert ${stats.defense>=0?"+":""}${stats.defense||0}</span><span>Gen ${stats.accuracy>=0?"+":""}${stats.accuracy||0}</span><span>Init ${stats.initiative>=0?"+":""}${stats.initiative||0}</span></div>
+    <div class="battle-stat-strip">${["attack","defense","accuracy","initiative"].map(k=>`<span>${statIconHtml(k)}${BATTLE_STAT_LABELS[k]} ${stats[k]>=0?"+":""}${stats[k]||0}</span>`).join("")}</div>
     ${advancedDetails}
     <div class="battle-assistant-actions">${hasTurn?`<button data-battle-status-action="turnStart" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Zugbeginn</button>`:""}${hasAttack?`<button data-battle-status-action="attack" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Angriff prüfen</button>`:""}${hasMan?`<button data-battle-status-action="maneuver" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Manöver prüfen</button>`:""}</div>
   </article>`;
@@ -1557,9 +1578,9 @@ function renderBattleFighterSheet(){
   const sel=app.battleSelectedFighter; if(!sel) return; const f=battleFighter(sel.side,sel.uid), p=battleFighterPokemon(f); if(!f||!p) return;
   $("#battleFighterSheetName").textContent=p.name;
   const stats=f.stats||{};
-  $("#battleFighterSheetBody").innerHTML=`<div class="battle-sheet-summary"><img src="${p.image||FALLBACK_IMAGE}" alt="${escapeHtml(p.name)}"><div><strong>${escapeHtml(p.name)} · Lv ${f.level}</strong><span>${f.currentHp}/${f.maxHp} KP · ${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span></div></div>
+  $("#battleFighterSheetBody").innerHTML=`<div class="battle-sheet-summary"><img src="${p.image||FALLBACK_IMAGE}" alt="${escapeHtml(p.name)}"><div><strong>${escapeHtml(p.name)} · Lv ${f.level}</strong><span class="identity-type">${typeIconHtml(p.type)}${escapeHtml(p.type)}</span><span>${f.currentHp}/${f.maxHp} KP · ${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span></div></div>
     <h3>Zustände</h3><div class="battle-status-toggle-grid">${BATTLE_STATUS_KEYS.map(k=>{const st=f.statuses?.[k]||{};return `<button class="status-${k} ${st.active?"active":""}" data-battle-status-toggle="${k}" type="button"><span>${BATTLE_STATUS_ICONS[k]||"•"}</span><strong>${battleStatusLabel(k)}</strong><small>${st.active&&st.actions?`${st.actions} Aktionen`:st.active?"aktiv":"inaktiv"}</small></button>`;}).join("")}</div>
-    <h3>Statuswerte</h3><div class="battle-stat-edit">${["attack","defense","accuracy","initiative"].map(k=>`<div><span>${BATTLE_STAT_LABELS[k]}</span><div class="battle-counter"><button data-battle-stat-step="${k}" data-battle-delta="-1" type="button">−</button><strong>${stats[k]>=0?"+":""}${stats[k]||0}</strong><button data-battle-stat-step="${k}" data-battle-delta="1" type="button">+</button></div></div>`).join("")}</div>
+    <h3>Statuswerte</h3><div class="battle-stat-edit">${["attack","defense","accuracy","initiative"].map(k=>`<div><span class="stat-label">${statIconHtml(k)}${BATTLE_STAT_LABELS[k]}</span><div class="battle-counter"><button data-battle-stat-step="${k}" data-battle-delta="-1" type="button">−</button><strong>${stats[k]>=0?"+":""}${stats[k]||0}</strong><button data-battle-stat-step="${k}" data-battle-delta="1" type="button">+</button></div></div>`).join("")}</div>
     <p class="battle-sheet-note">Genauigkeit und Zustände werden mit den vorgesehenen Würfen geprüft. Eingefroren wird manuell entfernt.</p>`;
   $("#battleFighterSheetBody").querySelectorAll("img").forEach(setImgFallback);
 }
@@ -1797,7 +1818,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13.5").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13.6").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
@@ -1862,7 +1883,7 @@ function showNoPlayer(msg="Öffne deinen persönlichen Spieler-Link. Als Spielle
 
 function buildTypeStrip(){
   const types=["Alle",...new Set(app.pokemon.map(p=>p.type))];
-  $("#typeStrip").innerHTML=types.map(t=>`<button class="type-chip ${t==="Alle"?"active":""}" data-type="${t}">${t}</button>`).join("");
+  $("#typeStrip").innerHTML=types.map(t=>`<button class="type-chip ${t==="Alle"?"active":""}" data-type="${t}">${typeIconHtml(t)}${escapeHtml(t)}</button>`).join("");
 }
 function filteredPokemon(){
   const q=app.search.trim().toLowerCase();
@@ -1920,7 +1941,7 @@ function renderDashboard(){
 
   const goalCard=(g,done=false)=>{
     const pr=goalProgress(g);
-    return `<article class="dashboard-goal ${done?"done":""}" style="${typeVars(g.type)}"><div class="dashboard-goal-head"><span class="goal-type-dot"></span><div><strong>${escapeHtml(g.label)}</strong><small>${escapeHtml(g.type)} · ${pr.count}/${pr.target} gefangen${pr.done&&!done?" · Bedingung erreicht":""}</small></div><em>${done?"✓ Erfüllt":"Aktiv"}</em></div><div class="dashboard-goal-track"><span style="width:${pr.pct}%"></span></div></article>`;
+    return `<article class="dashboard-goal ${done?"done":""}" style="${typeVars(g.type)}"><div class="dashboard-goal-head">${typeIconHtml(g.type)||'<span class="goal-type-dot"></span>'}<div><strong>${escapeHtml(g.label)}</strong><small>${escapeHtml(g.type)} · ${pr.count}/${pr.target} gefangen${pr.done&&!done?" · Bedingung erreicht":""}</small></div><em>${done?"✓ Erfüllt":"Aktiv"}</em></div><div class="dashboard-goal-track"><span style="width:${pr.pct}%"></span></div></article>`;
   };
 
   const goalList=$("#dashboardGoalsList");
@@ -1952,14 +1973,14 @@ function renderDashboard(){
 
   const strong=[...owned].sort((a,b)=>stateFor(b).level-stateFor(a).level || stateFor(b).ep-stateFor(a).ep || a.id-b.id).slice(0,6);
   $("#dashboardStrongList").innerHTML=strong.length?strong.map((p,i)=>{
-    const st=stateFor(p); return `<button type="button" class="dashboard-strong-row" data-dashboard-pokemon="${p.id}" style="${typeVars(p.type)}"><b>${i+1}</b><img src="${p.image}" alt=""><span><strong>${escapeHtml(p.name)}</strong><small>${escapeHtml(p.type)} · ${st.ep}/10 EP</small></span><em>Lvl ${st.level}</em></button>`;
+    const st=stateFor(p); return `<button type="button" class="dashboard-strong-row" data-dashboard-pokemon="${p.id}" style="${typeVars(p.type)}"><b>${i+1}</b><img src="${p.image}" alt=""><span><strong>${escapeHtml(p.name)}</strong><small>${typeIconHtml(p.type)}${escapeHtml(p.type)} · ${st.ep}/10 EP</small></span><em>Lvl ${st.level}</em></button>`;
   }).join(""):`<div class="dashboard-empty">Noch keine Pokémon gefangen.</div>`;
   $("#dashboardStrongList").querySelectorAll("img").forEach(setImgFallback);
 
   const byType=[...new Set(app.pokemon.map(p=>p.type))].sort((a,b)=>a.localeCompare(b,"de"));
   $("#dashboardTypeProgress").innerHTML=byType.map(type=>{
     const all=app.pokemon.filter(p=>p.type===type), got=all.filter(p=>stateFor(p).owned).length, pct=all.length?Math.round(got/all.length*100):0;
-    return `<article style="${typeVars(type)}"><div class="dashboard-type-line"><span><i></i><strong>${escapeHtml(type)}</strong></span><b>${got}/${all.length}</b></div><div class="dashboard-type-track"><span style="width:${pct}%"></span></div></article>`;
+    return `<article style="${typeVars(type)}"><div class="dashboard-type-line"><span>${typeIconHtml(type)}<strong>${escapeHtml(type)}</strong></span><b>${got}/${all.length}</b></div><div class="dashboard-type-track"><span style="width:${pct}%"></span></div></article>`;
   }).join("");
 
   const canSetLocation=app.isAdmin&&app.editMode&&!!currentTrainerEntry();
@@ -2105,7 +2126,7 @@ function renderGrid(){
   $("#resultCount").textContent=`${list.length} ${list.length===1?"Eintrag":"Einträge"}`;
   $("#resultLabel").textContent=app.filter==="owned"?"Gefangen":app.filter==="favorite"?"Favoriten":"Alle Monster";
   $("#emptyState").classList.toggle("hidden",list.length!==0);
-  $("#dexGrid").innerHTML=list.map(p=>{ const s=stateFor(p); const learned=attacksFor(p).filter(a=>a.level<=s.level).length; return `<button class="dex-card ${s.owned?"":"not-owned"}" data-id="${p.id}" style="${typeVars(p.type)}"><div class="card-art"><span class="card-fav">${s.favorite?"★":"☆"}</span><img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy"></div><div class="card-copy"><small>#${pad(p.id)}</small><strong>${escapeHtml(p.name)}</strong><div class="card-meta"><span class="card-type"><i class="type-dot"></i>${escapeHtml(p.type)}</span><span class="level-pill">Lvl ${s.level}</span></div>${learned?`<div class="card-attacks">⚔ ${learned} Attacken</div>`:""}</div></button>`; }).join("");
+  $("#dexGrid").innerHTML=list.map(p=>{ const s=stateFor(p); const learned=attacksFor(p).filter(a=>a.level<=s.level).length; return `<button class="dex-card ${s.owned?"":"not-owned"}" data-id="${p.id}" style="${typeVars(p.type)}"><div class="card-art"><span class="card-fav">${s.favorite?"★":"☆"}</span><img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy"></div><div class="card-copy"><small>#${pad(p.id)}</small><strong>${escapeHtml(p.name)}</strong><div class="card-meta"><span class="card-type">${typeIconHtml(p.type)}${escapeHtml(p.type)}</span><span class="level-pill">Lvl ${s.level}</span></div>${learned?`<div class="card-attacks">⚔ ${learned} Attacken</div>`:""}</div></button>`; }).join("");
   $$("#dexGrid img").forEach(setImgFallback);
 }
 function renderPlayerList(){
@@ -2143,10 +2164,10 @@ function selectedPokemon(){ return app.pokemon.find(p=>p.id===app.selectedId); }
 function renderDetail(){
   const p=selectedPokemon(); if(!p) return; const s=stateFor(p);
   $("#detailHero").style=typeVars(p.type); $("#detailNumber").textContent=`#${pad(p.id)}`; $("#detailName").textContent=p.name;
-  $("#detailType").innerHTML=`<span class="type-badge" style="${typeVars(p.type)}"><span>●</span>${escapeHtml(p.type)}</span>`;
+  $("#detailType").innerHTML=`<span class="type-badge" style="${typeVars(p.type)}">${typeIconHtml(p.type)}${escapeHtml(p.type)}</span>`;
   const img=$("#detailImage"); img.src=p.image; img.alt=p.name; img.classList.toggle("not-owned",!s.owned); setImgFallback(img);
   $("#detailFavoriteBtn").textContent=s.favorite?"★":"☆"; $("#detailFavoriteBtn").classList.toggle("active",s.favorite);
-  $("#infoStatus").textContent=s.owned?"Gefangen":"Nicht gefangen"; $("#infoType").textContent=p.type; $("#infoRange").textContent=`${p.minLevel}–${p.maxLevel}`;
+  $("#infoStatus").textContent=s.owned?"Gefangen":"Nicht gefangen"; $("#infoType").innerHTML=`<span class="type-icon-label">${typeIconHtml(p.type)}${escapeHtml(p.type)}</span>`; $("#infoRange").textContent=`${p.minLevel}–${p.maxLevel}`;
   $("#currentLevel").textContent=s.level; $("#currentEP").textContent=s.level>=p.maxLevel?`${s.ep} / 10 · Max`:`${s.ep} / 10`; $("#epBar").style.width=`${s.ep*10}%`;
   $("#valueMin").textContent=p.minLevel; $("#valueMax").textContent=p.maxLevel; $("#valueCurrent").textContent=s.level;
   renderCharacterValues(p,s);
@@ -2188,7 +2209,7 @@ function renderCharacterValues(p,s){
     const cls=immune?"immune":numeric>0?"positive":"negative";
     const label=immune?"Immun":`${numeric>0?"+":""}${numeric}`;
     const note=immune?"keine Wirkung":numeric>0?`Kartenwert +${numeric}`:`Kartenwert ${numeric}`;
-    return `<article class="type-modifier ${cls}" style="${typeVars(type)}"><span class="modifier-type"><i></i>${escapeHtml(type)}</span><strong>${label}</strong><small>${note}</small></article>`;
+    return `<article class="type-modifier ${cls}" style="${typeVars(type)}"><span class="modifier-type">${typeIconHtml(type)}${escapeHtml(type)}</span><strong>${label}</strong><small>${note}</small></article>`;
   }).join(""):`<div class="notice notice-muted"><p>Keine Typenmodifikatoren auf der Charakterkarte.</p></div>`;
 }
 
@@ -2214,7 +2235,7 @@ function renderAttackTab(p,s){
     }
     const ready=m.level<=s.level;
     const card=attackCard(m.name); const setText=card?.detailsAvailable!==false&&card?.setSize?` · Satz x${card.setSize}`:"";
-    html.push(`<button type="button" data-card-open="${escapeHtml(m.name)}" class="attack-item attack-item-button ${ready?"unlocked":"locked"}"><span class="attack-level">${m.level}</span><div class="attack-name"><strong>${escapeHtml(m.name)}</strong><small>${ready?"Für dieses Level verfügbar":`Freischaltung ab Level ${m.level}`}${setText}</small></div><span class="attack-state" aria-label="${ready?"verfügbar":"gesperrt"}">${ready?"✓":"○"}</span></button>`);
+    html.push(`<button type="button" data-card-open="${escapeHtml(m.name)}" class="attack-item attack-item-button ${ready?"unlocked":"locked"}"><span class="attack-level">${m.level}</span><div class="attack-name"><strong>${typeIconHtml(card?.type)}${escapeHtml(m.name)}</strong><small>${ready?"Für dieses Level verfügbar":`Freischaltung ab Level ${m.level}`}${setText}</small></div><span class="attack-state" aria-label="${ready?"verfügbar":"gesperrt"}">${ready?"✓":"○"}</span></button>`);
   }
   list.innerHTML=html.join("");
 }
@@ -2227,7 +2248,7 @@ function buildLibraryTypeStrip(){
   const types=["Alle",...new Set(source.filter(Boolean))];
   const el=$("#libraryTypeStrip"); if(!el) return;
   if(app.libraryType!=="Alle"&&!types.includes(app.libraryType)) app.libraryType="Alle";
-  el.innerHTML=types.map(t=>`<button type="button" class="library-type-chip ${t===app.libraryType?"active":""}" data-library-type="${escapeHtml(t)}">${escapeHtml(t)}</button>`).join("");
+  el.innerHTML=types.map(t=>`<button type="button" class="library-type-chip ${t===app.libraryType?"active":""}" data-library-type="${escapeHtml(t)}">${typeIconHtml(t)}${escapeHtml(t)}</button>`).join("");
 }
 function filteredAttackCards(){
   const q=app.librarySearch.trim().toLowerCase();
@@ -2272,7 +2293,7 @@ function renderLibrary(){
     $("#libraryGrid").innerHTML=list.map(p=>{
       const c=pokemonCharacterCard(p); const s=stateFor(p); const maxHp=(+c.baseHp||0)+(+s.level||0);
       const immune=Object.values(c.typeModifiers||{}).filter(v=>v==="immune").length;
-      return `<button class="library-card pokemon-library-card" data-card-pokemon="${p.id}" type="button" style="${typeVars(p.type)}"><div class="pokemon-library-top"><img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy"><div><small>#${pad(p.id)} · ${escapeHtml(p.type)}</small><h3>${escapeHtml(p.name)}</h3><span>${c.range==="ranged"?"Fernkampf":"Nahkampf"} · Bewegung ${c.movement}</span></div></div><div class="library-card-values pokemon-values"><span><small>KP-Basis</small><b>${c.baseHp}</b></span><span><small>Max. KP</small><b>${maxHp}</b></span><span><small>Immun</small><b>${immune}</b></span></div><p>Max. KP auf aktuellem Level ${s.level}: <strong>${c.baseHp} + ${s.level} = ${maxHp}</strong></p></button>`;
+      return `<button class="library-card pokemon-library-card" data-card-pokemon="${p.id}" type="button" style="${typeVars(p.type)}"><div class="pokemon-library-top"><img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy"><div><small>#${pad(p.id)} · ${typeIconHtml(p.type)}${escapeHtml(p.type)}</small><h3>${escapeHtml(p.name)}</h3><span>${c.range==="ranged"?"Fernkampf":"Nahkampf"} · Bewegung ${c.movement}</span></div></div><div class="library-card-values pokemon-values"><span><small>KP-Basis</small><b>${c.baseHp}</b></span><span><small>Max. KP</small><b>${maxHp}</b></span><span><small>Immun</small><b>${immune}</b></span></div><p>Max. KP auf aktuellem Level ${s.level}: <strong>${c.baseHp} + ${s.level} = ${maxHp}</strong></p></button>`;
     }).join("");
     $$("#libraryGrid img").forEach(setImgFallback);
     return;
@@ -2291,9 +2312,9 @@ function renderLibrary(){
   $("#libraryEmpty").classList.toggle("hidden",list.length!==0);
   $$("#libraryKindFilter [data-card-kind]").forEach(b=>b.classList.toggle("active",b.dataset.cardKind===app.libraryKind));
   $("#libraryGrid").innerHTML=list.map(c=>{
-    if(c.detailsAvailable===false) return `<button class="library-card missing" data-card-open="${escapeHtml(c.name)}" type="button"><div class="library-card-top"><span class="library-kind neutral">?</span><span class="library-type">${escapeHtml(c.type||"—")}</span></div><h3>${escapeHtml(c.name)}</h3><p>Für diese Attacke wurde in den bereitgestellten Attackenkarten keine passende Karte gefunden.</p></button>`;
+    if(c.detailsAvailable===false) return `<button class="library-card missing" data-card-open="${escapeHtml(c.name)}" type="button"><div class="library-card-top"><span class="library-kind neutral">?</span><span class="library-type">${typeIconHtml(c.type)}${escapeHtml(c.type||"—")}</span></div><h3>${escapeHtml(c.name)}</h3><p>Für diese Attacke wurde in den bereitgestellten Attackenkarten keine passende Karte gefunden.</p></button>`;
     const effects=(c.effects||[]).map(e=>e.text).join(" ");
-    return `<button class="library-card" data-card-open="${escapeHtml(c.name)}" type="button" style="${cardTypeVars(c.type)}"><div class="library-card-top"><span class="library-kind kind-${c.cardType}">${CARD_KIND_ICONS[c.cardType]||"•"} ${CARD_KIND_LABELS[c.cardType]||c.cardType}</span><span class="library-type">${escapeHtml(c.type)}</span></div><h3>${escapeHtml(c.name)}</h3><div class="library-card-values">${c.cardType!=="scheme"?`<span><small>Wert</small><b>${c.value}</b></span>`:""}<span><small>BOOST</small><b>${c.boost}</b></span><span><small>Kartensatz</small><b>x${c.setSize}</b></span></div>${effects?`<p>${escapeHtml(effects)}</p>`:'<p class="muted">Keine zusätzlichen Karteneffekte.</p>'}</button>`;
+    return `<button class="library-card" data-card-open="${escapeHtml(c.name)}" type="button" style="${cardTypeVars(c.type)}"><div class="library-card-top"><span class="library-kind kind-${c.cardType}">${CARD_KIND_ICONS[c.cardType]||"•"} ${CARD_KIND_LABELS[c.cardType]||c.cardType}</span><span class="library-type">${typeIconHtml(c.type)}${escapeHtml(c.type)}</span></div><h3>${escapeHtml(c.name)}</h3><div class="library-card-values">${c.cardType!=="scheme"?`<span><small>Wert</small><b>${c.value}</b></span>`:""}<span><small>BOOST</small><b>${c.boost}</b></span><span><small>Kartensatz</small><b>x${c.setSize}</b></span></div>${effects?`<p>${escapeHtml(effects)}</p>`:'<p class="muted">Keine zusätzlichen Karteneffekte.</p>'}</button>`;
   }).join("");
 }
 function resetLibraryFilters(){
@@ -2311,7 +2332,7 @@ function renderCardDetail(name){
     return;
   }
   const effects=(c.effects||[]).length?(c.effects||[]).map(e=>`<article class="card-effect"><small>${TIMING_LABELS[e.timing]||e.timing}</small><p>${escapeHtml(e.text)}</p></article>`).join(""):`<article class="card-effect empty"><small>EFFEKT</small><p>Keine zusätzlichen Karteneffekte.</p></article>`;
-  $("#cardDetailBody").innerHTML=`<section class="card-facts" style="${cardTypeVars(c.type)}"><div class="card-kind-hero kind-${c.cardType}"><span>${CARD_KIND_ICONS[c.cardType]||"•"}</span><strong>${CARD_KIND_LABELS[c.cardType]||c.cardType}</strong></div><div class="card-fact-grid">${c.cardType!=="scheme"?`<article><small>Wert</small><strong>${c.value}</strong></article>`:""}<article><small>BOOST</small><strong>${c.boost}</strong></article><article><small>Kartensatz</small><strong>x${c.setSize}</strong></article></div><p class="set-explain">Ein Pokémon mit dieser Attacke benötigt den vollständigen Satz aus <strong>${c.setSize} ${c.setSize===1?"Karte":"Karten"}</strong>.</p></section><section class="card-effect-list">${effects}</section>${renderLearnersHtml(learners)}`;
+  $("#cardDetailBody").innerHTML=`<section class="card-facts" style="${cardTypeVars(c.type)}"><div class="card-type-row">${typeIconHtml(c.type)}<strong>${escapeHtml(c.type)}</strong></div><div class="card-kind-hero kind-${c.cardType}"><span>${CARD_KIND_ICONS[c.cardType]||"•"}</span><strong>${CARD_KIND_LABELS[c.cardType]||c.cardType}</strong></div><div class="card-fact-grid">${c.cardType!=="scheme"?`<article><small>Wert</small><strong>${c.value}</strong></article>`:""}<article><small>BOOST</small><strong>${c.boost}</strong></article><article><small>Kartensatz</small><strong>x${c.setSize}</strong></article></div><p class="set-explain">Ein Pokémon mit dieser Attacke benötigt den vollständigen Satz aus <strong>${c.setSize} ${c.setSize===1?"Karte":"Karten"}</strong>.</p></section><section class="card-effect-list">${effects}</section>${renderLearnersHtml(learners)}`;
 }
 function renderLearnersHtml(learners){
   if(!learners.length) return `<section class="card-learners"><div class="card-section-head"><p class="eyebrow">Zuordnung</p><h3>Lernbar von</h3></div><div class="notice notice-muted"><p>Diese Attacke ist keinem Pokémon zugeordnet.</p></div></section>`;

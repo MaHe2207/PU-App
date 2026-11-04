@@ -1,5 +1,9 @@
 # PU-Dex
 
+## v13.6 – Typen- und Werte-Symbole
+
+19 neue Symbole für 15 Pokémon-/Attackentypen und die vier Werte Angriff, Verteidigung, Genauigkeit, Initiative. Im einfachen Kampfdashboard werden Schwächen, Resistenzen und Immunitäten mit Typen-Icons und ihren Kartenwert-Modifikatoren angezeigt. Die Anzeige einer Zugreihenfolge bzw. „wer am Zug ist“ entfällt in diesem Modus. Details: `README-v13.6.md`.
+
 ## v13.5 – freie Sicht im Kampf und farbige Zustände
 
 Auf dem Kampfbildschirm verschwinden die untere Navigation und der rote Sprung-zum-Kampf-Hinweis. In den anderen Menüs bleiben Navigation und Kampfsprung erhalten. Alle sechs Zustandssymbole sind nun farbig, und der einfache Modus zeigt die Zusatznachzüge mit Plus-/Minus-Buttons. Siehe `README-v13.5.md`.
