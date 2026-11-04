@@ -1,4 +1,4 @@
-const CACHE="pu-dex-v13-6-type-stat-icons-20261104";
+const CACHE="pu-dex-v13-8-landscape-no-clipping-20261104";
 const CORE=[
   "./",
   "./index.html",

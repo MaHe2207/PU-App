@@ -11,7 +11,7 @@ const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 const FALLBACK_IMAGE = "assets/placeholder.svg";
-const APP_VERSION = "13.6";
+const APP_VERSION = "13.8";
 const LAYOUT_MODE_KEY = "pu-dex-layout-mode";
 
 const TYPE_COLORS = {
@@ -1462,10 +1462,10 @@ function renderSimpleBattleFighterCard(side,f){
   const hasAttack=BATTLE_STATUS_KEYS.some(k=>f.statuses?.[k]?.active&&(app.battleRules?.statuses?.[k]?.actions||[]).includes("attack")) || (+stats.accuracy<0);
   const hasMan=BATTLE_STATUS_KEYS.some(k=>f.statuses?.[k]?.active&&(app.battleRules?.statuses?.[k]?.actions||[]).includes("maneuver"));
   return `<article class="simple-battle-fighter" style="${typeVars(type)}">
-    <div class="simple-battle-identity"><img src="${p?.image||FALLBACK_IMAGE}" alt="${escapeHtml(p?.name||"Pokémon")}"><div><small>${side==="own"?escapeHtml(app.activeBattle?.sides?.own?.label||"Spieler"):escapeHtml(app.activeBattle?.sides?.opponent?.label||"Gegner")} · Lv ${f.level}</small><h3>${escapeHtml(p?.name||"Pokémon")}</h3><span class="identity-type">${typeIconHtml(type)}${escapeHtml(type)}</span><span>${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span></div></div>
+    <div class="simple-battle-identity"><img src="${p?.image||FALLBACK_IMAGE}" alt="${escapeHtml(p?.name||"Pokémon")}"><div><small>${side==="own"?escapeHtml(app.activeBattle?.sides?.own?.label||"Spieler"):escapeHtml(app.activeBattle?.sides?.opponent?.label||"Gegner")} · Lv ${f.level}</small><h3 title="${escapeHtml(p?.name||"Pokémon")}">${escapeHtml(p?.name||"Pokémon")}</h3><span class="identity-type">${typeIconHtml(type)}${escapeHtml(type)}</span><span class="simple-battle-range-full">${battleRangeLabel(f)} · Bewegung ${battleMovement(f)}</span><span class="simple-battle-range-compact">${battleRangeLabel(f)==="Fernkampf"?"Fern":"Nah"} · Bew. ${battleMovement(f)}</span></div></div>
     <div class="simple-battle-hp"><div class="simple-battle-hp-top"><span>KP</span><strong>${f.currentHp} / ${f.maxHp}</strong></div><div class="battle-hp-track"><span style="width:${hpPct}%"></span></div><div class="simple-battle-hp-buttons"><button data-battle-hp="-5" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−5</button><button data-battle-hp="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">−1</button><button data-battle-hp="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+1</button><button data-battle-hp="5" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">+5</button></div></div>
     <div class="simple-battle-controls"><div><label>Zustände</label>${simpleBattleStatusControls(side,f)}</div><div><label>Werte</label>${simpleBattleStatControls(side,f)}</div>${simpleBattleTypeProfile(f)}</div>
-    <div class="simple-battle-checks"><div class="simple-battle-extra"><small>Zusatznachzüge</small><div class="battle-counter simple-extra-counter"><button data-battle-counter="extraDraws" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button" aria-label="Zusatznachzüge verringern">−</button><strong>${f.extraDraws??0}</strong><button data-battle-counter="extraDraws" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button" aria-label="Zusatznachzüge erhöhen">+</button></div></div>${hasTurn?`<button data-battle-status-action="turnStart" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Zugbeginn</button>`:""}${hasAttack?`<button data-battle-status-action="attack" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Angriff prüfen</button>`:""}${hasMan?`<button data-battle-status-action="maneuver" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Manöver prüfen</button>`:""}</div>
+    <div class="simple-battle-checks"><div class="simple-battle-extra"><small>Zusatznachzüge</small><div class="battle-counter simple-extra-counter"><button data-battle-counter="extraDraws" data-battle-delta="-1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button" aria-label="Zusatznachzüge verringern">−</button><strong>${f.extraDraws??0}</strong><button data-battle-counter="extraDraws" data-battle-delta="1" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button" aria-label="Zusatznachzüge erhöhen">+</button></div></div><div class="simple-battle-status-actions">${hasTurn?`<button data-battle-status-action="turnStart" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Zugbeginn</button>`:""}${hasAttack?`<button data-battle-status-action="attack" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Angriff prüfen</button>`:""}${hasMan?`<button data-battle-status-action="maneuver" data-battle-side="${side}" data-battle-uid="${f.uid}" type="button">Manöver prüfen</button>`:""}</div></div>
   </article>`;
 }
 function renderSimpleBattleReserve(){
@@ -1818,7 +1818,7 @@ async function init(){
     render();
   });
   setupPwaInstall();
-  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13.6").catch(()=>{});
+  if("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js?v=13.8").catch(()=>{});
 }
 
 async function loadAdminPlayers(){
